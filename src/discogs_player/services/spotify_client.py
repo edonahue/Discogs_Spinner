@@ -108,6 +108,47 @@ class SpotifyClient:
             )
         return result
 
+    def search_albums(self, *, query: str, limit: int = 10) -> list[dict[str, object]]:
+        payload = self._request(
+            "GET",
+            "/v1/search",
+            params={
+                "q": query,
+                "type": "album",
+                "limit": max(1, min(50, int(limit))),
+            },
+        )
+        albums = payload.get("albums", {}) if isinstance(payload, dict) else {}
+        items = albums.get("items") if isinstance(albums, dict) else []
+        if not isinstance(items, list):
+            return []
+
+        result: list[dict[str, object]] = []
+        for raw in items:
+            if not isinstance(raw, dict):
+                continue
+
+            artists_raw = raw.get("artists")
+            artist_names: list[str] = []
+            if isinstance(artists_raw, list):
+                for artist in artists_raw:
+                    if isinstance(artist, dict) and artist.get("name"):
+                        artist_names.append(str(artist["name"]))
+
+            external_urls = raw.get("external_urls") if isinstance(raw.get("external_urls"), dict) else {}
+            result.append(
+                {
+                    "id": raw.get("id"),
+                    "name": raw.get("name"),
+                    "artists": artist_names,
+                    "release_date": raw.get("release_date"),
+                    "total_tracks": raw.get("total_tracks"),
+                    "uri": raw.get("uri"),
+                    "external_url": external_urls.get("spotify") if isinstance(external_urls, dict) else None,
+                }
+            )
+        return result
+
     def start_album_playback(self, spotify_album_id: str, *, device_id: str | None = None) -> None:
         album_id = spotify_album_id.removeprefix("spotify:album:")
         context_uri = f"spotify:album:{album_id}"

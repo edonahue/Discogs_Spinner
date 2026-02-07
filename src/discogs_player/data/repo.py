@@ -43,6 +43,16 @@ def _row_to_release(row) -> dict[str, Any]:
     }
 
 
+def _row_to_mapping(row) -> dict[str, Any]:
+    return {
+        "discogs_release_id": row["discogs_release_id"],
+        "spotify_album_id": row["spotify_album_id"],
+        "confidence": row["confidence"],
+        "last_checked_at": row["last_checked_at"],
+        "is_override": bool(row["is_override"]),
+    }
+
+
 def upsert_releases(conn, releases: Iterable[dict[str, Any]]) -> int:
     rows = []
     for release in releases:
@@ -108,6 +118,80 @@ def mark_releases_inactive_missing(conn, active_ids: Sequence[int]) -> int:
     cursor = conn.execute(sql, list(active_ids))
     conn.commit()
     return cursor.rowcount
+
+
+def get_release_by_id(conn, discogs_release_id: int) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT
+            r.discogs_release_id,
+            r.artist,
+            r.title,
+            r.year,
+            r.genres,
+            r.styles,
+            r.thumb_url,
+            r.cover_url,
+            r.added_at,
+            r.last_synced_at,
+            r.is_active,
+            m.spotify_album_id
+        FROM releases r
+        LEFT JOIN spotify_mapping m
+          ON m.discogs_release_id = r.discogs_release_id
+        WHERE r.discogs_release_id = ?
+        """,
+        (discogs_release_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return _row_to_release(row)
+
+
+def get_spotify_mapping(conn, discogs_release_id: int) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT discogs_release_id, spotify_album_id, confidence, last_checked_at, is_override
+        FROM spotify_mapping
+        WHERE discogs_release_id = ?
+        """,
+        (discogs_release_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return _row_to_mapping(row)
+
+
+def upsert_spotify_mapping(
+    conn,
+    *,
+    discogs_release_id: int,
+    spotify_album_id: str | None,
+    confidence: float | None,
+    last_checked_at: str | None,
+    is_override: bool = False,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO spotify_mapping(
+            discogs_release_id, spotify_album_id, confidence, last_checked_at, is_override
+        )
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(discogs_release_id) DO UPDATE SET
+            spotify_album_id = excluded.spotify_album_id,
+            confidence = excluded.confidence,
+            last_checked_at = excluded.last_checked_at,
+            is_override = excluded.is_override
+        """,
+        (
+            int(discogs_release_id),
+            spotify_album_id,
+            confidence,
+            last_checked_at,
+            1 if is_override else 0,
+        ),
+    )
+    conn.commit()
 
 
 def query_releases(
