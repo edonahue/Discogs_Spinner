@@ -159,6 +159,15 @@ def _render_match_results_table(items: list[dict[str, object]], *, title: str) -
     console.print(table)
 
 
+def _parse_release_id(raw: str) -> int:
+    value = raw.strip()
+    if not value:
+        raise ValueError("Release id cannot be empty.")
+    if not value.isdigit():
+        raise ValueError("Release id must be an integer.")
+    return int(value)
+
+
 @app.command("status")
 def status(json_output: bool = typer.Option(False, "--json", help="Output JSON")) -> None:
     """Show current local sync and mapping status."""
@@ -461,7 +470,7 @@ def match(
             if unmatched:
                 raise ValueError("Do not use --unmatched with `match override`.")
 
-            release_id = int(arg2)
+            release_id = _parse_release_id(arg2)
             result = run_match_override(release_id, arg3)
             if json_output:
                 console.print(json.dumps(result, indent=2, sort_keys=True))
@@ -502,7 +511,7 @@ def match(
                 "Usage: dplayer match <release_id> or dplayer match --unmatched --limit N"
             )
 
-        release_id = int(arg1)
+        release_id = _parse_release_id(arg1)
         result = run_match_release(release_id, threshold=threshold)
         if json_output:
             console.print(json.dumps(result, indent=2, sort_keys=True))

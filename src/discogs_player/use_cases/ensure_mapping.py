@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -23,10 +24,26 @@ def _now_iso() -> str:
 
 def _normalize_album_id(raw: str) -> str:
     album = raw.strip()
-    if album.startswith("spotify:album:"):
-        album = album.removeprefix("spotify:album:")
     if not album:
         raise ValueError("Spotify album id cannot be empty.")
+
+    if album.startswith("spotify:album:"):
+        album = album.removeprefix("spotify:album:")
+
+    url_match = re.search(r"(?:https?://)?open\.spotify\.com/album/([A-Za-z0-9]+)", album)
+    if url_match:
+        album = url_match.group(1)
+
+    album = album.split("?", 1)[0].strip("/")
+    if "/" in album:
+        album = album.rsplit("/", 1)[-1]
+
+    if not album:
+        raise ValueError("Spotify album id cannot be empty.")
+    if not re.fullmatch(r"[A-Za-z0-9]+", album):
+        raise ValueError(
+            "Spotify album id must be an alphanumeric album id, spotify:album URI, or open.spotify.com album URL."
+        )
     return album
 
 
