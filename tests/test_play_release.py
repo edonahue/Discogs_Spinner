@@ -170,3 +170,99 @@ def test_play_release_fails_when_no_devices(isolated_xdg, monkeypatch):
 
     with pytest.raises(play_release.NoPlayableDeviceError):
         play_release.run_play_release(discogs_release_id=444)
+
+
+def test_play_release_auto_matches_when_mapping_missing(isolated_xdg, monkeypatch):
+    _FakeSpotifyClient.playback_calls = []
+    _FakeSpotifyClient.devices = [
+        {
+            "id": "desk-1",
+            "name": "Desk",
+            "type": "Computer",
+            "is_active": True,
+            "is_restricted": False,
+            "volume_percent": 80,
+        }
+    ]
+
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(555)])
+    finally:
+        conn.close()
+
+    monkeypatch.setattr(play_release, "SpotifyClient", _FakeSpotifyClient)
+    monkeypatch.setattr(play_release, "get_spotify_access_token", lambda conn=None: "token")
+    monkeypatch.setattr(
+        play_release,
+        "run_match_release",
+        lambda release_id: {
+            "discogs_release_id": release_id,
+            "matched": True,
+            "spotify_album_id": "album-555",
+            "confidence": 0.93,
+            "source": "auto",
+        },
+    )
+
+    result = play_release.run_play_release(discogs_release_id=555, auto_match=True)
+
+    assert result["auto_match_attempted"] is True
+    assert result["auto_matched"] is True
+    assert result["playback_started"] is True
+    assert _FakeSpotifyClient.playback_calls == [("album-555", "desk-1")]
+
+
+def test_play_release_open_fallback_for_missing_mapping(isolated_xdg):
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(666)])
+    finally:
+        conn.close()
+
+    result = play_release.run_play_release(discogs_release_id=666, open_fallback=True)
+
+    assert result["playback_started"] is False
+    assert result["fallback_reason"] == "missing_mapping"
+    assert str(result["fallback_open_url"]).startswith("https://open.spotify.com/search/")
+
+
+def test_play_release_open_fallback_when_no_devices(isolated_xdg, monkeypatch):
+    _FakeSpotifyClient.playback_calls = []
+    _FakeSpotifyClient.devices = []
+
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(777)])
+        _seed_mapping(conn, 777, "spotify:album:777")
+    finally:
+        conn.close()
+
+    monkeypatch.setattr(play_release, "SpotifyClient", _FakeSpotifyClient)
+    monkeypatch.setattr(play_release, "get_spotify_access_token", lambda conn=None: "token")
+
+    result = play_release.run_play_release(discogs_release_id=777, open_fallback=True)
+
+    assert result["playback_started"] is False
+    assert result["fallback_reason"] == "no_device"
+    assert result["fallback_open_url"] == "https://open.spotify.com/album/777"
+
+
+def test_play_release_open_fallback_when_spotify_auth_missing(isolated_xdg, monkeypatch):
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(888)])
+        _seed_mapping(conn, 888, "spotify:album:888")
+    finally:
+        conn.close()
+
+    def _raise_auth_error(conn=None):
+        _ = conn
+        raise play_release.SpotifyAuthError("token missing")
+
+    monkeypatch.setattr(play_release, "get_spotify_access_token", _raise_auth_error)
+
+    result = play_release.run_play_release(discogs_release_id=888, open_fallback=True)
+    assert result["playback_started"] is False
+    assert result["fallback_reason"] == "auth_error"
+    assert result["fallback_open_url"] == "https://open.spotify.com/album/888"

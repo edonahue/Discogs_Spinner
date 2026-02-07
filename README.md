@@ -71,7 +71,13 @@ dplayer match 1393315 --json
 
 dplayer play <discogs_release_id>
 dplayer play --last-spin
+dplayer play --last-spin --auto-match
+dplayer play --last-spin --open
 dplayer play --last-spin --json
+
+dplayer config show
+dplayer config set spotify_client_id abc123
+dplayer config unset spotify_client_id
 ```
 
 Equivalent module invocation:
@@ -84,4 +90,5 @@ python -m discogs_player.main status --json
 
 - `sync` soft-deactivates releases missing from Discogs pull (safeguarded when an empty API result is returned unless `--full` is used).
 - `--no-images` is accepted for forward compatibility (image caching is not implemented yet).
+- `play --open` keeps SSH/headless flow safe by printing Spotify URLs instead of requiring GUI launch support.
 - Missing dependency errors are handled with actionable install commands instead of tracebacks.

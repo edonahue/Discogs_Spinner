@@ -18,6 +18,11 @@ from discogs_player.use_cases.device_management import (
     run_list_devices,
     run_set_default_device,
 )
+from discogs_player.use_cases.config_management import (
+    run_config_set,
+    run_config_show,
+    run_config_unset,
+)
 from discogs_player.use_cases.ensure_mapping import (
     run_match_override,
     run_match_release,
@@ -41,7 +46,9 @@ APT_INSTALL_CMD = (
 
 app = typer.Typer(help="Discogs Player CLI")
 device_app = typer.Typer(help="Manage the default Spotify playback device")
+config_app = typer.Typer(help="Manage local app settings")
 app.add_typer(device_app, name="device")
+app.add_typer(config_app, name="config")
 console = Console()
 
 
@@ -129,6 +136,17 @@ def _render_devices_table(devices: list[dict[str, object]]) -> None:
             "yes" if item.get("is_restricted") else "no",
             "yes" if item.get("is_default") else "no",
         )
+
+    console.print(table)
+
+
+def _render_settings_table(settings: dict[str, str]) -> None:
+    table = Table(title="app settings")
+    table.add_column("Key", style="cyan")
+    table.add_column("Value", style="white")
+
+    for key, value in settings.items():
+        table.add_row(key, value)
 
     console.print(table)
 
@@ -380,6 +398,56 @@ def device_auto() -> None:
     )
 
 
+@config_app.command("show")
+def config_show(json_output: bool = typer.Option(False, "--json", help="Output JSON")) -> None:
+    """Show persisted app settings."""
+    settings = run_config_show()
+    if json_output:
+        console.print(json.dumps(settings, indent=2, sort_keys=True))
+        return
+
+    if not settings:
+        console.print("No stored app settings.")
+        return
+
+    _render_settings_table(settings)
+
+
+@config_app.command("set")
+def config_set(key: str, value: str, json_output: bool = typer.Option(False, "--json", help="Output JSON")) -> None:
+    """Set an app setting key/value pair."""
+    try:
+        result = run_config_set(key, value)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        console.print(json.dumps(result, indent=2, sort_keys=True))
+        return
+
+    console.print(f"Set config: {result['key']}={result['value']}")
+
+
+@config_app.command("unset")
+def config_unset(key: str, json_output: bool = typer.Option(False, "--json", help="Output JSON")) -> None:
+    """Remove an app setting key."""
+    try:
+        result = run_config_unset(key)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        console.print(json.dumps(result, indent=2, sort_keys=True))
+        return
+
+    if result["removed"]:
+        console.print(f"Unset config key: {result['key']}")
+    else:
+        console.print(f"Config key was not set: {result['key']}")
+
+
 @app.command("play")
 def play(
     discogs_release_id: int | None = typer.Argument(
@@ -387,6 +455,16 @@ def play(
         help="Discogs release id to play (uses mapped Spotify album).",
     ),
     last_spin: bool = typer.Option(False, "--last-spin", help="Play the most recent spin result"),
+    auto_match: bool = typer.Option(
+        False,
+        "--auto-match",
+        help="Attempt automatic Discogs->Spotify mapping when missing.",
+    ),
+    open_fallback: bool = typer.Option(
+        False,
+        "--open",
+        help="Print a Spotify URL fallback instead of failing when playback cannot start.",
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output JSON"),
 ) -> None:
     """Start Spotify playback for a mapped Discogs release."""
@@ -394,6 +472,8 @@ def play(
         result = run_play_release(
             discogs_release_id=discogs_release_id,
             use_last_spin=last_spin,
+            auto_match=auto_match,
+            open_fallback=open_fallback,
         )
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
@@ -407,6 +487,13 @@ def play(
     except NoPlayableDeviceError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=5) from exc
+    except MatchingDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(
+            "Install missing dependency: [cyan]pip install rapidfuzz[/cyan] "
+            "or [cyan]pip install -r requirements.txt[/cyan]"
+        )
+        raise typer.Exit(code=1) from exc
     except SpotifyDependencyError as exc:
         console.print(f"[red]{exc}[/red]")
         console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
@@ -425,15 +512,26 @@ def play(
         console.print(json.dumps(result, indent=2, sort_keys=True))
         return
 
-    table = Table(title="Playback started")
-    table.add_column("Field", style="cyan")
-    table.add_column("Value", style="white")
-    table.add_row("discogs_release_id", str(result["discogs_release_id"]))
-    table.add_row("spotify_album_id", str(result["spotify_album_id"]))
-    table.add_row("device_id", str(result["device_id"]))
-    table.add_row("device_name", str(result["device_name"]))
-    table.add_row("used_last_spin", str(result["used_last_spin"]))
-    console.print(table)
+    if result.get("playback_started"):
+        table = Table(title="Playback started")
+        table.add_column("Field", style="cyan")
+        table.add_column("Value", style="white")
+        table.add_row("discogs_release_id", str(result["discogs_release_id"]))
+        table.add_row("spotify_album_id", str(result["spotify_album_id"]))
+        table.add_row("device_id", str(result["device_id"]))
+        table.add_row("device_name", str(result["device_name"]))
+        table.add_row("used_last_spin", str(result["used_last_spin"]))
+        table.add_row("auto_match_attempted", str(result["auto_match_attempted"]))
+        table.add_row("auto_matched", str(result["auto_matched"]))
+        table.add_row("spotify_open_url", str(result["spotify_open_url"]))
+        console.print(table)
+        return
+
+    console.print(
+        f"[yellow]Playback fallback:[/yellow] {result.get('message') or 'Playback was not started.'}"
+    )
+    if result.get("fallback_open_url"):
+        console.print(f"Spotify URL: [cyan]{result['fallback_open_url']}[/cyan]")
 
 
 @app.command("match")

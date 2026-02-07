@@ -64,6 +64,19 @@ def set_setting(key: str, value: Optional[str], conn=None) -> None:
             conn.close()
 
 
+def list_settings(conn=None) -> dict[str, str]:
+    owns_conn = conn is None
+    if owns_conn:
+        conn = get_connection()
+
+    try:
+        rows = conn.execute("SELECT key, value FROM app_settings ORDER BY key").fetchall()
+        return {str(row["key"]): str(row["value"]) for row in rows}
+    finally:
+        if owns_conn:
+            conn.close()
+
+
 def get_int_setting(key: str, default: int | None = None, conn=None) -> int | None:
     raw = get_setting(key, conn=conn)
     if raw is None:
