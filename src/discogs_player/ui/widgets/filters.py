@@ -23,6 +23,7 @@ class FilterBar(Gtk.Box):
         self.set_margin_start(8)
         self.set_margin_end(8)
         self._on_refresh = on_refresh
+        self._default_limit = max(1, int(default_limit))
 
         self._search_entry = Gtk.Entry()
         self._search_entry.set_hexpand(False)
@@ -54,7 +55,7 @@ class FilterBar(Gtk.Box):
         self._limit_spin.set_numeric(True)
         self._limit_spin.set_range(1, 500)
         self._limit_spin.set_increments(1, 25)
-        self._limit_spin.set_value(max(1, int(default_limit)))
+        self._limit_spin.set_value(self._default_limit)
         self._limit_spin.set_tooltip_text("Result limit")
         self.append(self._limit_spin)
 
@@ -94,6 +95,7 @@ class FilterBar(Gtk.Box):
         self._genre_entry.set_text("")
         self._style_entry.set_text("")
         self._unmatched_only.set_active(False)
+        self._limit_spin.set_value(self._default_limit)
         self._trigger_refresh()
 
     def search_text(self) -> str | None:

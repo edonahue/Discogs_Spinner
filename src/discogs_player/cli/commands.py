@@ -71,6 +71,11 @@ def _print_missing_dependency(module_name: str | None) -> None:
     print(message, file=sys.stderr)
 
 
+def _emit_json(payload: object) -> None:
+    sys.stdout.write(json.dumps(payload, indent=2, sort_keys=True))
+    sys.stdout.write("\n")
+
+
 def _render_status_table(report: dict[str, object]) -> None:
     table = Table(title="discogs_player status")
     table.add_column("Field", style="cyan")
@@ -191,7 +196,7 @@ def status(json_output: bool = typer.Option(False, "--json", help="Output JSON")
     """Show current local sync and mapping status."""
     report = get_status_report()
     if json_output:
-        console.print(json.dumps(report, indent=2, sort_keys=True))
+        _emit_json(report)
         return
     _render_status_table(report)
 
@@ -289,7 +294,7 @@ def list_releases(
         raise typer.Exit(code=2) from exc
 
     if json_output:
-        console.print(json.dumps(releases, indent=2, sort_keys=True))
+        _emit_json(releases)
         return
 
     _render_release_table(releases)
@@ -320,7 +325,7 @@ def spin(
         raise typer.Exit(code=2) from exc
 
     if json_output:
-        console.print(json.dumps(selected, indent=2, sort_keys=True))
+        _emit_json(selected)
         return
 
     console.print("[bold green]Spin result[/bold green]")
@@ -344,7 +349,7 @@ def devices(json_output: bool = typer.Option(False, "--json", help="Output JSON"
         raise typer.Exit(code=4) from exc
 
     if json_output:
-        console.print(json.dumps(items, indent=2, sort_keys=True))
+        _emit_json(items)
         return
 
     _render_devices_table(items)
@@ -403,7 +408,7 @@ def config_show(json_output: bool = typer.Option(False, "--json", help="Output J
     """Show persisted app settings."""
     settings = run_config_show()
     if json_output:
-        console.print(json.dumps(settings, indent=2, sort_keys=True))
+        _emit_json(settings)
         return
 
     if not settings:
@@ -423,7 +428,7 @@ def config_set(key: str, value: str, json_output: bool = typer.Option(False, "--
         raise typer.Exit(code=2) from exc
 
     if json_output:
-        console.print(json.dumps(result, indent=2, sort_keys=True))
+        _emit_json(result)
         return
 
     console.print(f"Set config: {result['key']}={result['value']}")
@@ -439,7 +444,7 @@ def config_unset(key: str, json_output: bool = typer.Option(False, "--json", hel
         raise typer.Exit(code=2) from exc
 
     if json_output:
-        console.print(json.dumps(result, indent=2, sort_keys=True))
+        _emit_json(result)
         return
 
     if result["removed"]:
@@ -509,7 +514,7 @@ def play(
         raise typer.Exit(code=4) from exc
 
     if json_output:
-        console.print(json.dumps(result, indent=2, sort_keys=True))
+        _emit_json(result)
         return
 
     if result.get("playback_started"):
@@ -571,7 +576,7 @@ def match(
             release_id = _parse_release_id(arg2)
             result = run_match_override(release_id, arg3)
             if json_output:
-                console.print(json.dumps(result, indent=2, sort_keys=True))
+                _emit_json(result)
                 return
 
             table = Table(title="Mapping override saved")
@@ -595,7 +600,7 @@ def match(
                 raise ValueError("Do not pass <release_id> when using --unmatched.")
             summary = run_match_unmatched(limit=limit, threshold=threshold)
             if json_output:
-                console.print(json.dumps(summary, indent=2, sort_keys=True))
+                _emit_json(summary)
                 return
 
             _render_match_results_table(summary["results"], title="match --unmatched results")
@@ -612,7 +617,7 @@ def match(
         release_id = _parse_release_id(arg1)
         result = run_match_release(release_id, threshold=threshold)
         if json_output:
-            console.print(json.dumps(result, indent=2, sort_keys=True))
+            _emit_json(result)
             return
 
         _render_match_results_table([result], title="match result")

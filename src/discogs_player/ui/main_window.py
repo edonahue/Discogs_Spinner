@@ -101,14 +101,28 @@ class MainWindow(Adw.ApplicationWindow):
 
     def refresh(self) -> dict[str, object]:
         filters = self._current_filters()
-        return self.load_releases_with_filters(
-            q=filters["q"],  # type: ignore[arg-type]
-            year=filters["year"],  # type: ignore[arg-type]
-            genres=filters["genres"],  # type: ignore[arg-type]
-            styles=filters["styles"],  # type: ignore[arg-type]
-            unmatched=bool(filters["unmatched"]),
-            limit=int(filters["limit"]),
-        )
+        try:
+            return self.load_releases_with_filters(
+                q=filters["q"],  # type: ignore[arg-type]
+                year=filters["year"],  # type: ignore[arg-type]
+                genres=filters["genres"],  # type: ignore[arg-type]
+                styles=filters["styles"],  # type: ignore[arg-type]
+                unmatched=bool(filters["unmatched"]),
+                limit=int(filters["limit"]),
+            )
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._set_status(message)
+            return {
+                "ok": False,
+                "error": message,
+                "query": filters.get("q"),
+                "year": filters.get("year"),
+                "genres": filters.get("genres"),
+                "styles": filters.get("styles"),
+                "unmatched": bool(filters.get("unmatched")),
+                "limit": int(filters.get("limit") or self._limit),
+            }
 
     def _current_filters(self) -> dict[str, object]:
         return self._filters.current_filters()
