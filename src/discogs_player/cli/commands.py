@@ -9,7 +9,21 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from discogs_player.services.spotify_client import SpotifyApiError, SpotifyPlaybackError
+from discogs_player.services.spotify_oauth import SpotifyAuthError, SpotifyDependencyError
+from discogs_player.use_cases.device_management import (
+    NoSpotifyDevicesError,
+    run_auto_set_default_device,
+    run_list_devices,
+    run_set_default_device,
+)
 from discogs_player.use_cases.list_releases import run_list_releases
+from discogs_player.use_cases.play_release import (
+    MissingLastSpinError,
+    MissingSpotifyMappingError,
+    NoPlayableDeviceError,
+    run_play_release,
+)
 from discogs_player.use_cases.spin_release import NoReleasesFoundError, run_spin_release
 from discogs_player.use_cases.status_report import get_status_report
 
@@ -20,6 +34,8 @@ APT_INSTALL_CMD = (
 )
 
 app = typer.Typer(help="Discogs Player CLI")
+device_app = typer.Typer(help="Manage the default Spotify playback device")
+app.add_typer(device_app, name="device")
 console = Console()
 
 
@@ -84,6 +100,28 @@ def _render_release_table(releases: list[dict[str, object]]) -> None:
             str(item.get("title") or ""),
             str(year) if year is not None else "",
             mapped,
+        )
+
+    console.print(table)
+
+
+def _render_devices_table(devices: list[dict[str, object]]) -> None:
+    table = Table(title="spotify devices")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="white")
+    table.add_column("Type", style="white")
+    table.add_column("Active", justify="center")
+    table.add_column("Restricted", justify="center")
+    table.add_column("Default", justify="center")
+
+    for item in devices:
+        table.add_row(
+            str(item.get("id") or ""),
+            str(item.get("name") or ""),
+            str(item.get("type") or ""),
+            "yes" if item.get("is_active") else "no",
+            "yes" if item.get("is_restricted") else "no",
+            "yes" if item.get("is_default") else "no",
         )
 
     console.print(table)
@@ -228,3 +266,130 @@ def spin(
 
     console.print("[bold green]Spin result[/bold green]")
     _render_release_table([selected])
+
+
+@app.command("devices")
+def devices(json_output: bool = typer.Option(False, "--json", help="Output JSON")) -> None:
+    """List Spotify playback devices."""
+    try:
+        items = run_list_devices()
+    except SpotifyDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
+    except SpotifyAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=3) from exc
+    except SpotifyApiError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=4) from exc
+
+    if json_output:
+        console.print(json.dumps(items, indent=2, sort_keys=True))
+        return
+
+    _render_devices_table(items)
+
+
+@device_app.command("set")
+def device_set(device_id: str) -> None:
+    """Persist the default Spotify playback device id."""
+    try:
+        selected = run_set_default_device(device_id)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+    except SpotifyDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
+    except SpotifyAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=3) from exc
+    except SpotifyApiError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=4) from exc
+
+    console.print(
+        f"Default Spotify device set: id={selected.get('id')} name={selected.get('name')}"
+    )
+
+
+@device_app.command("auto")
+def device_auto() -> None:
+    """Auto-select and persist a likely desktop Spotify device."""
+    try:
+        selected = run_auto_set_default_device()
+    except NoSpotifyDevicesError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=5) from exc
+    except SpotifyDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
+    except SpotifyAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=3) from exc
+    except SpotifyApiError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=4) from exc
+
+    console.print(
+        f"Auto-selected default device: id={selected.get('id')} name={selected.get('name')}"
+    )
+
+
+@app.command("play")
+def play(
+    discogs_release_id: int | None = typer.Argument(
+        None,
+        help="Discogs release id to play (uses mapped Spotify album).",
+    ),
+    last_spin: bool = typer.Option(False, "--last-spin", help="Play the most recent spin result"),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Start Spotify playback for a mapped Discogs release."""
+    try:
+        result = run_play_release(
+            discogs_release_id=discogs_release_id,
+            use_last_spin=last_spin,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+    except MissingLastSpinError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=5) from exc
+    except MissingSpotifyMappingError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=5) from exc
+    except NoPlayableDeviceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=5) from exc
+    except SpotifyDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
+    except SpotifyAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=3) from exc
+    except SpotifyPlaybackError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=5) from exc
+    except SpotifyApiError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=4) from exc
+
+    if json_output:
+        console.print(json.dumps(result, indent=2, sort_keys=True))
+        return
+
+    table = Table(title="Playback started")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("discogs_release_id", str(result["discogs_release_id"]))
+    table.add_row("spotify_album_id", str(result["spotify_album_id"]))
+    table.add_row("device_id", str(result["device_id"]))
+    table.add_row("device_name", str(result["device_name"]))
+    table.add_row("used_last_spin", str(result["used_last_spin"]))
+    console.print(table)
