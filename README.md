@@ -26,6 +26,18 @@ pip install -e .
 export DISCOGS_TOKEN="your_discogs_personal_token"
 ```
 
+Spotify playback supports either a direct access token or refresh credentials:
+
+```bash
+# Option 1: direct access token
+export SPOTIFY_ACCESS_TOKEN="..."
+
+# Option 2: auto-refresh
+export SPOTIFY_CLIENT_ID="..."
+export SPOTIFY_CLIENT_SECRET="..."
+export SPOTIFY_REFRESH_TOKEN="..."
+```
+
 You can also keep values in `.env` (see `.env.example`).
 
 ## Data locations (XDG)
@@ -43,8 +55,18 @@ dplayer sync
 dplayer sync --verbose
 dplayer list --limit 25
 dplayer list --year 1990:1999 --genre Rock --style Jazz --json
+
 dplayer spin --genre Rock --year 1990:1999
 dplayer spin --seed 42 --json
+
+dplayer devices
+dplayer devices --json
+dplayer device auto
+dplayer device set <device_id>
+
+dplayer play <discogs_release_id>
+dplayer play --last-spin
+dplayer play --last-spin --json
 ```
 
 Equivalent module invocation:
@@ -55,6 +77,6 @@ python -m discogs_player.main status --json
 
 ## Notes
 
-- `sync` currently soft-deactivates releases missing from the latest Discogs pull.
+- `sync` soft-deactivates releases missing from Discogs pull (safeguarded when an empty API result is returned unless `--full` is used).
 - `--no-images` is accepted for forward compatibility (image caching is not implemented yet).
 - Missing dependency errors are handled with actionable install commands instead of tracebacks.
