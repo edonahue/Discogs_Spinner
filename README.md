@@ -105,6 +105,15 @@ dplayer sync --no-images
 xvfb-run -a python -m discogs_player.ui_main --smoke-test --limit 12
 ```
 
+GUI match/play flow (new):
+
+```text
+1) Select a release card in the cover grid
+2) Click "Auto Match" to run Discogs->Spotify matching (candidate + confidence shown)
+3) Optional: paste a Spotify album id/URL and click "Save Override"
+4) Click "Play" to start playback (uses fallback URL messaging in headless-safe scenarios)
+```
+
 ## Notes
 
 - `sync` soft-deactivates releases missing from Discogs pull (safeguarded when an empty API result is returned unless `--full` is used).

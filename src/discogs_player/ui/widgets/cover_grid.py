@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -9,13 +11,19 @@ from gi.repository import Gtk, Pango
 
 
 class CoverGrid(Gtk.ScrolledWindow):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        on_selection_changed: Callable[[dict[str, object] | None], None] | None = None,
+    ) -> None:
         super().__init__()
         self.set_vexpand(True)
         self.set_hexpand(True)
+        self._on_selection_changed = on_selection_changed
+        self._children_to_items: dict[int, dict[str, object]] = {}
 
         self._flow = Gtk.FlowBox()
-        self._flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        self._flow.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self._flow.set_max_children_per_line(6)
         self._flow.set_min_children_per_line(2)
         self._flow.set_row_spacing(10)
@@ -24,6 +32,7 @@ class CoverGrid(Gtk.ScrolledWindow):
         self._flow.set_margin_bottom(8)
         self._flow.set_margin_start(8)
         self._flow.set_margin_end(8)
+        self._flow.connect("selected-children-changed", self._handle_selection_changed)
         self.set_child(self._flow)
 
     def _clear(self) -> None:
@@ -32,6 +41,7 @@ class CoverGrid(Gtk.ScrolledWindow):
             next_child = child.get_next_sibling()
             self._flow.remove(child)
             child = next_child
+        self._children_to_items.clear()
 
     def _build_card(self, item: dict[str, object]) -> Gtk.Widget:
         frame = Gtk.Frame()
@@ -79,4 +89,26 @@ class CoverGrid(Gtk.ScrolledWindow):
         self._clear()
         for item in items:
             card = self._build_card(item)
-            self._flow.insert(card, -1)
+            child = Gtk.FlowBoxChild()
+            child.set_child(card)
+            self._children_to_items[id(child)] = dict(item)
+            self._flow.insert(child, -1)
+
+        if items:
+            first = self._flow.get_child_at_index(0)
+            if first is not None:
+                self._flow.select_child(first)
+        elif self._on_selection_changed is not None:
+            self._on_selection_changed(None)
+
+    def _handle_selection_changed(self, flow: Gtk.FlowBox) -> None:
+        if self._on_selection_changed is None:
+            return
+
+        selected = flow.get_selected_children()
+        if not selected:
+            self._on_selection_changed(None)
+            return
+
+        item = self._children_to_items.get(id(selected[0]))
+        self._on_selection_changed(dict(item) if isinstance(item, dict) else None)

@@ -11,7 +11,15 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
+from discogs_player.services.matching import MatchingDependencyError
+from discogs_player.services.spotify_client import SpotifyApiError, SpotifyPlaybackError
+from discogs_player.services.spotify_oauth import SpotifyAuthError, SpotifyDependencyError
 from discogs_player.use_cases.browse_release_grid import run_browse_release_grid
+from discogs_player.use_cases.match_play_flow import (
+    run_match_action,
+    run_override_action,
+    run_play_action,
+)
 from discogs_player.ui.widgets.album_detail import AlbumDetail
 from discogs_player.ui.widgets.cover_grid import CoverGrid
 from discogs_player.ui.widgets.device_picker import DevicePicker
@@ -32,6 +40,8 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._limit = max(1, int(limit))
         self._preload_covers = bool(preload_covers)
+        self._selected_release_id: int | None = None
+        self._selected_release: dict[str, object] | None = None
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.set_content(root)
@@ -45,7 +55,7 @@ class MainWindow(Adw.ApplicationWindow):
         content.set_resize_end_child(True)
         root.append(content)
 
-        self._cover_grid = CoverGrid()
+        self._cover_grid = CoverGrid(on_selection_changed=self._handle_release_selected)
         content.set_start_child(self._cover_grid)
 
         sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -55,7 +65,12 @@ class MainWindow(Adw.ApplicationWindow):
         sidebar.set_margin_end(8)
         content.set_end_child(sidebar)
 
-        sidebar.append(AlbumDetail())
+        self._album_detail = AlbumDetail(
+            on_auto_match=self._handle_auto_match_clicked,
+            on_override=self._handle_override_clicked,
+            on_play=self._handle_play_clicked,
+        )
+        sidebar.append(self._album_detail)
         sidebar.append(SpinWheel())
         sidebar.append(DevicePicker())
 
@@ -71,6 +86,86 @@ class MainWindow(Adw.ApplicationWindow):
         query = self._filters.search_text()
         return self.load_releases(q=query)
 
+    def _set_status(self, message: str) -> None:
+        self._status.set_text(message)
+
+    def _selected_release_id_or_raise(self) -> int:
+        if self._selected_release_id is None:
+            raise ValueError("Select a release first.")
+        return self._selected_release_id
+
+    def _friendly_error_message(self, exc: Exception) -> str:
+        if isinstance(
+            exc,
+            (
+                SpotifyDependencyError,
+                SpotifyAuthError,
+                SpotifyApiError,
+                SpotifyPlaybackError,
+                MatchingDependencyError,
+                ValueError,
+            ),
+        ):
+            return str(exc)
+        return f"{type(exc).__name__}: {exc}"
+
+    def _handle_release_selected(self, item: dict[str, object] | None) -> None:
+        self._selected_release = dict(item) if isinstance(item, dict) else None
+
+        if isinstance(item, dict) and isinstance(item.get("discogs_release_id"), int):
+            self._selected_release_id = int(item["discogs_release_id"])
+            self._album_detail.set_release(item)
+            artist = str(item.get("artist") or "Unknown Artist")
+            title = str(item.get("title") or "Unknown Title")
+            self._set_status(f"Selected release {self._selected_release_id}: {artist} - {title}")
+            return
+
+        self._selected_release_id = None
+        self._album_detail.set_release(None)
+        self._set_status("No release selected.")
+
+    def _handle_auto_match_clicked(self) -> None:
+        try:
+            release_id = self._selected_release_id_or_raise()
+            payload = run_match_action(release_id)
+            self._album_detail.set_match_result(payload)
+            self._set_status(str(payload.get("status_message") or "Auto-match completed."))
+            if self._selected_release is not None:
+                self._selected_release["spotify_album_id"] = payload.get("spotify_album_id")
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._album_detail.set_error(message)
+            self._set_status(message)
+
+    def _handle_override_clicked(self) -> None:
+        try:
+            release_id = self._selected_release_id_or_raise()
+            spotify_album_id = self._album_detail.get_override_album_id()
+            payload = run_override_action(release_id, spotify_album_id)
+            self._album_detail.set_override_result(payload)
+            self._set_status(str(payload.get("status_message") or "Override saved."))
+            if self._selected_release is not None:
+                self._selected_release["spotify_album_id"] = payload.get("spotify_album_id")
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._album_detail.set_error(message)
+            self._set_status(message)
+
+    def _handle_play_clicked(self) -> None:
+        try:
+            release_id = self._selected_release_id_or_raise()
+            payload = run_play_action(release_id)
+            self._album_detail.set_play_result(payload)
+            self._set_status(str(payload.get("status_message") or "Play action completed."))
+            if self._selected_release is not None:
+                album_id = payload.get("spotify_album_id")
+                if album_id:
+                    self._selected_release["spotify_album_id"] = album_id
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._album_detail.set_error(message)
+            self._set_status(message)
+
     def load_releases(self, *, q: str | None = None) -> dict[str, object]:
         self._status.set_text("Loading releases...")
         items = run_browse_release_grid(
@@ -81,7 +176,13 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._cover_grid.set_items(items)
         cover_count = sum(1 for item in items if item.get("cover_path"))
-        self._status.set_text(f"Loaded {len(items)} releases ({cover_count} covers cached)")
+        if not items:
+            self._album_detail.set_release(None)
+            self._set_status("Loaded 0 releases.")
+        else:
+            self._set_status(
+                f"Loaded {len(items)} releases ({cover_count} covers cached). Select a release."
+            )
         return {
             "ok": True,
             "item_count": len(items),
@@ -120,4 +221,3 @@ class DiscogsPlayerApp(Adw.Application):
         if self._smoke_test:
             print(json.dumps(report, sort_keys=True))
             self.quit()
-
