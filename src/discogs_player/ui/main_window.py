@@ -15,6 +15,12 @@ from discogs_player.services.matching import MatchingDependencyError
 from discogs_player.services.spotify_client import SpotifyApiError, SpotifyPlaybackError
 from discogs_player.services.spotify_oauth import SpotifyAuthError, SpotifyDependencyError
 from discogs_player.use_cases.browse_release_grid import run_browse_release_grid
+from discogs_player.use_cases.device_management import NoSpotifyDevicesError
+from discogs_player.use_cases.device_picker_flow import (
+    run_auto_set_default_device_action,
+    run_refresh_devices_action,
+    run_set_default_device_action,
+)
 from discogs_player.use_cases.match_play_flow import (
     run_match_action,
     run_override_action,
@@ -72,7 +78,12 @@ class MainWindow(Adw.ApplicationWindow):
         )
         sidebar.append(self._album_detail)
         sidebar.append(SpinWheel())
-        sidebar.append(DevicePicker())
+        self._device_picker = DevicePicker(
+            on_refresh=self._handle_devices_refresh_clicked,
+            on_set_default=self._handle_set_default_device_clicked,
+            on_auto_select=self._handle_auto_select_device_clicked,
+        )
+        sidebar.append(self._device_picker)
 
         self._status = Gtk.Label(label="Ready")
         self._status.set_xalign(0.0)
@@ -110,6 +121,7 @@ class MainWindow(Adw.ApplicationWindow):
                 SpotifyApiError,
                 SpotifyPlaybackError,
                 MatchingDependencyError,
+                NoSpotifyDevicesError,
                 ValueError,
             ),
         ):
@@ -171,6 +183,49 @@ class MainWindow(Adw.ApplicationWindow):
         except Exception as exc:
             message = self._friendly_error_message(exc)
             self._album_detail.set_error(message)
+            self._set_status(message)
+
+    def _handle_devices_refresh_clicked(self) -> None:
+        try:
+            payload = run_refresh_devices_action()
+            self._device_picker.set_devices(payload["devices"])  # type: ignore[arg-type]
+            self._device_picker.set_default_device(payload.get("default_device"))  # type: ignore[arg-type]
+            message = str(payload.get("status_message") or "Device list refreshed.")
+            self._device_picker.set_result(message)
+            self._set_status(message)
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._device_picker.set_error(message)
+            self._set_status(message)
+
+    def _handle_set_default_device_clicked(self) -> None:
+        try:
+            selected_device_id = self._device_picker.selected_device_id()
+            if not selected_device_id:
+                raise ValueError("Select a device first.")
+
+            payload = run_set_default_device_action(selected_device_id)
+            self._device_picker.set_devices(payload["devices"])  # type: ignore[arg-type]
+            self._device_picker.set_default_device(payload.get("default_device"))  # type: ignore[arg-type]
+            message = str(payload.get("status_message") or "Default device updated.")
+            self._device_picker.set_result(message)
+            self._set_status(message)
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._device_picker.set_error(message)
+            self._set_status(message)
+
+    def _handle_auto_select_device_clicked(self) -> None:
+        try:
+            payload = run_auto_set_default_device_action()
+            self._device_picker.set_devices(payload["devices"])  # type: ignore[arg-type]
+            self._device_picker.set_default_device(payload.get("default_device"))  # type: ignore[arg-type]
+            message = str(payload.get("status_message") or "Auto-selected default device.")
+            self._device_picker.set_result(message)
+            self._set_status(message)
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._device_picker.set_error(message)
             self._set_status(message)
 
     def load_releases(self, *, q: str | None = None) -> dict[str, object]:

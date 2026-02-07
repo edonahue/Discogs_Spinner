@@ -112,7 +112,8 @@ GUI match/play flow (new):
 2) Select a release card in the cover grid
 3) Click "Auto Match" to run Discogs->Spotify matching (candidate + confidence shown)
 4) Optional: paste a Spotify album id/URL and click "Save Override"
-5) Click "Play" to start playback (uses fallback URL messaging in headless-safe scenarios)
+5) In "Spotify Device", click "Refresh Devices", then "Set Default" or "Auto Select"
+6) Click "Play" to start playback (uses fallback URL messaging in headless-safe scenarios)
 ```
 
 ## Notes
