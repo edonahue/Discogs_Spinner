@@ -46,7 +46,7 @@ class MainWindow(Adw.ApplicationWindow):
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.set_content(root)
 
-        self._filters = FilterBar(on_refresh=self.refresh)
+        self._filters = FilterBar(default_limit=self._limit, on_refresh=self.refresh)
         root.append(self._filters)
 
         content = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
@@ -83,8 +83,15 @@ class MainWindow(Adw.ApplicationWindow):
         root.append(self._status)
 
     def refresh(self) -> dict[str, object]:
-        query = self._filters.search_text()
-        return self.load_releases(q=query)
+        filters = self._filters.current_filters()
+        return self.load_releases_with_filters(
+            q=filters["q"],  # type: ignore[arg-type]
+            year=filters["year"],  # type: ignore[arg-type]
+            genres=filters["genres"],  # type: ignore[arg-type]
+            styles=filters["styles"],  # type: ignore[arg-type]
+            unmatched=bool(filters["unmatched"]),
+            limit=int(filters["limit"]),
+        )
 
     def _set_status(self, message: str) -> None:
         self._status.set_text(message)
@@ -167,10 +174,27 @@ class MainWindow(Adw.ApplicationWindow):
             self._set_status(message)
 
     def load_releases(self, *, q: str | None = None) -> dict[str, object]:
+        return self.load_releases_with_filters(q=q)
+
+    def load_releases_with_filters(
+        self,
+        *,
+        q: str | None = None,
+        year: str | None = None,
+        genres: list[str] | None = None,
+        styles: list[str] | None = None,
+        unmatched: bool = False,
+        limit: int | None = None,
+    ) -> dict[str, object]:
         self._status.set_text("Loading releases...")
+        effective_limit = max(1, int(limit if limit is not None else self._limit))
         items = run_browse_release_grid(
-            limit=self._limit,
+            limit=effective_limit,
             q=q,
+            year=year,
+            genres=genres or [],
+            styles=styles or [],
+            unmatched=unmatched,
             preload_covers=self._preload_covers,
         )
 
@@ -188,6 +212,11 @@ class MainWindow(Adw.ApplicationWindow):
             "item_count": len(items),
             "cover_cached_count": cover_count,
             "query": q,
+            "year": year,
+            "genres": genres or [],
+            "styles": styles or [],
+            "unmatched": unmatched,
+            "limit": effective_limit,
         }
 
 
