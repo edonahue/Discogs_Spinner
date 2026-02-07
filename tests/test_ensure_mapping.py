@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import get_spotify_mapping, upsert_releases
 from discogs_player.services.matching import MatchingResult
@@ -127,3 +129,28 @@ def test_run_match_override_and_preserve_override(isolated_xdg, monkeypatch):
     assert result["source"] == "override"
     assert result["spotify_album_id"] == "boy123"
     assert result["matched"] is True
+
+
+def test_run_match_override_accepts_open_spotify_album_url(isolated_xdg):
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(4, artist="Blur", title="Parklife", year=1994)])
+    finally:
+        conn.close()
+
+    result = ensure_mapping.run_match_override(
+        4,
+        "https://open.spotify.com/album/4Z8W4fKeB5YxbusRsdQVPb?si=abc123",
+    )
+    assert result["spotify_album_id"] == "4Z8W4fKeB5YxbusRsdQVPb"
+
+
+def test_run_match_override_rejects_invalid_album_id(isolated_xdg):
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(5, artist="The Cure", title="Disintegration", year=1989)])
+    finally:
+        conn.close()
+
+    with pytest.raises(ValueError):
+        ensure_mapping.run_match_override(5, "spotify:album:bad-id!")
