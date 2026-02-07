@@ -11,6 +11,15 @@ sudo apt install -y \
   libsecret-1-0 build-essential python3-dev
 ```
 
+GUI/headless smoke-test packages:
+
+```bash
+sudo apt update
+sudo apt install -y \
+  python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 \
+  libadwaita-1-0 gir1.2-gdkpixbuf-2.0 xvfb
+```
+
 ## Setup
 
 ```bash
@@ -86,9 +95,20 @@ Equivalent module invocation:
 python -m discogs_player.main status --json
 ```
 
+GUI smoke test (headless with Xvfb):
+
+```bash
+# Ensure releases exist first:
+dplayer sync --no-images
+
+# Run GUI load/render smoke test and exit:
+xvfb-run -a python -m discogs_player.ui_main --smoke-test --limit 12
+```
+
 ## Notes
 
 - `sync` soft-deactivates releases missing from Discogs pull (safeguarded when an empty API result is returned unless `--full` is used).
 - `--no-images` is accepted for forward compatibility (image caching is not implemented yet).
+- GUI scaffold now includes release-grid rendering + cover prefetch/cache for headless smoke testing.
 - `play --open` keeps SSH/headless flow safe by printing Spotify URLs instead of requiring GUI launch support.
 - Missing dependency errors are handled with actionable install commands instead of tracebacks.

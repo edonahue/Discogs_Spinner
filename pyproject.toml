@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 dplayer = "discogs_player.main:main"
+dplayer-gui = "discogs_player.ui_main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
