@@ -64,6 +64,11 @@ dplayer devices --json
 dplayer device auto
 dplayer device set <device_id>
 
+dplayer match 1393315
+dplayer match --unmatched --limit 20
+dplayer match override 1393315 spotify:album:abc123
+dplayer match 1393315 --json
+
 dplayer play <discogs_release_id>
 dplayer play --last-spin
 dplayer play --last-spin --json
