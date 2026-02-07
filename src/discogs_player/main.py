@@ -33,7 +33,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     app_args = argv if argv is not None else sys.argv[1:]
     try:
-        app(args=app_args, prog_name="dplayer", standalone_mode=False)
+        app(args=app_args, prog_name="dplayer")
     except SystemExit as exc:
         code = exc.code
         return int(code) if isinstance(code, int) else 1
