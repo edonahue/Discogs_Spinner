@@ -10,12 +10,18 @@ from rich.console import Console
 from rich.table import Table
 
 from discogs_player.services.spotify_client import SpotifyApiError, SpotifyPlaybackError
+from discogs_player.services.matching import MatchingDependencyError
 from discogs_player.services.spotify_oauth import SpotifyAuthError, SpotifyDependencyError
 from discogs_player.use_cases.device_management import (
     NoSpotifyDevicesError,
     run_auto_set_default_device,
     run_list_devices,
     run_set_default_device,
+)
+from discogs_player.use_cases.ensure_mapping import (
+    run_match_override,
+    run_match_release,
+    run_match_unmatched,
 )
 from discogs_player.use_cases.list_releases import run_list_releases
 from discogs_player.use_cases.play_release import (
@@ -122,6 +128,32 @@ def _render_devices_table(devices: list[dict[str, object]]) -> None:
             "yes" if item.get("is_active") else "no",
             "yes" if item.get("is_restricted") else "no",
             "yes" if item.get("is_default") else "no",
+        )
+
+    console.print(table)
+
+
+def _render_match_results_table(items: list[dict[str, object]], *, title: str) -> None:
+    table = Table(title=title)
+    table.add_column("Discogs ID", style="cyan", justify="right")
+    table.add_column("Artist", style="white")
+    table.add_column("Title", style="white")
+    table.add_column("Matched", justify="center")
+    table.add_column("Spotify Album", style="green")
+    table.add_column("Confidence", justify="right")
+    table.add_column("Source", style="magenta")
+
+    for item in items:
+        confidence = item.get("confidence")
+        confidence_str = f"{float(confidence):.3f}" if isinstance(confidence, (int, float)) else ""
+        table.add_row(
+            str(item.get("discogs_release_id") or ""),
+            str(item.get("artist") or ""),
+            str(item.get("title") or ""),
+            "yes" if item.get("matched") else "no",
+            str(item.get("spotify_album_id") or ""),
+            confidence_str,
+            str(item.get("source") or ""),
         )
 
     console.print(table)
@@ -393,3 +425,107 @@ def play(
     table.add_row("device_name", str(result["device_name"]))
     table.add_row("used_last_spin", str(result["used_last_spin"]))
     console.print(table)
+
+
+@app.command("match")
+def match(
+    arg1: str | None = typer.Argument(
+        None,
+        help="Either <discogs_release_id> or the literal `override`.",
+    ),
+    arg2: str | None = typer.Argument(
+        None,
+        help="When using override: <discogs_release_id>.",
+    ),
+    arg3: str | None = typer.Argument(
+        None,
+        help="When using override: <spotify_album_id>.",
+    ),
+    unmatched: bool = typer.Option(False, "--unmatched", help="Match a batch of unmatched releases"),
+    limit: int = typer.Option(25, "--limit", min=1, help="Batch size for --unmatched"),
+    threshold: float = typer.Option(0.72, "--threshold", help="Match threshold (0.0 to 1.0)"),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """
+    Match Discogs releases to Spotify albums.
+
+    Supported forms:
+    - `dplayer match <release_id>`
+    - `dplayer match --unmatched --limit N`
+    - `dplayer match override <release_id> <spotify_album_id>`
+    """
+    try:
+        if arg1 == "override":
+            if arg2 is None or arg3 is None:
+                raise ValueError("Usage: dplayer match override <release_id> <spotify_album_id>")
+            if unmatched:
+                raise ValueError("Do not use --unmatched with `match override`.")
+
+            release_id = int(arg2)
+            result = run_match_override(release_id, arg3)
+            if json_output:
+                console.print(json.dumps(result, indent=2, sort_keys=True))
+                return
+
+            table = Table(title="Mapping override saved")
+            table.add_column("Field", style="cyan")
+            table.add_column("Value", style="white")
+            table.add_row("discogs_release_id", str(result["discogs_release_id"]))
+            table.add_row("spotify_album_id", str(result["spotify_album_id"]))
+            table.add_row("confidence", str(result["confidence"]))
+            table.add_row("is_override", str(result["is_override"]))
+            console.print(table)
+            return
+
+        if arg2 is not None or arg3 is not None:
+            raise ValueError(
+                "Unexpected extra arguments. Use `dplayer match <release_id>` or "
+                "`dplayer match override <release_id> <spotify_album_id>`."
+            )
+
+        if unmatched:
+            if arg1 is not None:
+                raise ValueError("Do not pass <release_id> when using --unmatched.")
+            summary = run_match_unmatched(limit=limit, threshold=threshold)
+            if json_output:
+                console.print(json.dumps(summary, indent=2, sort_keys=True))
+                return
+
+            _render_match_results_table(summary["results"], title="match --unmatched results")
+            console.print(
+                f"processed_count={summary['processed_count']} matched_count={summary['matched_count']}"
+            )
+            return
+
+        if arg1 is None:
+            raise ValueError(
+                "Usage: dplayer match <release_id> or dplayer match --unmatched --limit N"
+            )
+
+        release_id = int(arg1)
+        result = run_match_release(release_id, threshold=threshold)
+        if json_output:
+            console.print(json.dumps(result, indent=2, sort_keys=True))
+            return
+
+        _render_match_results_table([result], title="match result")
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+    except MatchingDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(
+            "Install missing dependency: [cyan]pip install rapidfuzz[/cyan] "
+            "or [cyan]pip install -r requirements.txt[/cyan]"
+        )
+        raise typer.Exit(code=1) from exc
+    except SpotifyDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
+    except SpotifyAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=3) from exc
+    except SpotifyApiError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=4) from exc
