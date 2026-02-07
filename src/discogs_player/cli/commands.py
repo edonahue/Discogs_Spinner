@@ -11,7 +11,11 @@ from rich.table import Table
 
 from discogs_player.services.spotify_client import SpotifyApiError, SpotifyPlaybackError
 from discogs_player.services.matching import MatchingDependencyError
-from discogs_player.services.spotify_oauth import SpotifyAuthError, SpotifyDependencyError
+from discogs_player.services.spotify_oauth import (
+    SpotifyAuthError,
+    SpotifyDependencyError,
+    run_spotify_oauth_login,
+)
 from discogs_player.use_cases.device_management import (
     NoSpotifyDevicesError,
     run_auto_set_default_device,
@@ -47,8 +51,10 @@ APT_INSTALL_CMD = (
 app = typer.Typer(help="Discogs Player CLI")
 device_app = typer.Typer(help="Manage the default Spotify playback device")
 config_app = typer.Typer(help="Manage local app settings")
+auth_app = typer.Typer(help="Authenticate with external services")
 app.add_typer(device_app, name="device")
 app.add_typer(config_app, name="config")
+app.add_typer(auth_app, name="auth")
 console = Console()
 
 
@@ -451,6 +457,73 @@ def config_unset(key: str, json_output: bool = typer.Option(False, "--json", hel
         console.print(f"Unset config key: {result['key']}")
     else:
         console.print(f"Config key was not set: {result['key']}")
+
+
+@auth_app.command("spotify")
+def auth_spotify(
+    listen_host: str = typer.Option("127.0.0.1", "--listen-host", help="OAuth callback host"),
+    listen_port: int = typer.Option(
+        8765,
+        "--listen-port",
+        min=1,
+        max=65535,
+        help="OAuth callback port",
+    ),
+    timeout_seconds: int = typer.Option(
+        180,
+        "--timeout-seconds",
+        min=10,
+        max=3600,
+        help="Max seconds to wait for browser callback",
+    ),
+    open_browser: bool = typer.Option(
+        False,
+        "--open-browser",
+        help="Attempt to open browser automatically with Spotify authorization URL.",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Run Spotify OAuth login via local callback server."""
+
+    def _on_authorization_url(url: str) -> None:
+        if json_output:
+            return
+        console.print("Open this Spotify authorization URL in a browser:")
+        console.print(f"[cyan]{url}[/cyan]")
+        console.print("Waiting for Spotify callback...")
+
+    try:
+        result = run_spotify_oauth_login(
+            listen_host=listen_host,
+            listen_port=listen_port,
+            timeout_seconds=timeout_seconds,
+            open_browser=open_browser,
+            on_authorization_url=_on_authorization_url,
+        )
+    except SpotifyDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
+    except SpotifyAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=3) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    table = Table(title="Spotify OAuth complete")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("listen_host", str(result.get("listen_host")))
+    table.add_row("listen_port", str(result.get("listen_port")))
+    table.add_row("redirect_uri", str(result.get("redirect_uri")))
+    table.add_row("access_token_expires_in", str(result.get("access_token_expires_in")))
+    table.add_row("received_refresh_token", str(result.get("received_refresh_token")))
+    table.add_row("stored_refresh_token", str(result.get("stored_refresh_token")))
+    table.add_row("open_browser_requested", str(result.get("open_browser_requested")))
+    table.add_row("open_browser_succeeded", str(result.get("open_browser_succeeded")))
+    console.print(table)
 
 
 @app.command("play")

@@ -72,6 +72,8 @@ dplayer devices
 dplayer devices --json
 dplayer device auto
 dplayer device set <device_id>
+dplayer auth spotify --open-browser
+dplayer auth spotify --listen-port 8765
 
 dplayer match 1393315
 dplayer match --unmatched --limit 20
@@ -121,7 +123,8 @@ GUI match/play flow (new):
 ## Notes
 
 - `sync` soft-deactivates releases missing from Discogs pull (safeguarded when an empty API result is returned unless `--full` is used).
-- `--no-images` is accepted for forward compatibility (image caching is not implemented yet).
+- `--no-images` is accepted for forward compatibility (sync does not currently prefetch image binaries).
 - GUI scaffold now includes release-grid rendering + cover prefetch/cache for headless smoke testing.
 - `play --open` keeps SSH/headless flow safe by printing Spotify URLs instead of requiring GUI launch support.
+- `auth spotify` runs a local callback OAuth flow and stores secrets in keyring when available (falls back to app settings).
 - Missing dependency errors are handled with actionable install commands instead of tracebacks.
