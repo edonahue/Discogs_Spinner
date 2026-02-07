@@ -9,6 +9,15 @@ fi
 
 LIMIT="${1:-12}"
 
+# Improve stability in headless CI/SSH sessions.
+export GSK_RENDERER="${GSK_RENDERER:-cairo}"
+export LIBGL_ALWAYS_SOFTWARE="${LIBGL_ALWAYS_SOFTWARE:-1}"
+if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+  export XDG_RUNTIME_DIR="/tmp/dplayer-runtime-$UID"
+  mkdir -p "${XDG_RUNTIME_DIR}"
+  chmod 700 "${XDG_RUNTIME_DIR}"
+fi
+
 if [ -f ".venv/bin/python" ]; then
   # Prefer venv Python when it can import gi, otherwise fall back to system Python.
   if .venv/bin/python - <<'PY' >/dev/null 2>&1
