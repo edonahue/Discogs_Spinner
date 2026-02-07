@@ -13,7 +13,7 @@ from rich.table import Table
 from discogs_player.use_cases.list_releases import run_list_releases
 from discogs_player.use_cases.status_report import get_status_report
 
-APPT_INSTALL_CMD = "sudo apt update && sudo apt install -y python3 python3-venv python3-pip libsecret-1-0"
+APT_INSTALL_CMD = "sudo apt update && sudo apt install -y python3 python3-venv python3-pip libsecret-1-0"
 
 app = typer.Typer(help="Discogs Player CLI")
 console = Console()
@@ -26,7 +26,7 @@ def _print_missing_dependency(module_name: str | None) -> None:
             f"Missing Python dependency: {missing}",
             "",
             "Install required system packages on Pop!_OS:",
-            f"  {APPT_INSTALL_CMD}",
+            f"  {APT_INSTALL_CMD}",
             "",
             "Then install project dependencies:",
             "  python3 -m venv .venv",
