@@ -21,6 +21,7 @@ class CoverGrid(Gtk.ScrolledWindow):
         self.set_hexpand(True)
         self._on_selection_changed = on_selection_changed
         self._children_to_items: dict[int, dict[str, object]] = {}
+        self._release_ids_to_children: dict[int, Gtk.FlowBoxChild] = {}
 
         self._flow = Gtk.FlowBox()
         self._flow.set_selection_mode(Gtk.SelectionMode.SINGLE)
@@ -42,6 +43,7 @@ class CoverGrid(Gtk.ScrolledWindow):
             self._flow.remove(child)
             child = next_child
         self._children_to_items.clear()
+        self._release_ids_to_children.clear()
 
     def _build_card(self, item: dict[str, object]) -> Gtk.Widget:
         frame = Gtk.Frame()
@@ -91,7 +93,11 @@ class CoverGrid(Gtk.ScrolledWindow):
             card = self._build_card(item)
             child = Gtk.FlowBoxChild()
             child.set_child(card)
-            self._children_to_items[id(child)] = dict(item)
+            item_dict = dict(item)
+            self._children_to_items[id(child)] = item_dict
+            release_id = item_dict.get("discogs_release_id")
+            if isinstance(release_id, int):
+                self._release_ids_to_children[release_id] = child
             self._flow.insert(child, -1)
 
         if items:
@@ -112,3 +118,10 @@ class CoverGrid(Gtk.ScrolledWindow):
 
         item = self._children_to_items.get(id(selected[0]))
         self._on_selection_changed(dict(item) if isinstance(item, dict) else None)
+
+    def select_release(self, discogs_release_id: int) -> bool:
+        child = self._release_ids_to_children.get(int(discogs_release_id))
+        if child is None:
+            return False
+        self._flow.select_child(child)
+        return True

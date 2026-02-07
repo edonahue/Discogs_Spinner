@@ -109,11 +109,13 @@ GUI match/play flow (new):
 
 ```text
 1) Use GUI filters (q, year range, genres/styles, unmatched, limit) then Refresh
-2) Select a release card in the cover grid
-3) Click "Auto Match" to run Discogs->Spotify matching (candidate + confidence shown)
-4) Optional: paste a Spotify album id/URL and click "Save Override"
-5) In "Spotify Device", click "Refresh Devices", then "Set Default" or "Auto Select"
-6) Click "Play" to start playback (uses fallback URL messaging in headless-safe scenarios)
+2) Optional: use Spin section (set seed if desired) and click "Spin"
+3) Optional: click "Play Last Spin" to replay most recent spin result
+4) Select a release card in the cover grid
+5) Click "Auto Match" to run Discogs->Spotify matching (candidate + confidence shown)
+6) Optional: paste a Spotify album id/URL and click "Save Override"
+7) In "Spotify Device", click "Refresh Devices", then "Set Default" or "Auto Select"
+8) Click "Play" to start playback (uses fallback URL messaging in headless-safe scenarios)
 ```
 
 ## Notes

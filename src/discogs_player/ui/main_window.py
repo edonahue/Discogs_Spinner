@@ -26,6 +26,8 @@ from discogs_player.use_cases.match_play_flow import (
     run_override_action,
     run_play_action,
 )
+from discogs_player.use_cases.play_release import MissingLastSpinError
+from discogs_player.use_cases.spin_flow import run_play_last_spin_action, run_spin_action
 from discogs_player.ui.widgets.album_detail import AlbumDetail
 from discogs_player.ui.widgets.cover_grid import CoverGrid
 from discogs_player.ui.widgets.device_picker import DevicePicker
@@ -77,7 +79,11 @@ class MainWindow(Adw.ApplicationWindow):
             on_play=self._handle_play_clicked,
         )
         sidebar.append(self._album_detail)
-        sidebar.append(SpinWheel())
+        self._spin_wheel = SpinWheel(
+            on_spin=self._handle_spin_clicked,
+            on_play_last_spin=self._handle_play_last_spin_clicked,
+        )
+        sidebar.append(self._spin_wheel)
         self._device_picker = DevicePicker(
             on_refresh=self._handle_devices_refresh_clicked,
             on_set_default=self._handle_set_default_device_clicked,
@@ -94,7 +100,7 @@ class MainWindow(Adw.ApplicationWindow):
         root.append(self._status)
 
     def refresh(self) -> dict[str, object]:
-        filters = self._filters.current_filters()
+        filters = self._current_filters()
         return self.load_releases_with_filters(
             q=filters["q"],  # type: ignore[arg-type]
             year=filters["year"],  # type: ignore[arg-type]
@@ -103,6 +109,9 @@ class MainWindow(Adw.ApplicationWindow):
             unmatched=bool(filters["unmatched"]),
             limit=int(filters["limit"]),
         )
+
+    def _current_filters(self) -> dict[str, object]:
+        return self._filters.current_filters()
 
     def _set_status(self, message: str) -> None:
         self._status.set_text(message)
@@ -122,11 +131,31 @@ class MainWindow(Adw.ApplicationWindow):
                 SpotifyPlaybackError,
                 MatchingDependencyError,
                 NoSpotifyDevicesError,
+                MissingLastSpinError,
                 ValueError,
             ),
         ):
             return str(exc)
         return f"{type(exc).__name__}: {exc}"
+
+    def _focus_release_id(self, discogs_release_id: int, *, allow_expand_limit: bool = True) -> bool:
+        if self._cover_grid.select_release(discogs_release_id):
+            return True
+
+        if not allow_expand_limit:
+            return False
+
+        filters = self._current_filters()
+        expanded_limit = max(int(filters.get("limit") or self._limit), 250)
+        self.load_releases_with_filters(
+            q=filters.get("q"),  # type: ignore[arg-type]
+            year=filters.get("year"),  # type: ignore[arg-type]
+            genres=filters.get("genres"),  # type: ignore[arg-type]
+            styles=filters.get("styles"),  # type: ignore[arg-type]
+            unmatched=bool(filters.get("unmatched")),
+            limit=expanded_limit,
+        )
+        return self._cover_grid.select_release(discogs_release_id)
 
     def _handle_release_selected(self, item: dict[str, object] | None) -> None:
         self._selected_release = dict(item) if isinstance(item, dict) else None
@@ -226,6 +255,54 @@ class MainWindow(Adw.ApplicationWindow):
         except Exception as exc:
             message = self._friendly_error_message(exc)
             self._device_picker.set_error(message)
+            self._set_status(message)
+
+    def _handle_spin_clicked(self) -> None:
+        try:
+            filters = self._current_filters()
+            seed = self._spin_wheel.get_seed()
+            payload = run_spin_action(
+                q=filters["q"],  # type: ignore[arg-type]
+                year=filters["year"],  # type: ignore[arg-type]
+                genres=filters["genres"],  # type: ignore[arg-type]
+                styles=filters["styles"],  # type: ignore[arg-type]
+                unmatched=bool(filters["unmatched"]),
+                seed=seed,
+            )
+            self._spin_wheel.set_spin_result(payload)
+
+            release = payload.get("release")
+            if isinstance(release, dict):
+                release_id = release.get("discogs_release_id")
+                if isinstance(release_id, int):
+                    focused = self._focus_release_id(release_id)
+                    if not focused:
+                        self._selected_release_id = release_id
+                        self._selected_release = dict(release)
+                        self._album_detail.set_release(release)
+
+            self._set_status(str(payload.get("status_message") or "Spin complete."))
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._spin_wheel.set_error(message)
+            self._set_status(message)
+
+    def _handle_play_last_spin_clicked(self) -> None:
+        try:
+            payload = run_play_last_spin_action()
+            self._spin_wheel.set_play_result(payload)
+            message = str(payload.get("status_message") or "Play last spin complete.")
+
+            raw = payload.get("raw")
+            if isinstance(raw, dict):
+                release_id = raw.get("discogs_release_id")
+                if isinstance(release_id, int):
+                    self._focus_release_id(release_id)
+
+            self._set_status(message)
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._spin_wheel.set_error(message)
             self._set_status(message)
 
     def load_releases(self, *, q: str | None = None) -> dict[str, object]:
