@@ -160,12 +160,12 @@ def query_releases(
     if genres:
         for genre in genres:
             sql.append("AND LOWER(r.genres) LIKE ?")
-            params.append(f"%{genre.lower()}%")
+            params.append(f'%"{genre.lower()}"%')
 
     if styles:
         for style in styles:
             sql.append("AND LOWER(r.styles) LIKE ?")
-            params.append(f"%{style.lower()}%")
+            params.append(f'%"{style.lower()}"%')
 
     if unmatched:
         sql.append("AND (m.spotify_album_id IS NULL OR m.spotify_album_id = '')")

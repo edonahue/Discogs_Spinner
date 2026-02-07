@@ -7,14 +7,8 @@ CLI-first Discogs collection sync tool designed for SSH use on Pop!_OS/Linux.
 ```bash
 sudo apt update
 sudo apt install -y \
-  python3 python3-venv python3-pip \
-  libsecret-1-0
-```
-
-If a Python package build fails in your environment, also install:
-
-```bash
-sudo apt install -y build-essential python3-dev
+  python3 python3-venv python3-pip python3-setuptools \
+  libsecret-1-0 build-essential python3-dev
 ```
 
 ## Setup

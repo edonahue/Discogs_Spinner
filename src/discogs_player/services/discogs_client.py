@@ -6,9 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable
-
-import httpx
+from typing import Any, Callable
 
 
 class DiscogsError(Exception):
@@ -23,7 +21,21 @@ class DiscogsApiError(DiscogsError):
     """Discogs API failure."""
 
 
+class DiscogsDependencyError(DiscogsError):
+    """Discogs client dependency error."""
+
+
 ProgressCallback = Callable[[int, int, int, int], None]
+
+
+def _httpx():
+    try:
+        import httpx
+    except ModuleNotFoundError as exc:
+        raise DiscogsDependencyError(
+            "Missing Python dependency: httpx. Install with `pip install -r requirements.txt`."
+        ) from exc
+    return httpx
 
 
 @dataclass
@@ -41,20 +53,35 @@ class DiscogsClient:
 
     def _request_with_backoff(
         self,
-        client: httpx.Client,
+        client: Any,
         method: str,
         path: str,
         *,
         params: dict[str, object] | None = None,
-    ) -> httpx.Response:
+        httpx_module: Any | None = None,
+    ) -> Any:
+        httpx_module = httpx_module or _httpx()
         url = f"https://api.discogs.com{path}"
         max_attempts = 5
 
         for attempt in range(1, max_attempts + 1):
-            response = client.request(method, url, params=params)
+            try:
+                response = client.request(method, url, params=params)
+            except Exception as exc:  # pragma: no cover - explicit branch tested via fake client
+                if isinstance(exc, httpx_module.RequestError):
+                    if attempt < max_attempts:
+                        time.sleep(attempt)
+                        continue
+                    raise DiscogsApiError(f"Discogs request transport error: {exc}") from exc
+                raise
+
             if response.status_code == 429:
                 retry_after = response.headers.get("Retry-After")
-                sleep_for = int(retry_after) if retry_after and retry_after.isdigit() else attempt
+                sleep_for = (
+                    int(retry_after.strip())
+                    if isinstance(retry_after, str) and retry_after.strip().isdigit()
+                    else attempt
+                )
                 time.sleep(max(1, sleep_for))
                 continue
 
@@ -76,9 +103,18 @@ class DiscogsClient:
 
         raise DiscogsApiError("Discogs API retries exhausted due to rate limiting/server errors")
 
-    def _get_username(self, client: httpx.Client) -> str:
-        response = self._request_with_backoff(client, "GET", "/oauth/identity")
-        payload = response.json()
+    def _get_username(self, client: Any, *, httpx_module: Any | None = None) -> str:
+        response = self._request_with_backoff(
+            client,
+            "GET",
+            "/oauth/identity",
+            httpx_module=httpx_module,
+        )
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise DiscogsApiError("Discogs identity response was not valid JSON") from exc
+
         username = payload.get("username")
         if not username:
             raise DiscogsApiError("Discogs identity response missing username")
@@ -91,9 +127,10 @@ class DiscogsClient:
         progress_callback: ProgressCallback | None = None,
     ) -> list[dict[str, object]]:
         releases: list[dict[str, object]] = []
+        httpx_module = _httpx()
 
-        with httpx.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
-            username = self._get_username(client)
+        with httpx_module.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
+            username = self._get_username(client, httpx_module=httpx_module)
             page = 1
             pages = 1
 
@@ -103,8 +140,13 @@ class DiscogsClient:
                     "GET",
                     f"/users/{username}/collection/folders/0/releases",
                     params={"page": page, "per_page": per_page},
+                    httpx_module=httpx_module,
                 )
-                payload = response.json()
+                try:
+                    payload = response.json()
+                except ValueError as exc:
+                    raise DiscogsApiError("Discogs collection response was not valid JSON") from exc
+
                 pagination = payload.get("pagination", {})
                 pages = int(pagination.get("pages", 1))
                 page_releases = payload.get("releases", [])
@@ -142,7 +184,13 @@ class DiscogsClient:
 
         title = str(basic.get("title") or "")
         year = basic.get("year")
-        year_value = int(year) if isinstance(year, int) else None
+        year_value = None
+        if isinstance(year, int):
+            year_value = year
+        elif isinstance(year, str):
+            year_str = year.strip()
+            if year_str.isdigit():
+                year_value = int(year_str)
 
         genres = basic.get("genres") if isinstance(basic.get("genres"), list) else []
         styles = basic.get("styles") if isinstance(basic.get("styles"), list) else []

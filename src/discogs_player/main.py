@@ -12,7 +12,8 @@ def _missing_dependency_message(module_name: str) -> str:
             f"Missing Python dependency: {module_name}",
             "",
             "Install required system packages on Pop!_OS:",
-            "  sudo apt update && sudo apt install -y python3 python3-venv python3-pip libsecret-1-0",
+            "  sudo apt update && sudo apt install -y python3 python3-venv python3-pip "
+            "python3-setuptools libsecret-1-0 build-essential python3-dev",
             "",
             "Then install project dependencies:",
             "  python3 -m venv .venv",

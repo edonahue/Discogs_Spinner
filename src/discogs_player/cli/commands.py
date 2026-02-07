@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Callable
 
 import typer
 from rich.console import Console
@@ -13,7 +12,11 @@ from rich.table import Table
 from discogs_player.use_cases.list_releases import run_list_releases
 from discogs_player.use_cases.status_report import get_status_report
 
-APT_INSTALL_CMD = "sudo apt update && sudo apt install -y python3 python3-venv python3-pip libsecret-1-0"
+APT_INSTALL_CMD = (
+    "sudo apt update && sudo apt install -y "
+    "python3 python3-venv python3-pip python3-setuptools libsecret-1-0 "
+    "build-essential python3-dev"
+)
 
 app = typer.Typer(help="Discogs Player CLI")
 console = Console()
@@ -106,7 +109,11 @@ def sync(
     _ = no_images
 
     try:
-        from discogs_player.services.discogs_client import DiscogsApiError, DiscogsAuthError
+        from discogs_player.services.discogs_client import (
+            DiscogsApiError,
+            DiscogsAuthError,
+            DiscogsDependencyError,
+        )
         from discogs_player.services.sync_manager import MissingDiscogsTokenError
         from discogs_player.use_cases.sync_collection import run_sync_collection
     except ModuleNotFoundError as exc:
@@ -121,13 +128,23 @@ def sync(
 
     try:
         if verbose:
-            summary = run_sync_collection(progress_callback=progress_callback)
+            summary = run_sync_collection(
+                progress_callback=progress_callback,
+                allow_empty_deactivate=full,
+            )
         else:
             with console.status("Syncing Discogs collection..."):
-                summary = run_sync_collection(progress_callback=None)
+                summary = run_sync_collection(
+                    progress_callback=None,
+                    allow_empty_deactivate=full,
+                )
     except MissingDiscogsTokenError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=3) from exc
+    except DiscogsDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print(f"Install command (Pop!_OS): [cyan]{APT_INSTALL_CMD}[/cyan]")
+        raise typer.Exit(code=1) from exc
     except DiscogsAuthError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=3) from exc
@@ -142,7 +159,11 @@ def sync(
     table.add_row("upserted_count", str(summary["upserted_count"]))
     table.add_row("deactivated_count", str(summary["deactivated_count"]))
     table.add_row("last_sync_time", str(summary["last_sync_time"]))
+    table.add_row("skipped_empty_deactivate", str(summary["skipped_empty_deactivate"]))
     console.print(table)
+
+    for warning in summary.get("warnings", []):
+        console.print(f"[yellow]warning:[/yellow] {warning}")
 
 
 @app.command("list")
