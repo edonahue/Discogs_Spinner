@@ -43,6 +43,8 @@ dplayer sync
 dplayer sync --verbose
 dplayer list --limit 25
 dplayer list --year 1990:1999 --genre Rock --style Jazz --json
+dplayer spin --genre Rock --year 1990:1999
+dplayer spin --seed 42 --json
 ```
 
 Equivalent module invocation:

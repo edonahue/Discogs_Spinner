@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from discogs_player.use_cases.list_releases import run_list_releases
+from discogs_player.use_cases.spin_release import NoReleasesFoundError, run_spin_release
 from discogs_player.use_cases.status_report import get_status_report
 
 APT_INSTALL_CMD = (
@@ -195,3 +196,35 @@ def list_releases(
         return
 
     _render_release_table(releases)
+
+
+@app.command("spin")
+def spin(
+    q: str | None = typer.Option(None, "--q", help="Search artist/title substring"),
+    year: str | None = typer.Option(None, "--year", help="Single year or range like 1990:1999"),
+    genre: list[str] | None = typer.Option(None, "--genre", help="Filter by genre, repeatable"),
+    style: list[str] | None = typer.Option(None, "--style", help="Filter by style, repeatable"),
+    unmatched: bool = typer.Option(False, "--unmatched", help="Only spin from unmapped releases"),
+    seed: int | None = typer.Option(None, "--seed", help="Deterministic random seed"),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Choose a random release from filtered results and persist last spin."""
+    try:
+        selected = run_spin_release(
+            q=q,
+            year=year,
+            genres=genre or [],
+            styles=style or [],
+            unmatched=unmatched,
+            seed=seed,
+        )
+    except (ValueError, NoReleasesFoundError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        console.print(json.dumps(selected, indent=2, sort_keys=True))
+        return
+
+    console.print("[bold green]Spin result[/bold green]")
+    _render_release_table([selected])

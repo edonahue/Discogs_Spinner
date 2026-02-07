@@ -118,7 +118,7 @@ def query_releases(
     year_to: int | None = None,
     genres: Sequence[str] | None = None,
     styles: Sequence[str] | None = None,
-    limit: int = 25,
+    limit: int | None = 25,
     unmatched: bool = False,
 ) -> list[dict[str, Any]]:
     sql = [
@@ -171,8 +171,9 @@ def query_releases(
         sql.append("AND (m.spotify_album_id IS NULL OR m.spotify_album_id = '')")
 
     sql.append("ORDER BY LOWER(r.artist), LOWER(r.title)")
-    sql.append("LIMIT ?")
-    params.append(max(1, int(limit)))
+    if limit is not None:
+        sql.append("LIMIT ?")
+        params.append(max(1, int(limit)))
 
     rows = conn.execute("\n".join(sql), params).fetchall()
     return [_row_to_release(row) for row in rows]
