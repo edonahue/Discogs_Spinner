@@ -252,7 +252,9 @@ class MainWindow(Adw.ApplicationWindow):
         value_heading.add_css_class("title-5")
         sidebar.append(value_heading)
 
-        self._value_examples = Gtk.Label(label="No priced releases with median values yet.")
+        self._value_examples = Gtk.Label(
+            label="No priced releases with median values yet. Run `dplayer value refresh --from-missing`."
+        )
         self._value_examples.set_xalign(0.0)
         self._value_examples.set_wrap(True)
         self._value_examples.add_css_class("dim-label")
@@ -471,7 +473,9 @@ class MainWindow(Adw.ApplicationWindow):
         high_rows = high if isinstance(high, list) else []
         low_rows = low if isinstance(low, list) else []
         if not high_rows and not low_rows:
-            self._value_examples.set_text("No priced releases with median values yet.")
+            self._value_examples.set_text(
+                "No priced releases with median values yet. Run `dplayer value refresh --from-missing`."
+            )
             return
 
         high_text = ", ".join(
@@ -740,7 +744,7 @@ class MainWindow(Adw.ApplicationWindow):
         cover_count = sum(1 for item in items if item.get("cover_path"))
         if not items:
             self._album_detail.set_release(None)
-            self._set_status("Loaded 0 releases.")
+            self._set_status("Loaded 0 releases. Run `dplayer sync` to import your Discogs collection.")
         else:
             self._set_status(
                 f"Loaded {len(items)} releases ({cover_count} covers cached)."
@@ -773,8 +777,21 @@ class DiscogsPlayerApp(Adw.Application):
             return
         self._did_activate = True
 
-        window = MainWindow(self, limit=self._limit, preload_covers=self._preload_covers)
-        window.present()
+        report: dict[str, object]
+        try:
+            window = MainWindow(self, limit=self._limit, preload_covers=self._preload_covers)
+            window.present()
+        except Exception as exc:
+            self.exit_code = 1
+            report = {
+                "ok": False,
+                "error": str(exc),
+                "traceback": traceback.format_exc(limit=4),
+            }
+            if self._smoke_test:
+                print(json.dumps(report, sort_keys=True))
+            self.quit()
+            return
 
         try:
             report = window.load_releases()
