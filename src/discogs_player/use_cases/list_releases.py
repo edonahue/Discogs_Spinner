@@ -60,6 +60,7 @@ def run_list_releases(
     genres: list[str] | None = None,
     styles: list[str] | None = None,
     unmatched: bool = False,
+    with_value: bool = False,
 ) -> list[dict[str, object]]:
     year_range = parse_year_range(year)
 
@@ -74,6 +75,7 @@ def run_list_releases(
             styles=styles,
             limit=limit,
             unmatched=unmatched,
+            include_market=with_value,
         )
     finally:
         conn.close()

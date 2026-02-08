@@ -3,7 +3,12 @@ from __future__ import annotations
 import pytest
 
 from discogs_player.data.db import get_connection
-from discogs_player.data.repo import get_release_counts, upsert_releases
+from discogs_player.data.repo import (
+    get_release_counts,
+    get_wantlist_count,
+    upsert_releases,
+    upsert_wantlist_entries,
+)
 from discogs_player.services import sync_manager
 from discogs_player.services.discogs_client import DiscogsApiError, DiscogsClient
 import discogs_player.services.discogs_client as discogs_client
@@ -30,6 +35,15 @@ class _FakeClientEmpty:
         self.token = token
 
     def fetch_collection_releases(self, **kwargs):
+        _ = kwargs
+        return []
+
+
+class _FakeWantlistClientEmpty:
+    def __init__(self, token: str):
+        self.token = token
+
+    def fetch_wantlist_releases(self, **kwargs):
         _ = kwargs
         return []
 
@@ -96,6 +110,91 @@ def test_sync_full_allows_empty_deactivate(isolated_xdg, monkeypatch):
     assert summary["skipped_empty_deactivate"] is False
     assert summary["warnings"] == []
     assert counts["release_count_active"] == 0
+
+
+def test_wantlist_sync_skips_empty_deactivate_by_default(isolated_xdg, monkeypatch):
+    conn = get_connection()
+    try:
+        upsert_wantlist_entries(
+            conn,
+            [
+                {
+                    "discogs_release_id": 901,
+                    "artist": "Artist",
+                    "title": "Title",
+                    "year": 2001,
+                    "genres": ["Rock"],
+                    "styles": ["Alt"],
+                    "thumb_url": None,
+                    "cover_url": None,
+                    "notes": None,
+                    "added_at": "2026-01-01T00:00:00Z",
+                    "last_synced_at": "2026-01-01T00:00:00Z",
+                    "is_active": 1,
+                }
+            ],
+        )
+    finally:
+        conn.close()
+
+    monkeypatch.setenv("DISCOGS_TOKEN", "token")
+    monkeypatch.setattr(sync_manager, "DiscogsClient", _FakeWantlistClientEmpty)
+
+    summary = sync_manager.sync_wantlist(allow_empty_deactivate=False)
+
+    conn = get_connection()
+    try:
+        active_count = get_wantlist_count(conn)
+    finally:
+        conn.close()
+
+    assert summary["fetched_count"] == 0
+    assert summary["deactivated_count"] == 0
+    assert summary["skipped_empty_deactivate"] is True
+    assert summary["warnings"]
+    assert active_count == 1
+
+
+def test_wantlist_sync_full_allows_empty_deactivate(isolated_xdg, monkeypatch):
+    conn = get_connection()
+    try:
+        upsert_wantlist_entries(
+            conn,
+            [
+                {
+                    "discogs_release_id": 902,
+                    "artist": "Artist",
+                    "title": "Title",
+                    "year": 2001,
+                    "genres": ["Rock"],
+                    "styles": ["Alt"],
+                    "thumb_url": None,
+                    "cover_url": None,
+                    "notes": None,
+                    "added_at": "2026-01-01T00:00:00Z",
+                    "last_synced_at": "2026-01-01T00:00:00Z",
+                    "is_active": 1,
+                }
+            ],
+        )
+    finally:
+        conn.close()
+
+    monkeypatch.setenv("DISCOGS_TOKEN", "token")
+    monkeypatch.setattr(sync_manager, "DiscogsClient", _FakeWantlistClientEmpty)
+
+    summary = sync_manager.sync_wantlist(allow_empty_deactivate=True)
+
+    conn = get_connection()
+    try:
+        active_count = get_wantlist_count(conn)
+    finally:
+        conn.close()
+
+    assert summary["deactivated_count"] == 1
+    assert summary["skipped_empty_deactivate"] is False
+    assert summary["warnings"] == []
+    assert active_count == 0
 
 
 def test_discogs_request_wraps_transport_errors(monkeypatch):
@@ -165,3 +264,45 @@ def test_normalize_release_year_string():
 
     assert normalized is not None
     assert normalized["year"] == 1999
+
+
+def test_normalize_wantlist_release_includes_notes():
+    client = DiscogsClient(token="token")
+    normalized = client._normalize_wantlist_release(
+        {
+            "date_added": "2026-02-07T00:00:00+00:00",
+            "notes": "Need this pressing",
+            "basic_information": {
+                "id": 555,
+                "title": "Album",
+                "year": "1980",
+                "artists": [{"name": "Artist"}],
+                "genres": ["Rock"],
+                "styles": ["Post-Punk"],
+                "thumb": "",
+                "cover_image": "",
+            },
+        },
+        "2026-02-07T00:00:00+00:00",
+    )
+
+    assert normalized is not None
+    assert normalized["discogs_release_id"] == 555
+    assert normalized["year"] == 1980
+    assert normalized["notes"] == "Need this pressing"
+
+
+def test_extract_market_price_suggestions():
+    client = DiscogsClient(token="token")
+    stats = client._extract_market_price_suggestions(
+        {
+            "Mint (M)": {"currency": "USD", "value": 25.0},
+            "Very Good Plus (VG+)": {"currency": "USD", "value": 15.0},
+            "Good (G)": {"currency": "USD", "value": 5.0},
+        }
+    )
+
+    assert stats["lowest"] == 5.0
+    assert stats["median"] == 15.0
+    assert stats["highest"] == 25.0
+    assert stats["currency"] == "USD"

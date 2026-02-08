@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import statistics
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -162,6 +163,114 @@ class DiscogsClient:
                 page += 1
 
         return releases
+
+    def fetch_wantlist_releases(
+        self,
+        *,
+        per_page: int = 100,
+        progress_callback: ProgressCallback | None = None,
+    ) -> list[dict[str, object]]:
+        releases: list[dict[str, object]] = []
+        httpx_module = _httpx()
+
+        with httpx_module.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
+            username = self._get_username(client, httpx_module=httpx_module)
+            page = 1
+            pages = 1
+
+            while page <= pages:
+                response = self._request_with_backoff(
+                    client,
+                    "GET",
+                    f"/users/{username}/wants",
+                    params={"page": page, "per_page": per_page},
+                    httpx_module=httpx_module,
+                )
+                try:
+                    payload = response.json()
+                except ValueError as exc:
+                    raise DiscogsApiError("Discogs wantlist response was not valid JSON") from exc
+
+                pagination = payload.get("pagination", {})
+                pages = int(pagination.get("pages", 1))
+                page_releases = payload.get("wants", [])
+
+                now = datetime.now(timezone.utc).isoformat()
+                normalized = [self._normalize_wantlist_release(item, now) for item in page_releases]
+                normalized = [item for item in normalized if item is not None]
+                releases.extend(normalized)
+
+                if progress_callback is not None:
+                    progress_callback(page, pages, len(normalized), len(releases))
+
+                page += 1
+
+        return releases
+
+    def _normalize_wantlist_release(
+        self,
+        item: dict[str, object],
+        synced_at: str,
+    ) -> dict[str, object] | None:
+        base = self._normalize_release(item, synced_at)
+        if base is None:
+            return None
+
+        notes_raw = item.get("notes") if isinstance(item, dict) else None
+        notes = str(notes_raw).strip() if notes_raw is not None else ""
+        base["notes"] = notes or None
+        base["is_active"] = 1
+        return base
+
+    def fetch_market_price_suggestions(self, discogs_release_id: int) -> dict[str, object]:
+        httpx_module = _httpx()
+        with httpx_module.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
+            response = self._request_with_backoff(
+                client,
+                "GET",
+                f"/marketplace/price_suggestions/{int(discogs_release_id)}",
+                httpx_module=httpx_module,
+            )
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise DiscogsApiError("Discogs market value response was not valid JSON") from exc
+        return self._extract_market_price_suggestions(payload)
+
+    def _extract_market_price_suggestions(self, payload: Any) -> dict[str, object]:
+        if not isinstance(payload, dict):
+            raise DiscogsApiError("Discogs market value response had unexpected format")
+
+        values: list[float] = []
+        currency: str | None = None
+
+        for raw in payload.values():
+            if not isinstance(raw, dict):
+                continue
+            amount = raw.get("value")
+            if isinstance(amount, (int, float)):
+                values.append(float(amount))
+
+            raw_currency = raw.get("currency")
+            if currency is None and isinstance(raw_currency, str):
+                raw_currency = raw_currency.strip()
+                if raw_currency:
+                    currency = raw_currency
+
+        if not values:
+            return {
+                "lowest": None,
+                "median": None,
+                "highest": None,
+                "currency": currency,
+            }
+
+        return {
+            "lowest": float(min(values)),
+            "median": float(statistics.median(values)),
+            "highest": float(max(values)),
+            "currency": currency,
+        }
 
     def _normalize_release(
         self,
