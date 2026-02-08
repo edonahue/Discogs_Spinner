@@ -110,11 +110,28 @@ window.ipod-shell {
   font-weight: 700;
 }
 
+.ipod-cover-strip {
+  padding: 8px 6px;
+}
+
 .ipod-cover-frame {
   margin: 10px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background-color: rgba(4, 6, 9, 0.95);
+}
+
+.ipod-cover-slot {
+  margin: 2px;
+}
+
+.ipod-cover-slot-side {
+  opacity: 0.64;
+}
+
+.ipod-cover-slot-center {
+  border: 1px solid rgba(174, 200, 255, 0.45);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
 }
 
 .ipod-cover-placeholder {
@@ -124,20 +141,39 @@ window.ipod-shell {
 """
 
 
-class MainWindow(Adw.ApplicationWindow):
+def _normalize_release_limit(value: object | None) -> int | None:
+    if value is None:
+        return None
+    limit = int(value)
+    if limit <= 0:
+        return None
+    return limit
+
+
+def _build_window_header_bar() -> Gtk.HeaderBar:
+    header_bar = Gtk.HeaderBar()
+    header_bar.set_show_title_buttons(True)
+    header_bar.set_decoration_layout(":minimize,maximize,close")
+    return header_bar
+
+
+class MainWindow(Gtk.ApplicationWindow):
     def __init__(
         self,
         app: Adw.Application,
         *,
-        limit: int = 50,
+        limit: int | None = None,
         preload_covers: bool = True,
     ) -> None:
         super().__init__(application=app, title="Discogs Player")
         self.add_css_class("ipod-shell")
         self.set_default_size(1200, 820)
+        self.set_resizable(True)
+        self.set_deletable(True)
+        self.set_titlebar(_build_window_header_bar())
         self._install_css()
 
-        self._limit = max(1, int(limit))
+        self._limit = _normalize_release_limit(limit)
         self._preload_covers = bool(preload_covers)
         self._selected_release_id: int | None = None
         self._selected_release: dict[str, object] | None = None
@@ -148,7 +184,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ipod-root")
-        self.set_content(root)
+        self.set_child(root)
 
         self._filters = FilterBar(default_limit=self._limit, on_refresh=self.refresh)
         self._filters.add_css_class("ipod-panel")
@@ -286,7 +322,7 @@ class MainWindow(Adw.ApplicationWindow):
                 styles=filters["styles"],  # type: ignore[arg-type]
                 unmatched=bool(filters["unmatched"]),
                 sort_mode=str(filters.get("sort") or "artist_title"),
-                limit=int(filters["limit"]),
+                limit=_normalize_release_limit(filters.get("limit")),
             )
         except Exception as exc:
             message = self._friendly_error_message(exc)
@@ -300,7 +336,7 @@ class MainWindow(Adw.ApplicationWindow):
                 "styles": filters.get("styles"),
                 "unmatched": bool(filters.get("unmatched")),
                 "sort": str(filters.get("sort") or "artist_title"),
-                "limit": int(filters.get("limit") or self._limit),
+                "limit": _normalize_release_limit(filters.get("limit")),
             }
 
     def _current_filters(self) -> dict[str, object]:
@@ -527,7 +563,8 @@ class MainWindow(Adw.ApplicationWindow):
             return False
 
         filters = self._current_filters()
-        expanded_limit = max(int(filters.get("limit") or self._limit), 250)
+        current_limit = _normalize_release_limit(filters.get("limit"))
+        expanded_limit = None if current_limit is None else max(current_limit, 250)
         self.load_releases_with_filters(
             q=filters.get("q"),  # type: ignore[arg-type]
             year=filters.get("year"),  # type: ignore[arg-type]
@@ -710,7 +747,7 @@ class MainWindow(Adw.ApplicationWindow):
         limit: int | None = None,
     ) -> dict[str, object]:
         self._status.set_text("Loading releases...")
-        effective_limit = max(1, int(limit if limit is not None else self._limit))
+        effective_limit = _normalize_release_limit(limit if limit is not None else self._limit)
         items_raw = run_browse_release_grid(
             limit=effective_limit,
             q=q,
@@ -764,9 +801,15 @@ class MainWindow(Adw.ApplicationWindow):
 
 
 class DiscogsPlayerApp(Adw.Application):
-    def __init__(self, *, limit: int = 50, preload_covers: bool = True, smoke_test: bool = False):
+    def __init__(
+        self,
+        *,
+        limit: int | None = None,
+        preload_covers: bool = True,
+        smoke_test: bool = False,
+    ) -> None:
         super().__init__(application_id="com.discogs_player.app")
-        self._limit = max(1, int(limit))
+        self._limit = _normalize_release_limit(limit)
         self._preload_covers = bool(preload_covers)
         self._smoke_test = bool(smoke_test)
         self.exit_code = 0
@@ -778,15 +821,18 @@ class DiscogsPlayerApp(Adw.Application):
         self._did_activate = True
 
         report: dict[str, object]
+        titlebar_present = False
         try:
             window = MainWindow(self, limit=self._limit, preload_covers=self._preload_covers)
             window.present()
+            titlebar_present = bool(window.get_titlebar() is not None)
         except Exception as exc:
             self.exit_code = 1
             report = {
                 "ok": False,
                 "error": str(exc),
                 "traceback": traceback.format_exc(limit=4),
+                "titlebar_present": titlebar_present,
             }
             if self._smoke_test:
                 print(json.dumps(report, sort_keys=True))
@@ -802,6 +848,7 @@ class DiscogsPlayerApp(Adw.Application):
                 "error": str(exc),
                 "traceback": traceback.format_exc(limit=4),
             }
+        report["titlebar_present"] = titlebar_present
 
         if self._smoke_test:
             print(json.dumps(report, sort_keys=True))

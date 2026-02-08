@@ -41,5 +41,6 @@ def test_gui_smoke_script_emits_valid_json_when_gui_runtime_is_available():
     assert lines, "gui smoke script produced no stdout"
     payload = json.loads(lines[-1])
     assert payload.get("ok") is True
+    assert payload.get("titlebar_present") is True
     assert "item_count" in payload
     assert "sort" in payload

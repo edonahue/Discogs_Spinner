@@ -183,6 +183,10 @@ To remove the desktop integration later:
 ./scripts/uninstall_desktop_app.sh
 ```
 
+If launcher clicks fail silently, check:
+
+- `~/.local/state/discogs_player/gui-launch.log`
+
 ## Scheduled sync (cron)
 
 Run sync in the background on a schedule:

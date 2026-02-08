@@ -33,6 +33,38 @@ set -euo pipefail
 REPO_ROOT="__REPO_ROOT__"
 VENV_PY="${REPO_ROOT}/.venv/bin/python"
 APT_GUI_CMD="sudo apt update && sudo apt install -y python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libadwaita-1-0 gir1.2-gdkpixbuf-2.0"
+XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+LOG_DIR="${XDG_STATE_HOME}/discogs_player"
+LOG_PATH="${LOG_DIR}/gui-launch.log"
+
+timestamp() {
+  date -Iseconds
+}
+
+ensure_log_writable() {
+  if [ ! -d "${LOG_DIR}" ]; then
+    mkdir -p "${LOG_DIR}" >/dev/null 2>&1 || return 1
+  fi
+  if [ ! -e "${LOG_PATH}" ]; then
+    : >"${LOG_PATH}" 2>/dev/null || return 1
+  fi
+  [ -w "${LOG_PATH}" ]
+}
+
+log_line() {
+  local message="$1"
+  if ! ensure_log_writable; then
+    return 0
+  fi
+  printf '[%s] %s\n' "$(timestamp)" "${message}" >>"${LOG_PATH}" || true
+}
+
+notify_failure() {
+  local message="$1"
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "Discogs Player" "${message}" || true
+  fi
+}
 
 has_gtk_bindings() {
   local py_bin="$1"
@@ -40,25 +72,75 @@ has_gtk_bindings() {
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
+from gi.repository import Adw, Gtk
 PY
 }
 
 export PYTHONPATH="${REPO_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
-if [ -x "${VENV_PY}" ] && has_gtk_bindings "${VENV_PY}"; then
-  exec "${VENV_PY}" -m discogs_player.ui_main "$@"
+run_with_python() {
+  local py_bin="$1"
+  local label="$2"
+  shift 2
+
+  if ! has_gtk_bindings "${py_bin}"; then
+    log_line "Skipping ${label} runtime (${py_bin}): GTK bindings unavailable"
+    return 1
+  fi
+
+  log_line "Launching Discogs Player with ${label} runtime (${py_bin})"
+  local rc=0
+  if ensure_log_writable; then
+    if "${py_bin}" -m discogs_player.ui_main "$@" >>"${LOG_PATH}" 2>&1; then
+      rc=0
+    else
+      rc=$?
+    fi
+  else
+    if "${py_bin}" -m discogs_player.ui_main "$@"; then
+      rc=0
+    else
+      rc=$?
+    fi
+  fi
+
+  if [ "${rc}" -eq 0 ]; then
+    log_line "Discogs Player exited cleanly via ${label} runtime"
+    return 0
+  fi
+
+  log_line "Discogs Player exited with rc=${rc} via ${label} runtime"
+  return "${rc}"
+}
+
+if [ ! -d "${REPO_ROOT}/src/discogs_player" ]; then
+  message="Repository path missing: ${REPO_ROOT}"
+  log_line "${message}"
+  notify_failure "${message}"
+  exit 1
+fi
+
+if [ ! -e "${XDG_RUNTIME_DIR}" ]; then
+  log_line "Warning: XDG_RUNTIME_DIR does not exist (${XDG_RUNTIME_DIR})"
+fi
+
+if [ -x "${VENV_PY}" ] && run_with_python "${VENV_PY}" "venv" "$@"; then
+  exit 0
 fi
 
 if command -v python3 >/dev/null 2>&1; then
   SYS_PYTHON="$(command -v python3)"
-  if has_gtk_bindings "${SYS_PYTHON}"; then
-    exec "${SYS_PYTHON}" -m discogs_player.ui_main "$@"
+  if run_with_python "${SYS_PYTHON}" "system" "$@"; then
+    exit 0
   fi
 fi
 
+echo "Discogs Player launcher failed. See ${LOG_PATH}" >&2
 echo "GTK4/libadwaita Python bindings are not available." >&2
 echo "Install on Pop!_OS with:" >&2
 echo "  ${APT_GUI_CMD}" >&2
+notify_failure "Launch failed. Check ${LOG_PATH}"
 exit 1
 EOF
 
