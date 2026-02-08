@@ -36,6 +36,8 @@ def run_browse_release_grid(
                 "artist": release.get("artist"),
                 "title": release.get("title"),
                 "year": release.get("year"),
+                "genres": release.get("genres") if isinstance(release.get("genres"), list) else [],
+                "styles": release.get("styles") if isinstance(release.get("styles"), list) else [],
                 "cover_url": cover_url,
                 "cover_path": cover_path,
                 "spotify_album_id": release.get("spotify_album_id"),
@@ -43,4 +45,3 @@ def run_browse_release_grid(
         )
 
     return items
-

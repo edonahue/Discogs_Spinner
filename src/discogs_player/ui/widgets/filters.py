@@ -11,13 +11,22 @@ from gi.repository import Gtk
 
 
 class FilterBar(Gtk.Box):
+    _SORT_OPTIONS: tuple[tuple[str, str], ...] = (
+        ("artist_title", "Sort: Artist/Title"),
+        ("year_desc", "Sort: Year (Newest)"),
+        ("year_asc", "Sort: Year (Oldest)"),
+        ("genre", "Sort: Genre (A-Z)"),
+        ("genre_year", "Sort: Genre then Year"),
+    )
+
     def __init__(
         self,
         *,
         default_limit: int = 50,
         on_refresh: Callable[[], None] | None = None,
     ) -> None:
-        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.set_hexpand(True)
         self.set_margin_top(8)
         self.set_margin_bottom(8)
         self.set_margin_start(8)
@@ -25,31 +34,46 @@ class FilterBar(Gtk.Box):
         self._on_refresh = on_refresh
         self._default_limit = max(1, int(default_limit))
 
+        top_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        top_row.set_hexpand(True)
+        self.append(top_row)
+
+        bottom_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        bottom_row.set_hexpand(True)
+        self.append(bottom_row)
+
         self._search_entry = Gtk.Entry()
-        self._search_entry.set_hexpand(False)
-        self._search_entry.set_width_chars(18)
+        self._search_entry.set_hexpand(True)
+        self._search_entry.set_width_chars(16)
         self._search_entry.set_placeholder_text("Search artist/title")
-        self.append(self._search_entry)
+        top_row.append(self._search_entry)
 
         self._year_entry = Gtk.Entry()
-        self._year_entry.set_width_chars(12)
+        self._year_entry.set_width_chars(11)
         self._year_entry.set_placeholder_text("Year (e.g. 1990:1999)")
-        self.append(self._year_entry)
+        top_row.append(self._year_entry)
 
         self._genre_entry = Gtk.Entry()
         self._genre_entry.set_hexpand(True)
-        self._genre_entry.set_width_chars(18)
+        self._genre_entry.set_width_chars(16)
         self._genre_entry.set_placeholder_text("Genres (comma-separated)")
-        self.append(self._genre_entry)
+        top_row.append(self._genre_entry)
 
         self._style_entry = Gtk.Entry()
         self._style_entry.set_hexpand(True)
-        self._style_entry.set_width_chars(18)
+        self._style_entry.set_width_chars(16)
         self._style_entry.set_placeholder_text("Styles (comma-separated)")
-        self.append(self._style_entry)
+        top_row.append(self._style_entry)
 
         self._unmatched_only = Gtk.CheckButton(label="Unmatched")
-        self.append(self._unmatched_only)
+        bottom_row.append(self._unmatched_only)
+
+        self._sort_values = [item[0] for item in self._SORT_OPTIONS]
+        self._sort_dropdown = Gtk.DropDown.new_from_strings([item[1] for item in self._SORT_OPTIONS])
+        self._sort_dropdown.set_hexpand(True)
+        self._sort_dropdown.set_selected(0)
+        self._sort_dropdown.connect("notify::selected", lambda *_: self._trigger_refresh())
+        bottom_row.append(self._sort_dropdown)
 
         self._limit_spin = Gtk.SpinButton()
         self._limit_spin.set_numeric(True)
@@ -57,16 +81,16 @@ class FilterBar(Gtk.Box):
         self._limit_spin.set_increments(1, 25)
         self._limit_spin.set_value(self._default_limit)
         self._limit_spin.set_tooltip_text("Result limit")
-        self.append(self._limit_spin)
+        bottom_row.append(self._limit_spin)
 
         clear_button = Gtk.Button(label="Clear")
         clear_button.connect("clicked", lambda *_: self.clear())
-        self.append(clear_button)
+        bottom_row.append(clear_button)
 
         refresh_button = Gtk.Button(label="Refresh")
         if self._on_refresh is not None:
             refresh_button.connect("clicked", lambda *_: self._on_refresh())
-        self.append(refresh_button)
+        bottom_row.append(refresh_button)
 
         for entry in (
             self._search_entry,
@@ -95,6 +119,7 @@ class FilterBar(Gtk.Box):
         self._genre_entry.set_text("")
         self._style_entry.set_text("")
         self._unmatched_only.set_active(False)
+        self._sort_dropdown.set_selected(0)
         self._limit_spin.set_value(self._default_limit)
         self._trigger_refresh()
 
@@ -118,6 +143,12 @@ class FilterBar(Gtk.Box):
     def limit(self) -> int:
         return max(1, int(self._limit_spin.get_value_as_int()))
 
+    def sort_mode(self) -> str:
+        selected = int(self._sort_dropdown.get_selected())
+        if selected < 0 or selected >= len(self._sort_values):
+            return "artist_title"
+        return self._sort_values[selected]
+
     def current_filters(self) -> dict[str, object]:
         return {
             "q": self.search_text(),
@@ -125,5 +156,6 @@ class FilterBar(Gtk.Box):
             "genres": self.genres(),
             "styles": self.styles(),
             "unmatched": self.unmatched(),
+            "sort": self.sort_mode(),
             "limit": self.limit(),
         }

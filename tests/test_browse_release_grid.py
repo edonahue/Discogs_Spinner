@@ -40,6 +40,8 @@ def test_run_browse_release_grid_without_preload(isolated_xdg):
     assert len(items) == 1
     assert items[0]["discogs_release_id"] == 101
     assert items[0]["cover_path"] is None
+    assert items[0]["genres"] == ["Electronic"]
+    assert items[0]["styles"] == ["Trip Hop"]
 
 
 def test_run_browse_release_grid_with_preload(monkeypatch, isolated_xdg):
