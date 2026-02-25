@@ -1,0 +1,114 @@
+name: Core Plus CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-core:
+    name: Test Core Profile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install core profile
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+
+      - name: Run core tests
+        run: |
+          python -m pytest -q \
+            tests/test_build_artifacts_script.py \
+            tests/test_core_plus_ci_workflow.py \
+            tests/test_cli_exit_codes.py \
+            tests/test_play_release.py \
+            tests/test_ensure_mapping.py
+
+      - name: Compile check
+        run: python -m compileall -q src tests
+
+  test-plus:
+    name: Test Plus Profile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install plus profile
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[spotify]"
+
+      - name: Run plus tests
+        run: |
+          python -m pytest -q \
+            tests/test_build_artifacts_script.py \
+            tests/test_core_plus_ci_workflow.py \
+            tests/test_spotify_live_smoke_script.py \
+            tests/test_spotify_oauth.py \
+            tests/test_cli_exit_codes.py \
+            tests/test_play_release.py \
+            tests/test_ensure_mapping.py
+
+      - name: Compile check
+        run: python -m compileall -q src tests
+
+  build-artifacts:
+    name: Build Artifacts (${{ matrix.os }})
+    needs:
+      - test-core
+      - test-plus
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+
+      - name: Build core and plus artifacts
+        shell: bash
+        run: ./scripts/build_artifacts.sh all
+
+      - name: Upload core artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: discogs_player-core-${{ matrix.os }}
+          path: dist/artifacts/**/discogs_player-core-*.tar.gz
+          if-no-files-found: error
+
+      - name: Upload plus artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: discogs_player-plus-${{ matrix.os }}
+          path: dist/artifacts/**/discogs_player-plus-*.tar.gz
+          if-no-files-found: error

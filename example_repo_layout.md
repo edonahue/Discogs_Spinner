@@ -21,11 +21,17 @@ discogs_player/
 
       services/
         discogs_client.py
-        spotify_client.py
-        spotify_oauth.py
         sync_manager.py
         image_cache.py
         matching.py
+
+      integrations/
+        player_backend.py
+        null_backend.py
+        spotify/
+          backend.py
+          spotify_client.py
+          oauth.py
 
       use_cases/
         sync_collection.py

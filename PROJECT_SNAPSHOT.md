@@ -1,5 +1,8 @@
 # Project Snapshot: `discogs_player`
 
+> Historical snapshot captured on 2026-02-08.
+> For current goals/capabilities/roadmap, use `PRODUCT_STATE.md`.
+
 As of **2026-02-08 (UTC)**.
 
 ## Completeness Rating
@@ -41,7 +44,8 @@ Layered architecture with shared use-cases across CLI and GUI:
 
 - `core/`: paths, settings, runtime config
 - `data/`: SQLite schema/migrations + repository queries
-- `services/`: external API clients (Discogs/Spotify), image cache, sync orchestration
+- `services/`: core API/data services (Discogs client, image cache, sync orchestration)
+- `integrations/`: optional addon backends (Spotify + null backend via capabilities)
 - `use_cases/`: business operations (`sync`, `list`, `spin`, `match`, `play`, `value`, `wantlist`, import/export, analytics)
 - `cli/`: Typer command wiring + Rich rendering
 - `ui/`: GTK4/libadwaita desktop interface over the same use-cases (no API calls in widgets)
