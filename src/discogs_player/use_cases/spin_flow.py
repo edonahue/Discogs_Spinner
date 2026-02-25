@@ -6,6 +6,20 @@ from discogs_player.use_cases.play_release import run_play_release
 from discogs_player.use_cases.spin_release import run_spin_release
 
 
+def _to_int(value: object | None, *, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped and stripped.lstrip("-").isdigit():
+            return int(stripped)
+    return default
+
+
 def run_spin_action(
     *,
     q: str | None = None,
@@ -24,7 +38,7 @@ def run_spin_action(
         seed=seed,
     )
 
-    release_id = int(chosen["discogs_release_id"])
+    release_id = _to_int(chosen.get("discogs_release_id"))
     artist = str(chosen.get("artist") or "Unknown Artist")
     title = str(chosen.get("title") or "Unknown Title")
     year_value = chosen.get("year")
@@ -68,4 +82,3 @@ def run_play_last_spin_action() -> dict[str, object]:
         "status_message": status_message,
         "raw": raw,
     }
-

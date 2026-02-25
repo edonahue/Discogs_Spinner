@@ -3,6 +3,20 @@
 from __future__ import annotations
 
 
+def _as_int(value: object | None) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped and stripped.lstrip("-").isdigit():
+            return int(stripped)
+    return 0
+
+
 def _first_genre(item: dict[str, object]) -> str:
     genres = item.get("genres")
     if isinstance(genres, list) and genres:
@@ -22,7 +36,7 @@ def sort_release_items(
             items,
             key=lambda item: (
                 item.get("year") is None,
-                -int(item.get("year") or 0),
+                -_as_int(item.get("year")),
                 str(item.get("artist") or "").lower(),
                 str(item.get("title") or "").lower(),
             ),
@@ -32,7 +46,7 @@ def sort_release_items(
             items,
             key=lambda item: (
                 item.get("year") is None,
-                int(item.get("year") or 0),
+                _as_int(item.get("year")),
                 str(item.get("artist") or "").lower(),
                 str(item.get("title") or "").lower(),
             ),
@@ -52,7 +66,7 @@ def sort_release_items(
             key=lambda item: (
                 _first_genre(item),
                 item.get("year") is None,
-                -int(item.get("year") or 0),
+                -_as_int(item.get("year")),
                 str(item.get("artist") or "").lower(),
                 str(item.get("title") or "").lower(),
             ),

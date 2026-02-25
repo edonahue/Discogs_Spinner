@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "discogs_player",
+  "version": "0.1.0",
+  "identifier": "com.discogsplayer.app",
+  "build": {
+    "beforeDevCommand": "cd ../webapp && npm run dev",
+    "beforeBuildCommand": "cd ../webapp && npm run build",
+    "frontendDist": "../webapp/dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "discogs_player",
+        "width": 1280,
+        "height": 820,
+        "resizable": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": false,
+    "targets": "all"
+  }
+}

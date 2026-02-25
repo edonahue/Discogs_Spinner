@@ -25,8 +25,15 @@ def _missing_gui_dependency_message(module_name: str) -> str:
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="dplayer-gui", description="Discogs Player GTK UI")
-    parser.add_argument("--limit", type=int, default=50, help="Maximum releases to render")
+    parser = argparse.ArgumentParser(
+        prog="dplayer-gui", description="Discogs Player GTK UI"
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Maximum releases to render (0 = all releases)",
+    )
     parser.add_argument(
         "--no-preload-covers",
         action="store_true",
@@ -67,7 +74,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 1
 
     app = DiscogsPlayerApp(
-        limit=max(1, int(args.limit)),
+        limit=max(0, int(args.limit)),
         preload_covers=not args.no_preload_covers,
         smoke_test=bool(args.smoke_test),
     )
@@ -77,4 +84,3 @@ def main(argv: Optional[list[str]] = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

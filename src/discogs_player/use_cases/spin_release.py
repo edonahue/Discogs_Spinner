@@ -36,13 +36,16 @@ def run_spin_release(
             styles=styles,
             limit=None,
             unmatched=unmatched,
+            include_market=True,
         )
         if not candidates:
             raise NoReleasesFoundError("No releases found for the provided filters.")
 
         rng = random.Random(seed)
         chosen = rng.choice(candidates)
-        set_setting("last_spin_release_id", str(chosen["discogs_release_id"]), conn=conn)
+        set_setting(
+            "last_spin_release_id", str(chosen["discogs_release_id"]), conn=conn
+        )
         return chosen
     finally:
         conn.close()

@@ -104,6 +104,135 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
           ON market_value_snapshots(captured_at);
         """,
     ),
+    (
+        5,
+        """
+        CREATE TABLE IF NOT EXISTS release_tracklist_cache (
+            discogs_release_id INTEGER PRIMARY KEY,
+            track_count INTEGER NOT NULL DEFAULT 0,
+            audio_track_count INTEGER NOT NULL DEFAULT 0,
+            last_refreshed_at TEXT NOT NULL,
+            FOREIGN KEY(discogs_release_id) REFERENCES releases(discogs_release_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS release_tracks (
+            discogs_release_id INTEGER NOT NULL,
+            seq INTEGER NOT NULL,
+            position TEXT,
+            title TEXT,
+            duration TEXT,
+            type TEXT,
+            is_audio_track INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY(discogs_release_id, seq),
+            FOREIGN KEY(discogs_release_id) REFERENCES releases(discogs_release_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_release_tracklist_cache_last_refreshed_at
+          ON release_tracklist_cache(last_refreshed_at);
+        CREATE INDEX IF NOT EXISTS idx_release_tracks_release_id_seq
+          ON release_tracks(discogs_release_id, seq);
+        """,
+    ),
+    (
+        6,
+        """
+        CREATE TABLE IF NOT EXISTS wantlist_market_prices (
+            discogs_release_id INTEGER PRIMARY KEY,
+            lowest REAL,
+            median REAL,
+            highest REAL,
+            currency TEXT,
+            last_updated_at TEXT,
+            FOREIGN KEY(discogs_release_id) REFERENCES wantlist(discogs_release_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_wantlist_market_prices_last_updated_at
+          ON wantlist_market_prices(last_updated_at);
+        CREATE INDEX IF NOT EXISTS idx_wantlist_market_prices_currency
+          ON wantlist_market_prices(currency);
+
+        CREATE TABLE IF NOT EXISTS wantlist_tracklist_cache (
+            discogs_release_id INTEGER PRIMARY KEY,
+            track_count INTEGER NOT NULL DEFAULT 0,
+            audio_track_count INTEGER NOT NULL DEFAULT 0,
+            last_refreshed_at TEXT NOT NULL,
+            FOREIGN KEY(discogs_release_id) REFERENCES wantlist(discogs_release_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS wantlist_tracks (
+            discogs_release_id INTEGER NOT NULL,
+            seq INTEGER NOT NULL,
+            position TEXT,
+            title TEXT,
+            duration TEXT,
+            type TEXT,
+            is_audio_track INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY(discogs_release_id, seq),
+            FOREIGN KEY(discogs_release_id) REFERENCES wantlist(discogs_release_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_wantlist_tracklist_cache_last_refreshed_at
+          ON wantlist_tracklist_cache(last_refreshed_at);
+        CREATE INDEX IF NOT EXISTS idx_wantlist_tracks_release_id_seq
+          ON wantlist_tracks(discogs_release_id, seq);
+        """,
+    ),
+    (
+        7,
+        """
+        CREATE TABLE IF NOT EXISTS release_stats (
+            discogs_release_id INTEGER PRIMARY KEY,
+            num_for_sale INTEGER,
+            lowest_price REAL,
+            community_have INTEGER,
+            community_want INTEGER,
+            rating_count INTEGER,
+            rating_average REAL,
+            last_updated_at TEXT,
+            FOREIGN KEY(discogs_release_id) REFERENCES releases(discogs_release_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS wantlist_stats (
+            discogs_release_id INTEGER PRIMARY KEY,
+            num_for_sale INTEGER,
+            lowest_price REAL,
+            community_have INTEGER,
+            community_want INTEGER,
+            rating_count INTEGER,
+            rating_average REAL,
+            last_updated_at TEXT,
+            FOREIGN KEY(discogs_release_id) REFERENCES wantlist(discogs_release_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_release_stats_last_updated_at
+          ON release_stats(last_updated_at);
+        CREATE INDEX IF NOT EXISTS idx_wantlist_stats_last_updated_at
+          ON wantlist_stats(last_updated_at);
+        """,
+    ),
+    (
+        8,
+        """
+        CREATE TABLE spotify_mapping_new (
+            discogs_release_id INTEGER PRIMARY KEY,
+            spotify_album_id TEXT,
+            confidence REAL,
+            last_checked_at TEXT,
+            is_override INTEGER NOT NULL DEFAULT 0
+        );
+
+        INSERT INTO spotify_mapping_new(
+            discogs_release_id, spotify_album_id, confidence, last_checked_at, is_override
+        )
+        SELECT
+            discogs_release_id, spotify_album_id, confidence, last_checked_at, is_override
+        FROM spotify_mapping;
+
+        DROP TABLE spotify_mapping;
+
+        ALTER TABLE spotify_mapping_new RENAME TO spotify_mapping;
+        """,
+    ),
 )
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1][0]
 
@@ -143,5 +272,6 @@ def get_connection(path: Path | None = None) -> sqlite3.Connection:
     conn = sqlite3.connect(target)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
     init_schema(conn)
     return conn

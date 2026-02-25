@@ -39,6 +39,33 @@ def _httpx():
     return httpx
 
 
+def _coerce_positive_int(value: object | None, *, default: int = 1) -> int:
+    if isinstance(value, bool):
+        parsed = int(value)
+    elif isinstance(value, int):
+        parsed = value
+    elif isinstance(value, float):
+        parsed = int(value)
+    elif isinstance(value, str):
+        stripped = value.strip()
+        if not stripped or not stripped.lstrip("-").isdigit():
+            return default
+        parsed = int(stripped)
+    else:
+        return default
+    return parsed if parsed > 0 else default
+
+
+def _as_dict_list(value: object | None) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    rows: list[dict[str, object]] = []
+    for item in value:
+        if isinstance(item, dict):
+            rows.append(item)
+    return rows
+
+
 @dataclass
 class DiscogsClient:
     token: str
@@ -68,12 +95,16 @@ class DiscogsClient:
         for attempt in range(1, max_attempts + 1):
             try:
                 response = client.request(method, url, params=params)
-            except Exception as exc:  # pragma: no cover - explicit branch tested via fake client
+            except (
+                Exception
+            ) as exc:  # pragma: no cover - explicit branch tested via fake client
                 if isinstance(exc, httpx_module.RequestError):
                     if attempt < max_attempts:
                         time.sleep(attempt)
                         continue
-                    raise DiscogsApiError(f"Discogs request transport error: {exc}") from exc
+                    raise DiscogsApiError(
+                        f"Discogs request transport error: {exc}"
+                    ) from exc
                 raise
 
             if response.status_code == 429:
@@ -102,7 +133,9 @@ class DiscogsClient:
 
             return response
 
-        raise DiscogsApiError("Discogs API retries exhausted due to rate limiting/server errors")
+        raise DiscogsApiError(
+            "Discogs API retries exhausted due to rate limiting/server errors"
+        )
 
     def _get_username(self, client: Any, *, httpx_module: Any | None = None) -> str:
         response = self._request_with_backoff(
@@ -114,7 +147,9 @@ class DiscogsClient:
         try:
             payload = response.json()
         except ValueError as exc:
-            raise DiscogsApiError("Discogs identity response was not valid JSON") from exc
+            raise DiscogsApiError(
+                "Discogs identity response was not valid JSON"
+            ) from exc
 
         username = payload.get("username")
         if not username:
@@ -130,7 +165,9 @@ class DiscogsClient:
         releases: list[dict[str, object]] = []
         httpx_module = _httpx()
 
-        with httpx_module.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
+        with httpx_module.Client(
+            headers=self._headers(), timeout=self.timeout_seconds
+        ) as client:
             username = self._get_username(client, httpx_module=httpx_module)
             page = 1
             pages = 1
@@ -146,15 +183,21 @@ class DiscogsClient:
                 try:
                     payload = response.json()
                 except ValueError as exc:
-                    raise DiscogsApiError("Discogs collection response was not valid JSON") from exc
+                    raise DiscogsApiError(
+                        "Discogs collection response was not valid JSON"
+                    ) from exc
 
-                pagination = payload.get("pagination", {})
-                pages = int(pagination.get("pages", 1))
-                page_releases = payload.get("releases", [])
+                pagination_raw = payload.get("pagination")
+                pagination = pagination_raw if isinstance(pagination_raw, dict) else {}
+                pages = _coerce_positive_int(pagination.get("pages"), default=1)
+                page_releases = _as_dict_list(payload.get("releases"))
 
                 now = datetime.now(timezone.utc).isoformat()
-                normalized = [self._normalize_release(item, now) for item in page_releases]
-                normalized = [item for item in normalized if item is not None]
+                normalized: list[dict[str, object]] = []
+                for item in page_releases:
+                    normalized_item = self._normalize_release(item, now)
+                    if normalized_item is not None:
+                        normalized.append(normalized_item)
                 releases.extend(normalized)
 
                 if progress_callback is not None:
@@ -173,7 +216,9 @@ class DiscogsClient:
         releases: list[dict[str, object]] = []
         httpx_module = _httpx()
 
-        with httpx_module.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
+        with httpx_module.Client(
+            headers=self._headers(), timeout=self.timeout_seconds
+        ) as client:
             username = self._get_username(client, httpx_module=httpx_module)
             page = 1
             pages = 1
@@ -189,15 +234,21 @@ class DiscogsClient:
                 try:
                     payload = response.json()
                 except ValueError as exc:
-                    raise DiscogsApiError("Discogs wantlist response was not valid JSON") from exc
+                    raise DiscogsApiError(
+                        "Discogs wantlist response was not valid JSON"
+                    ) from exc
 
-                pagination = payload.get("pagination", {})
-                pages = int(pagination.get("pages", 1))
-                page_releases = payload.get("wants", [])
+                pagination_raw = payload.get("pagination")
+                pagination = pagination_raw if isinstance(pagination_raw, dict) else {}
+                pages = _coerce_positive_int(pagination.get("pages"), default=1)
+                page_releases = _as_dict_list(payload.get("wants"))
 
                 now = datetime.now(timezone.utc).isoformat()
-                normalized = [self._normalize_wantlist_release(item, now) for item in page_releases]
-                normalized = [item for item in normalized if item is not None]
+                normalized: list[dict[str, object]] = []
+                for item in page_releases:
+                    normalized_item = self._normalize_wantlist_release(item, now)
+                    if normalized_item is not None:
+                        normalized.append(normalized_item)
                 releases.extend(normalized)
 
                 if progress_callback is not None:
@@ -222,9 +273,13 @@ class DiscogsClient:
         base["is_active"] = 1
         return base
 
-    def fetch_market_price_suggestions(self, discogs_release_id: int) -> dict[str, object]:
+    def fetch_market_price_suggestions(
+        self, discogs_release_id: int
+    ) -> dict[str, object]:
         httpx_module = _httpx()
-        with httpx_module.Client(headers=self._headers(), timeout=self.timeout_seconds) as client:
+        with httpx_module.Client(
+            headers=self._headers(), timeout=self.timeout_seconds
+        ) as client:
             response = self._request_with_backoff(
                 client,
                 "GET",
@@ -234,8 +289,81 @@ class DiscogsClient:
             try:
                 payload = response.json()
             except ValueError as exc:
-                raise DiscogsApiError("Discogs market value response was not valid JSON") from exc
+                raise DiscogsApiError(
+                    "Discogs market value response was not valid JSON"
+                ) from exc
         return self._extract_market_price_suggestions(payload)
+
+    def fetch_release_tracklist(self, discogs_release_id: int) -> dict[str, object]:
+        normalized_release_id = int(discogs_release_id)
+        if normalized_release_id <= 0:
+            raise ValueError("discogs_release_id must be a positive integer")
+
+        httpx_module = _httpx()
+        with httpx_module.Client(
+            headers=self._headers(), timeout=self.timeout_seconds
+        ) as client:
+            response = self._request_with_backoff(
+                client,
+                "GET",
+                f"/releases/{normalized_release_id}",
+                httpx_module=httpx_module,
+            )
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise DiscogsApiError(
+                    "Discogs release detail response was not valid JSON"
+                ) from exc
+
+        return {
+            "discogs_release_id": normalized_release_id,
+            "tracks": self._extract_release_tracklist(payload),
+        }
+
+    def fetch_release_stats(self, discogs_release_id: int) -> dict[str, object]:
+        normalized_release_id = int(discogs_release_id)
+        if normalized_release_id <= 0:
+            raise ValueError("discogs_release_id must be a positive integer")
+
+        httpx_module = _httpx()
+        with httpx_module.Client(
+            headers=self._headers(), timeout=self.timeout_seconds
+        ) as client:
+            response = self._request_with_backoff(
+                client,
+                "GET",
+                f"/releases/{normalized_release_id}",
+                httpx_module=httpx_module,
+            )
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise DiscogsApiError(
+                    "Discogs release detail response was not valid JSON"
+                ) from exc
+
+        return self._extract_release_stats(payload)
+
+    def _extract_release_stats(self, payload: Any) -> dict[str, object]:
+        if not isinstance(payload, dict):
+            raise DiscogsApiError(
+                "Discogs release detail response had unexpected format"
+            )
+
+        community = payload.get("community")
+        community = community if isinstance(community, dict) else {}
+        rating = community.get("rating")
+        rating = rating if isinstance(rating, dict) else {}
+
+        return {
+            "num_for_sale": payload.get("num_for_sale"),
+            "lowest_price": payload.get("lowest_price"),
+            "community_have": community.get("have"),
+            "community_want": community.get("want"),
+            "rating_count": rating.get("count"),
+            "rating_average": rating.get("average"),
+        }
 
     def _extract_market_price_suggestions(self, payload: Any) -> dict[str, object]:
         if not isinstance(payload, dict):
@@ -272,6 +400,40 @@ class DiscogsClient:
             "currency": currency,
         }
 
+    def _extract_release_tracklist(self, payload: Any) -> list[dict[str, object]]:
+        if not isinstance(payload, dict):
+            raise DiscogsApiError(
+                "Discogs release detail response had unexpected format"
+            )
+
+        rows = payload.get("tracklist")
+        if rows is None:
+            return []
+        if not isinstance(rows, list):
+            raise DiscogsApiError(
+                "Discogs release detail tracklist had unexpected format"
+            )
+
+        tracks: list[dict[str, object]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            title = str(row.get("title") or "").strip()
+            position = str(row.get("position") or "").strip()
+            duration = str(row.get("duration") or "").strip()
+            type_value = str(row.get("type_") or "").strip()
+            normalized_type = type_value.lower()
+            tracks.append(
+                {
+                    "position": position or None,
+                    "title": title or None,
+                    "duration": duration or None,
+                    "type": type_value or None,
+                    "is_audio_track": normalized_type == "track" and bool(title),
+                }
+            )
+        return tracks
+
     def _normalize_release(
         self,
         item: dict[str, object],
@@ -285,7 +447,8 @@ class DiscogsClient:
         if not isinstance(release_id, int):
             return None
 
-        artists = basic.get("artists") if isinstance(basic.get("artists"), list) else []
+        artists_raw = basic.get("artists")
+        artists = artists_raw if isinstance(artists_raw, list) else []
         artist_names = []
         for artist in artists:
             if isinstance(artist, dict) and artist.get("name"):
@@ -301,8 +464,10 @@ class DiscogsClient:
             if year_str.isdigit():
                 year_value = int(year_str)
 
-        genres = basic.get("genres") if isinstance(basic.get("genres"), list) else []
-        styles = basic.get("styles") if isinstance(basic.get("styles"), list) else []
+        genres_raw = basic.get("genres")
+        styles_raw = basic.get("styles")
+        genres = genres_raw if isinstance(genres_raw, list) else []
+        styles = styles_raw if isinstance(styles_raw, list) else []
 
         added_at_raw = item.get("date_added") if isinstance(item, dict) else None
         added_at = str(added_at_raw) if added_at_raw else None

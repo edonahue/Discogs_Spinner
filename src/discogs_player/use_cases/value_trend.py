@@ -47,7 +47,9 @@ def run_market_value_trend(*, limit: int = 30) -> dict[str, object]:
     first_median = float(first.get("total_median") or 0.0)
     last_median = float(last.get("total_median") or 0.0)
     window_delta = last_median - first_median
-    window_delta_percent = (window_delta / first_median * 100.0) if first_median != 0.0 else None
+    window_delta_percent = (
+        (window_delta / first_median * 100.0) if first_median != 0.0 else None
+    )
 
     return {
         "snapshot_count": len(points),

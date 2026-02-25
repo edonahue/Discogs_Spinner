@@ -47,7 +47,9 @@ def run_market_value_missing(
 
     stale_before: str | None = None
     if stale_days is not None:
-        stale_before = (datetime.now(timezone.utc) - timedelta(days=int(stale_days))).isoformat()
+        stale_before = (
+            datetime.now(timezone.utc) - timedelta(days=int(stale_days))
+        ).isoformat()
 
     conn = get_connection()
     try:
@@ -75,7 +77,9 @@ def write_market_value_missing_csv(
         writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
         writer.writeheader()
         for item in releases:
-            writer.writerow({key: _serialize_csv_value(item.get(key)) for key in CSV_COLUMNS})
+            writer.writerow(
+                {key: _serialize_csv_value(item.get(key)) for key in CSV_COLUMNS}
+            )
 
     return {
         "ok": True,

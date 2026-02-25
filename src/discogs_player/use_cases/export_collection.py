@@ -57,6 +57,16 @@ def _serialize_csv_value(value: Any) -> str:
     return str(value)
 
 
+def _as_dict_list(value: object | None) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+    rows: list[dict[str, object]] = []
+    for item in value:
+        if isinstance(item, dict):
+            rows.append(item)
+    return rows
+
+
 def build_export_payload(*, include_inactive: bool = True) -> dict[str, object]:
     conn = get_connection()
     try:
@@ -90,7 +100,7 @@ def run_export_collection(
 
     output.parent.mkdir(parents=True, exist_ok=True)
     payload = build_export_payload(include_inactive=include_inactive)
-    releases = payload["releases"] if isinstance(payload.get("releases"), list) else []
+    releases = _as_dict_list(payload.get("releases"))
 
     if normalized_format == "json":
         output.write_text(
@@ -102,13 +112,8 @@ def run_export_collection(
             writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
             writer.writeheader()
             for item in releases:
-                if not isinstance(item, dict):
-                    continue
                 writer.writerow(
-                    {
-                        key: _serialize_csv_value(item.get(key))
-                        for key in CSV_COLUMNS
-                    }
+                    {key: _serialize_csv_value(item.get(key)) for key in CSV_COLUMNS}
                 )
 
     return {

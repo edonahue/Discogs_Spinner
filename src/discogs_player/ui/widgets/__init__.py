@@ -1,2 +1,1 @@
 """Reusable GTK widgets."""
-

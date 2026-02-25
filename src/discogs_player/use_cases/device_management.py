@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+from discogs_player.capabilities import get_player_backend
 from discogs_player.core.settings import get_setting, set_setting
 from discogs_player.data.db import get_connection
-from discogs_player.services.spotify_client import SpotifyClient
-from discogs_player.services.spotify_oauth import get_spotify_access_token
 
 
 class NoSpotifyDevicesError(RuntimeError):
@@ -42,11 +41,15 @@ def _score_device(device: dict[str, object]) -> int:
 
 def choose_auto_device(devices: list[dict[str, object]]) -> dict[str, object]:
     if not devices:
-        raise NoSpotifyDevicesError("No Spotify devices found. Open Spotify on at least one device.")
+        raise NoSpotifyDevicesError(
+            "No Spotify devices found. Open Spotify on at least one device."
+        )
 
     with_ids = [device for device in devices if device.get("id")]
     if not with_ids:
-        raise NoSpotifyDevicesError("Spotify returned devices without ids; cannot set default device.")
+        raise NoSpotifyDevicesError(
+            "Spotify returned devices without ids; cannot set default device."
+        )
 
     return max(
         with_ids,
@@ -59,17 +62,18 @@ def choose_auto_device(devices: list[dict[str, object]]) -> dict[str, object]:
 
 
 def run_list_devices() -> list[dict[str, object]]:
+    backend = get_player_backend()
     conn = get_connection()
     try:
-        token = get_spotify_access_token(conn=conn)
         default_device_id = get_setting("default_spotify_device_id", conn=conn)
+        devices = backend.list_devices(conn=conn)
     finally:
         conn.close()
 
-    client = SpotifyClient(access_token=token)
-    devices = client.list_devices()
     for device in devices:
-        device["is_default"] = bool(default_device_id and device.get("id") == default_device_id)
+        device["is_default"] = bool(
+            default_device_id and device.get("id") == default_device_id
+        )
     return devices
 
 
@@ -78,11 +82,10 @@ def run_set_default_device(device_id: str) -> dict[str, str | None]:
     if not normalized_id:
         raise ValueError("Device id cannot be empty.")
 
+    backend = get_player_backend()
     conn = get_connection()
     try:
-        token = get_spotify_access_token(conn=conn)
-        client = SpotifyClient(access_token=token)
-        devices = client.list_devices()
+        devices = backend.list_devices(conn=conn)
 
         selected = None
         for device in devices:
@@ -103,11 +106,10 @@ def run_set_default_device(device_id: str) -> dict[str, str | None]:
 
 
 def run_auto_set_default_device() -> dict[str, str | None]:
+    backend = get_player_backend()
     conn = get_connection()
     try:
-        token = get_spotify_access_token(conn=conn)
-        client = SpotifyClient(access_token=token)
-        devices = client.list_devices()
+        devices = backend.list_devices(conn=conn)
         selected = choose_auto_device(devices)
 
         selected_id = str(selected.get("id"))

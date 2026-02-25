@@ -67,7 +67,11 @@ class ReleaseTextMenu(Gtk.ScrolledWindow):
             first_genre = str(genres[0] or "").strip()
             if first_genre:
                 genre_text = first_genre
-        secondary_parts = [piece for piece in (str(year) if year is not None else "", genre_text) if piece]
+        secondary_parts = [
+            piece
+            for piece in (str(year) if year is not None else "", genre_text)
+            if piece
+        ]
         secondary = Gtk.Label(label=" • ".join(secondary_parts))
         secondary.set_xalign(0.0)
         secondary.add_css_class("ipod-menu-secondary")
@@ -101,7 +105,9 @@ class ReleaseTextMenu(Gtk.ScrolledWindow):
         elif self._on_selection_changed is not None:
             self._on_selection_changed(None)
 
-    def _handle_row_selected(self, _list_box: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:
+    def _handle_row_selected(
+        self, _list_box: Gtk.ListBox, row: Gtk.ListBoxRow | None
+    ) -> None:
         if self._on_selection_changed is None:
             return
         if row is None:

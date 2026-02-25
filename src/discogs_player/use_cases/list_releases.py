@@ -54,7 +54,7 @@ def parse_year_range(raw: str | None) -> YearRange:
 
 def run_list_releases(
     *,
-    limit: int = 25,
+    limit: int | None = 25,
     q: str | None = None,
     year: str | None = None,
     genres: list[str] | None = None,

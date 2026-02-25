@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Callable
 
-from discogs_player.core.settings import get_discogs_token, set_setting
+from discogs_player.core.settings import (
+    discogs_token_missing_message,
+    get_discogs_token,
+    set_setting,
+)
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import (
     get_wantlist_count,
@@ -24,6 +28,15 @@ class MissingDiscogsTokenError(RuntimeError):
     """Raised when Discogs token is not configured."""
 
 
+def _extract_active_release_ids(items: list[dict[str, object]]) -> list[int]:
+    release_ids: list[int] = []
+    for item in items:
+        release_id = item.get("discogs_release_id")
+        if isinstance(release_id, int):
+            release_ids.append(release_id)
+    return release_ids
+
+
 def sync_collection(
     *,
     progress_callback: ProgressCallback | None = None,
@@ -31,9 +44,7 @@ def sync_collection(
 ) -> dict[str, object]:
     token = get_discogs_token()
     if not token:
-        raise MissingDiscogsTokenError(
-            "DISCOGS_TOKEN is not set. Export it in your shell or store it in app_settings."
-        )
+        raise MissingDiscogsTokenError(discogs_token_missing_message())
 
     client = DiscogsClient(token=token)
     releases = client.fetch_collection_releases(progress_callback=progress_callback)
@@ -41,7 +52,7 @@ def sync_collection(
     conn = get_connection()
     try:
         upserted_count = upsert_releases(conn, releases)
-        active_ids = [int(item["discogs_release_id"]) for item in releases]
+        active_ids = _extract_active_release_ids(releases)
         counts_before_deactivate = get_release_counts(conn)
         existing_active_count = counts_before_deactivate["release_count_active"]
         warnings: list[str] = []
@@ -77,9 +88,7 @@ def sync_wantlist(
 ) -> dict[str, object]:
     token = get_discogs_token()
     if not token:
-        raise MissingDiscogsTokenError(
-            "DISCOGS_TOKEN is not set. Export it in your shell or store it in app_settings."
-        )
+        raise MissingDiscogsTokenError(discogs_token_missing_message())
 
     client = DiscogsClient(token=token)
     entries = client.fetch_wantlist_releases(progress_callback=progress_callback)
@@ -87,7 +96,7 @@ def sync_wantlist(
     conn = get_connection()
     try:
         upserted_count = upsert_wantlist_entries(conn, entries)
-        active_ids = [int(item["discogs_release_id"]) for item in entries]
+        active_ids = _extract_active_release_ids(entries)
         existing_active_count = get_wantlist_count(conn)
         warnings: list[str] = []
 

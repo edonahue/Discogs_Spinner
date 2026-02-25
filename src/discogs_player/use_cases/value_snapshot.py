@@ -5,7 +5,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from discogs_player.data.db import get_connection
-from discogs_player.data.repo import get_market_value_summary, insert_market_value_snapshot
+from discogs_player.data.repo import (
+    get_market_value_summary,
+    insert_market_value_snapshot,
+)
 
 
 def run_market_value_snapshot() -> dict[str, object]:

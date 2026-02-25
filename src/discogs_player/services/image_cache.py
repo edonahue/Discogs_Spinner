@@ -14,8 +14,12 @@ from discogs_player.core.paths import cover_cache_dir
 
 DEFAULT_TIMEOUT_SECONDS = 20.0
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
-USER_AGENT = "discogs_player/0.1"
+USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+)
 LEGACY_CACHE_EXTENSION = ".img"
+_DISCOGS_IMAGE_HOSTS: frozenset[str] = frozenset({"i.discogs.com"})
 
 _CONTENT_TYPE_TO_EXTENSION: dict[str, str] = {
     "image/jpeg": ".jpg",
@@ -55,16 +59,44 @@ _KNOWN_IMAGE_EXTENSIONS: tuple[str, ...] = (
 )
 
 
+def _request_headers_for_url(url: str) -> dict[str, str]:
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "image/*",
+    }
+    try:
+        host = (urllib.parse.urlparse(url).hostname or "").strip().casefold()
+    except ValueError:
+        host = ""
+    if host in _DISCOGS_IMAGE_HOSTS:
+        headers.update(
+            {
+                "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.discogs.com/",
+            }
+        )
+    return headers
+
+
 def _digest_for_url(url: str) -> str:
     return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
 
-def _cache_path_for_digest(digest: str, extension: str) -> Path:
-    return cover_cache_dir() / f"{digest}{extension}"
+def _cache_path_for_digest(
+    digest: str, extension: str, *, cache_dir: Path | None = None
+) -> Path:
+    base_dir = cache_dir if cache_dir is not None else cover_cache_dir()
+    return base_dir / f"{digest}{extension}"
 
 
-def _cache_path_for_url(url: str, *, extension: str = LEGACY_CACHE_EXTENSION) -> Path:
-    return _cache_path_for_digest(_digest_for_url(url), extension)
+def _cache_path_for_url(
+    url: str,
+    *,
+    extension: str = LEGACY_CACHE_EXTENSION,
+    cache_dir: Path | None = None,
+) -> Path:
+    return _cache_path_for_digest(_digest_for_url(url), extension, cache_dir=cache_dir)
 
 
 def _extension_from_content_type(content_type: str | None) -> str | None:
@@ -132,14 +164,16 @@ def _choose_cache_extension(
     return LEGACY_CACHE_EXTENSION
 
 
-def _find_existing_cache_path(digest: str) -> Path | None:
+def _find_existing_cache_path(digest: str, *, cache_dir: Path | None = None) -> Path | None:
     candidates: list[Path] = []
     for extension in _KNOWN_IMAGE_EXTENSIONS:
-        path = _cache_path_for_digest(digest, extension)
+        path = _cache_path_for_digest(digest, extension, cache_dir=cache_dir)
         if path.exists() and path.stat().st_size > 0:
             candidates.append(path)
 
-    legacy = _cache_path_for_digest(digest, LEGACY_CACHE_EXTENSION)
+    legacy = _cache_path_for_digest(
+        digest, LEGACY_CACHE_EXTENSION, cache_dir=cache_dir
+    )
     if legacy.exists() and legacy.stat().st_size > 0:
         candidates.append(legacy)
 
@@ -183,14 +217,19 @@ def _write_cache_file(*, target: Path, data: bytes, cache_dir: Path) -> None:
         with os.fdopen(fd, "wb") as handle:
             # Raw byte copy only; no image transcoding, so quality/resolution is preserved.
             handle.write(data)
+        # Atomic replace for better performance
         os.replace(temp_path, target)
     finally:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
 
 
-def _cleanup_legacy_cache_file(*, digest: str, current_target: Path) -> None:
-    legacy = _cache_path_for_digest(digest, LEGACY_CACHE_EXTENSION)
+def _cleanup_legacy_cache_file(
+    *, digest: str, current_target: Path, cache_dir: Path | None = None
+) -> None:
+    legacy = _cache_path_for_digest(
+        digest, LEGACY_CACHE_EXTENSION, cache_dir=cache_dir
+    )
     if legacy == current_target or not legacy.exists():
         return
     try:
@@ -217,14 +256,14 @@ def get_or_fetch_cover_path(
     cache_dir.mkdir(parents=True, exist_ok=True)
     digest = _digest_for_url(normalized_url)
 
-    existing = _find_existing_cache_path(digest)
+    existing = _find_existing_cache_path(digest, cache_dir=cache_dir)
     if existing is not None:
         migrated = _maybe_migrate_legacy_cache_path(existing, cover_url=normalized_url)
         return str(migrated)
 
     request = urllib.request.Request(
         normalized_url,
-        headers={"User-Agent": USER_AGENT, "Accept": "image/*"},
+        headers=_request_headers_for_url(normalized_url),
     )
 
     try:
@@ -244,7 +283,125 @@ def get_or_fetch_cover_path(
         content_type=content_type,
         data=data,
     )
-    target = _cache_path_for_digest(digest, extension)
+    target = _cache_path_for_digest(digest, extension, cache_dir=cache_dir)
     _write_cache_file(target=target, data=data, cache_dir=cache_dir)
-    _cleanup_legacy_cache_file(digest=digest, current_target=target)
+    _cleanup_legacy_cache_file(
+        digest=digest,
+        current_target=target,
+        cache_dir=cache_dir,
+    )
+    return str(target)
+
+
+# Performance optimization: async image fetching with connection pooling
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict
+
+# Global executor for image operations
+_image_executor: ThreadPoolExecutor | None = None
+_pending_requests: Dict[str, asyncio.Future] = {}
+
+def get_image_executor() -> ThreadPoolExecutor:
+    """Get or create global image executor for performance."""
+    global _image_executor
+    if _image_executor is None:
+        _image_executor = ThreadPoolExecutor(
+            max_workers=4,  # Optimal for I/O bound operations
+            thread_name_prefix="image-cache",
+        )
+    return _image_executor
+
+
+async def get_or_fetch_cover_path_async(
+    cover_url: str | None,
+    *,
+    timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+    max_image_bytes: int = MAX_IMAGE_BYTES,
+) -> str | None:
+    """Async version of get_or_fetch_cover_path with request deduplication."""
+    if not cover_url:
+        return None
+
+    normalized_url = str(cover_url).strip()
+    if not normalized_url or not normalized_url.startswith(("http://", "https://")):
+        return None
+
+    # Check if already pending
+    if normalized_url in _pending_requests:
+        return await _pending_requests[normalized_url]
+
+    cache_dir = cover_cache_dir()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    digest = _digest_for_url(normalized_url)
+
+    existing = _find_existing_cache_path(digest, cache_dir=cache_dir)
+    if existing is not None:
+        migrated = _maybe_migrate_legacy_cache_path(existing, cover_url=normalized_url)
+        return str(migrated)
+
+    # Create async task for download
+    loop = asyncio.get_event_loop()
+    if loop is None:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    
+    task = loop.run_in_executor(
+        get_image_executor(),
+        _download_image_worker,
+        cover_url,
+        timeout_seconds,
+        max_image_bytes,
+        cache_dir,
+        digest,
+    )
+    
+    # Track pending request
+    _pending_requests[normalized_url] = task
+    
+    def on_complete(fut):
+        _pending_requests.pop(normalized_url, None)
+        
+    task.add_done_callback(on_complete)
+    return await task
+
+
+def _download_image_worker(
+    cover_url: str,
+    timeout_seconds: float,
+    max_image_bytes: int,
+    cache_dir: Path,
+    digest: str,
+) -> str | None:
+    """Worker function for async image downloading."""
+    # Reuse existing sync logic but optimized
+    request = urllib.request.Request(
+        cover_url,
+        headers=_request_headers_for_url(cover_url),
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            content_type = str(response.headers.get("Content-Type") or "").lower()
+            if content_type and not content_type.startswith("image/"):
+                return None
+
+            data = response.read(max_image_bytes + 1)
+            if not data or len(data) > max_image_bytes:
+                return None
+    except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+        return None
+
+    extension = _choose_cache_extension(
+        cover_url=cover_url,
+        content_type=content_type,
+        data=data,
+    )
+    target = _cache_path_for_digest(digest, extension, cache_dir=cache_dir)
+    _write_cache_file(target=target, data=data, cache_dir=cache_dir)
+    _cleanup_legacy_cache_file(
+        digest=digest,
+        current_target=target,
+        cache_dir=cache_dir,
+    )
     return str(target)

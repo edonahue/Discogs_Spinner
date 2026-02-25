@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from discogs_player.core.settings import get_discogs_token
+from discogs_player.core.settings import (
+    discogs_token_missing_message,
+    get_discogs_token,
+)
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import (
     query_market_price_refresh_candidates,
@@ -42,9 +45,7 @@ def run_refresh_market_values(
 
     token = get_discogs_token()
     if not token:
-        raise MissingDiscogsTokenError(
-            "DISCOGS_TOKEN is not set. Export it in your shell or store it in app_settings."
-        )
+        raise MissingDiscogsTokenError(discogs_token_missing_message())
 
     now = datetime.now(timezone.utc)
     now_iso = now.isoformat()
@@ -58,14 +59,22 @@ def run_refresh_market_values(
             rows = conn.execute(
                 (
                     "SELECT discogs_release_id FROM releases "
-                    "WHERE is_active = 1 AND discogs_release_id IN (" + placeholders + ")"
+                    "WHERE is_active = 1 AND discogs_release_id IN ("
+                    + placeholders
+                    + ")"
                 ),
                 normalized_release_ids,
             ).fetchall()
             available = {int(row["discogs_release_id"]) for row in rows}
-            candidate_ids = [release_id for release_id in normalized_release_ids if release_id in available]
+            candidate_ids = [
+                release_id
+                for release_id in normalized_release_ids
+                if release_id in available
+            ]
             skipped_release_ids = [
-                release_id for release_id in normalized_release_ids if release_id not in available
+                release_id
+                for release_id in normalized_release_ids
+                if release_id not in available
             ]
         elif from_missing:
             missing_rows = query_releases_needing_market_refresh(
@@ -116,15 +125,22 @@ def run_refresh_market_values(
                 lowest=float(lowest) if isinstance(lowest, (int, float)) else None,
                 median=float(median) if isinstance(median, (int, float)) else None,
                 highest=float(highest) if isinstance(highest, (int, float)) else None,
-                currency=str(currency).strip() if isinstance(currency, str) and currency.strip() else None,
+                currency=str(currency).strip()
+                if isinstance(currency, str) and currency.strip()
+                else None,
                 last_updated_at=now_iso,
+                commit=False,
             )
             refreshed_count += 1
             updated_release_ids.append(int(release_id))
-            if any(isinstance(value, (int, float)) for value in (lowest, median, highest)):
+            if any(
+                isinstance(value, (int, float)) for value in (lowest, median, highest)
+            ):
                 priced_count += 1
             else:
                 unpriced_count += 1
+        if refreshed_count > 0:
+            conn.commit()
     finally:
         conn.close()
 

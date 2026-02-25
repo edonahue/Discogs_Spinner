@@ -9,7 +9,9 @@ from discogs_player.use_cases.device_management import (
 )
 
 
-def _extract_default_device(devices: list[dict[str, object]]) -> dict[str, object] | None:
+def _extract_default_device(
+    devices: list[dict[str, object]],
+) -> dict[str, object] | None:
     for device in devices:
         if device.get("is_default"):
             return {"id": device.get("id"), "name": device.get("name")}
@@ -72,4 +74,3 @@ def run_auto_set_default_device_action() -> dict[str, object]:
             f"[{selected.get('id')}]"
         ),
     }
-

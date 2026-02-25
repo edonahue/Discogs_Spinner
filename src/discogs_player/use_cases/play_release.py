@@ -4,13 +4,34 @@ from __future__ import annotations
 
 from urllib.parse import quote
 
+from discogs_player.capabilities import get_player_backend
 from discogs_player.core.settings import get_int_setting, get_setting, set_setting
 from discogs_player.data.db import get_connection
-from discogs_player.data.repo import get_release_by_id, get_spotify_mapping
-from discogs_player.services.spotify_client import SpotifyApiError, SpotifyClient, SpotifyPlaybackError
-from discogs_player.services.spotify_oauth import SpotifyAuthError, get_spotify_access_token
-from discogs_player.use_cases.ensure_mapping import run_match_release
+from discogs_player.data.repo import (
+    get_release_by_id,
+    get_spotify_mapping,
+    get_wantlist_by_id,
+)
+from discogs_player.integrations.player_backend import (
+    PlayerApiError,
+    PlayerAuthError,
+    PlayerDependencyError,
+    PlayerPlaybackError,
+)
+from discogs_player.use_cases.ensure_mapping import (
+    SAFE_AUTO_APPLY_THRESHOLD,
+    run_match_release,
+)
 from discogs_player.use_cases.device_management import choose_auto_device
+
+# Backwards-compatible aliases for tests and existing imports.
+SpotifyDependencyError = PlayerDependencyError
+SpotifyAuthError = PlayerAuthError
+SpotifyApiError = PlayerApiError
+SpotifyPlaybackError = PlayerPlaybackError
+
+INTERACTIVE_AUTOMATCH_MAX_RETRIES = 0
+INTERACTIVE_AUTOMATCH_BACKOFF_SECONDS = 1.0
 
 
 class MissingLastSpinError(RuntimeError):
@@ -124,16 +145,28 @@ def run_play_release(
         )
         release = get_release_by_id(conn, resolved_release_id)
         if release is None:
-            raise ValueError(f"Discogs release {resolved_release_id} was not found in local database.")
+            # Wantlist entries should be playable via shared play paths too.
+            release = get_wantlist_by_id(conn, resolved_release_id)
+        if release is None:
+            raise ValueError(
+                f"Discogs release {resolved_release_id} was not found in local database."
+            )
 
         auto_match_attempted = False
         auto_matched = False
+        backend = get_player_backend()
         spotify_album_id = _get_spotify_album_id(conn, resolved_release_id)
         if not spotify_album_id and auto_match:
             auto_match_attempted = True
             try:
-                match_result = run_match_release(resolved_release_id)
-            except (SpotifyAuthError, SpotifyApiError) as exc:
+                match_result = run_match_release(
+                    resolved_release_id,
+                    threshold=SAFE_AUTO_APPLY_THRESHOLD,
+                    max_retries=INTERACTIVE_AUTOMATCH_MAX_RETRIES,
+                    backoff_seconds=INTERACTIVE_AUTOMATCH_BACKOFF_SECONDS,
+                    external_fallback=False,
+                )
+            except (PlayerDependencyError, PlayerAuthError, PlayerApiError) as exc:
                 if open_fallback:
                     return _build_result(
                         discogs_release_id=resolved_release_id,
@@ -162,7 +195,8 @@ def run_play_release(
             if auto_match_attempted:
                 message = (
                     f"No Spotify mapping found for Discogs release {resolved_release_id}. "
-                    "Auto-match did not find a confident result; run `dplayer match` manually."
+                    "Auto-match did not reach the safe confidence threshold; run "
+                    "`dplayer match` manually to review candidates."
                 )
 
             if open_fallback:
@@ -183,12 +217,14 @@ def run_play_release(
             raise MissingSpotifyMappingError(message)
 
         try:
-            token = get_spotify_access_token(conn=conn)
-            client = SpotifyClient(access_token=token)
-            devices = client.list_devices()
-        except (SpotifyAuthError, SpotifyApiError) as exc:
+            devices = backend.list_devices(conn=conn)
+        except (PlayerDependencyError, PlayerAuthError, PlayerApiError) as exc:
             if open_fallback:
-                reason = "auth_error" if isinstance(exc, SpotifyAuthError) else "api_error"
+                reason = "api_error"
+                if isinstance(exc, PlayerAuthError):
+                    reason = "auth_error"
+                elif isinstance(exc, PlayerDependencyError):
+                    reason = "backend_unavailable"
                 return _build_result(
                     discogs_release_id=resolved_release_id,
                     spotify_album_id=spotify_album_id,
@@ -231,16 +267,16 @@ def run_play_release(
                         message=message,
                     )
 
-                raise NoPlayableDeviceError(
-                    message
-                )
+                raise NoPlayableDeviceError(message)
             chosen_device = choose_auto_device(devices)
             default_device_id = str(chosen_device.get("id"))
             default_device_name = str(chosen_device.get("name") or "") or None
             set_setting("default_spotify_device_id", default_device_id, conn=conn)
             set_setting("default_spotify_device_name", default_device_name, conn=conn)
         else:
-            default_device_name = str(chosen_device.get("name") or "") or default_device_name
+            default_device_name = (
+                str(chosen_device.get("name") or "") or default_device_name
+            )
             set_setting("default_spotify_device_name", default_device_name, conn=conn)
 
         if default_device_id is None:
@@ -262,9 +298,27 @@ def run_play_release(
             raise NoPlayableDeviceError(message)
 
         try:
-            client.start_album_playback(spotify_album_id, device_id=default_device_id)
-        except SpotifyPlaybackError as exc:
+            backend.start_album_playback(
+                spotify_album_id,
+                device_id=default_device_id,
+                conn=conn,
+            )
+        except (
+            PlayerDependencyError,
+            PlayerAuthError,
+            PlayerApiError,
+            PlayerPlaybackError,
+        ) as exc:
             if open_fallback:
+                reason = "playback_error"
+                if isinstance(exc, PlayerPlaybackError):
+                    reason = "playback_error"
+                elif isinstance(exc, PlayerAuthError):
+                    reason = "auth_error"
+                elif isinstance(exc, PlayerDependencyError):
+                    reason = "backend_unavailable"
+                elif isinstance(exc, PlayerApiError):
+                    reason = "api_error"
                 return _build_result(
                     discogs_release_id=resolved_release_id,
                     spotify_album_id=spotify_album_id,
@@ -275,7 +329,7 @@ def run_play_release(
                     auto_matched=auto_matched,
                     playback_started=False,
                     fallback_open_url=_spotify_album_open_url(spotify_album_id),
-                    fallback_reason="playback_error",
+                    fallback_reason=reason,
                     message=str(exc),
                 )
             raise

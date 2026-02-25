@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Optional
 
 from discogs_player.data.db import get_connection
 
 DISCOGS_TOKEN_ENV = "DISCOGS_TOKEN"
+DISCOGS_TOKEN_SETTING_KEYS: tuple[str, ...] = ("discogs_token", DISCOGS_TOKEN_ENV)
+DISCOGS_TOKEN_MISSING_MESSAGE = (
+    "DISCOGS_TOKEN is not set. Export it in your shell or run "
+    "`dplayer config set discogs_token <token>`."
+)
 
 
 def _load_dotenv_if_available() -> None:
@@ -16,14 +22,27 @@ def _load_dotenv_if_available() -> None:
     except ModuleNotFoundError:
         return
     load_dotenv()
+    # GUI desktop launchers may start outside repo root; include project .env explicitly.
+    repo_env = Path(__file__).resolve().parents[3] / ".env"
+    if repo_env.exists():
+        load_dotenv(dotenv_path=repo_env, override=False)
 
 
 def get_discogs_token(conn=None) -> Optional[str]:
     _load_dotenv_if_available()
-    env_value = os.environ.get(DISCOGS_TOKEN_ENV)
+    env_value = str(os.environ.get(DISCOGS_TOKEN_ENV) or "").strip()
     if env_value:
         return env_value
-    return get_setting("discogs_token", conn=conn)
+
+    for key in DISCOGS_TOKEN_SETTING_KEYS:
+        stored = str(get_setting(key, conn=conn) or "").strip()
+        if stored:
+            return stored
+    return None
+
+
+def discogs_token_missing_message() -> str:
+    return DISCOGS_TOKEN_MISSING_MESSAGE
 
 
 def get_setting(key: str, default: Optional[str] = None, conn=None) -> Optional[str]:
@@ -32,7 +51,9 @@ def get_setting(key: str, default: Optional[str] = None, conn=None) -> Optional[
         conn = get_connection()
 
     try:
-        row = conn.execute("SELECT value FROM app_settings WHERE key = ?", (key,)).fetchone()
+        row = conn.execute(
+            "SELECT value FROM app_settings WHERE key = ?", (key,)
+        ).fetchone()
         if row is None:
             return default
         return row["value"]
@@ -70,7 +91,9 @@ def list_settings(conn=None) -> dict[str, str]:
         conn = get_connection()
 
     try:
-        rows = conn.execute("SELECT key, value FROM app_settings ORDER BY key").fetchall()
+        rows = conn.execute(
+            "SELECT key, value FROM app_settings ORDER BY key"
+        ).fetchall()
         return {str(row["key"]): str(row["value"]) for row in rows}
     finally:
         if owns_conn:

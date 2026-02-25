@@ -1,0 +1,53 @@
+"""Market value routes."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Query
+
+from discogs_player.use_cases.value_dashboard import run_market_value_dashboard
+from discogs_player.use_cases.value_refresh import run_refresh_market_values
+from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
+from discogs_player.use_cases.value_status import run_market_value_status
+from discogs_player_api.models import ValueRefreshRequest
+from discogs_player_api.runtime import run_use_case
+
+router = APIRouter(tags=["value"])
+
+
+@router.get("/value/status")
+def api_market_value_status() -> dict[str, object]:
+    return run_use_case(run_market_value_status)
+
+
+@router.get("/value/dashboard")
+def api_market_value_dashboard(
+    top_limit: int = Query(default=10, ge=1),
+    bottom_limit: int = Query(default=2, ge=1),
+    trend_limit: int = Query(default=12, ge=1),
+    detector_limit: int = Query(default=8, ge=1),
+) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_market_value_dashboard(
+            top_limit=int(top_limit),
+            bottom_limit=int(bottom_limit),
+            trend_limit=int(trend_limit),
+            detector_limit=int(detector_limit),
+        )
+    )
+
+
+@router.post("/value/refresh")
+def api_market_value_refresh(request: ValueRefreshRequest) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_refresh_market_values(
+            limit=int(request.limit),
+            stale_days=int(request.stale_days),
+            release_ids=request.release_ids,
+            from_missing=bool(request.from_missing),
+        )
+    )
+
+
+@router.post("/value/snapshot")
+def api_market_value_snapshot() -> dict[str, object]:
+    return run_use_case(run_market_value_snapshot)

@@ -141,7 +141,9 @@ def _normalize_schema_version(value: Any) -> int:
     try:
         schema_version = _to_int(value, field="schema_version")
     except ValueError as exc:
-        raise ValueError("Invalid or missing 'schema_version' in import payload.") from exc
+        raise ValueError(
+            "Invalid or missing 'schema_version' in import payload."
+        ) from exc
     if schema_version < 1:
         raise ValueError("Unsupported schema version in import payload.")
     if schema_version > LATEST_SCHEMA_VERSION:
@@ -206,11 +208,20 @@ def run_import_collection(
             if spotify_album_id:
                 mappings.append(
                     {
-                        "discogs_release_id": int(release["discogs_release_id"]),
+                        "discogs_release_id": _to_int(
+                            release.get("discogs_release_id"),
+                            field=f"releases[{idx}].discogs_release_id",
+                        ),
                         "spotify_album_id": spotify_album_id,
-                        "confidence": _to_optional_float(item.get("spotify_confidence")),
-                        "last_checked_at": _to_optional_str(item.get("spotify_last_checked_at")),
-                        "is_override": _to_bool(item.get("spotify_is_override"), default=False),
+                        "confidence": _to_optional_float(
+                            item.get("spotify_confidence")
+                        ),
+                        "last_checked_at": _to_optional_str(
+                            item.get("spotify_last_checked_at")
+                        ),
+                        "is_override": _to_bool(
+                            item.get("spotify_is_override"), default=False
+                        ),
                     }
                 )
 
@@ -227,12 +238,17 @@ def run_import_collection(
             if has_market_payload:
                 market_prices.append(
                     {
-                        "discogs_release_id": int(release["discogs_release_id"]),
+                        "discogs_release_id": _to_int(
+                            release.get("discogs_release_id"),
+                            field=f"releases[{idx}].discogs_release_id",
+                        ),
                         "lowest": _to_optional_float(item.get("market_lowest")),
                         "median": _to_optional_float(item.get("market_median")),
                         "highest": _to_optional_float(item.get("market_highest")),
                         "currency": _to_optional_str(item.get("market_currency")),
-                        "last_updated_at": _to_optional_str(item.get("market_last_updated_at")),
+                        "last_updated_at": _to_optional_str(
+                            item.get("market_last_updated_at")
+                        ),
                     }
                 )
 
@@ -241,7 +257,9 @@ def run_import_collection(
     conn = get_connection()
     try:
         pre_counts = get_release_counts(conn)
-        pre_settings_count = int(conn.execute("SELECT COUNT(*) FROM app_settings").fetchone()[0])
+        pre_settings_count = int(
+            conn.execute("SELECT COUNT(*) FROM app_settings").fetchone()[0]
+        )
 
         if not dry_run:
             if mode == "replace":
@@ -255,26 +273,47 @@ def run_import_collection(
             imported_release_count = upsert_releases(conn, releases)
             imported_mapping_count = 0
             for mapping in mappings:
+                mapping_discogs_release_id = _to_int(
+                    mapping.get("discogs_release_id"),
+                    field="mappings[].discogs_release_id",
+                )
+                mapping_spotify_album_id = _to_optional_str(mapping.get("spotify_album_id"))
+                if not mapping_spotify_album_id:
+                    continue
+                mapping_confidence = _to_optional_float(mapping.get("confidence"))
+                mapping_last_checked_at = _to_optional_str(mapping.get("last_checked_at"))
+                mapping_is_override = _to_bool(mapping.get("is_override"), default=False)
                 upsert_spotify_mapping(
                     conn,
-                    discogs_release_id=int(mapping["discogs_release_id"]),
-                    spotify_album_id=str(mapping["spotify_album_id"]),
-                    confidence=mapping["confidence"],
-                    last_checked_at=mapping["last_checked_at"],
-                    is_override=bool(mapping["is_override"]),
+                    discogs_release_id=mapping_discogs_release_id,
+                    spotify_album_id=mapping_spotify_album_id,
+                    confidence=mapping_confidence,
+                    last_checked_at=mapping_last_checked_at,
+                    is_override=mapping_is_override,
                 )
                 imported_mapping_count += 1
 
             imported_market_price_count = 0
             for market_price in market_prices:
+                market_discogs_release_id = _to_int(
+                    market_price.get("discogs_release_id"),
+                    field="market_prices[].discogs_release_id",
+                )
+                market_lowest = _to_optional_float(market_price.get("lowest"))
+                market_median = _to_optional_float(market_price.get("median"))
+                market_highest = _to_optional_float(market_price.get("highest"))
+                market_currency = _to_optional_str(market_price.get("currency"))
+                market_last_updated_at = _to_optional_str(
+                    market_price.get("last_updated_at")
+                )
                 upsert_market_price(
                     conn,
-                    discogs_release_id=int(market_price["discogs_release_id"]),
-                    lowest=market_price["lowest"],
-                    median=market_price["median"],
-                    highest=market_price["highest"],
-                    currency=market_price["currency"],
-                    last_updated_at=market_price["last_updated_at"],
+                    discogs_release_id=market_discogs_release_id,
+                    lowest=market_lowest,
+                    median=market_median,
+                    highest=market_highest,
+                    currency=market_currency,
+                    last_updated_at=market_last_updated_at,
                 )
                 imported_market_price_count += 1
 

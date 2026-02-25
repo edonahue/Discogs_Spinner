@@ -13,16 +13,45 @@ dependencies = [
   "rich>=13,<14",
   "httpx>=0.27,<1.0",
   "python-dotenv>=1.0,<2.0",
-  "rapidfuzz>=3.9,<4.0",
+]
+
+[project.optional-dependencies]
+spotify = [
   "keyring>=25,<26",
+  "rapidfuzz>=3.9,<4.0",
+]
+web = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn>=0.30,<1.0",
 ]
 
 [project.scripts]
 dplayer = "discogs_player.main:main"
 dplayer-gui = "discogs_player.ui_main:main"
+dplayer-api = "discogs_player.api_main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+extend-exclude = [
+  "reproduce_carousel_spin.py",
+  "test_carousel_crash.py",
+  "test_spin_debug.py",
+]
+
+[tool.ruff.lint]
+ignore = ["E402"]
+
+[tool.mypy]
+python_version = "3.10"
+
+[[tool.mypy.overrides]]
+module = ["gi", "gi.*"]
+ignore_missing_imports = true
