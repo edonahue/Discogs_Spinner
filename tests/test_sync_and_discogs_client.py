@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from discogs_player.core.settings import set_setting
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import (
     get_release_counts,
@@ -61,6 +62,33 @@ def test_sync_requires_discogs_token(isolated_xdg, monkeypatch):
 
     with pytest.raises(sync_manager.MissingDiscogsTokenError):
         sync_manager.sync_collection()
+
+
+def test_sync_uses_discogs_token_from_settings_when_env_missing(
+    isolated_xdg, monkeypatch
+):
+    monkeypatch.delenv("DISCOGS_TOKEN", raising=False)
+    conn = get_connection()
+    try:
+        set_setting("discogs_token", "stored-token", conn=conn)
+    finally:
+        conn.close()
+
+    seen: dict[str, str] = {}
+
+    class _FakeClientFromSettings:
+        def __init__(self, token: str):
+            seen["token"] = token
+
+        def fetch_collection_releases(self, **kwargs):
+            _ = kwargs
+            return []
+
+    monkeypatch.setattr(sync_manager, "DiscogsClient", _FakeClientFromSettings)
+    summary = sync_manager.sync_collection()
+
+    assert seen["token"] == "stored-token"
+    assert summary["fetched_count"] == 0
 
 
 def test_sync_skips_empty_deactivate_by_default(isolated_xdg, monkeypatch):
@@ -306,3 +334,49 @@ def test_extract_market_price_suggestions():
     assert stats["median"] == 15.0
     assert stats["highest"] == 25.0
     assert stats["currency"] == "USD"
+
+
+def test_extract_release_tracklist_rows():
+    client = DiscogsClient(token="token")
+    rows = client._extract_release_tracklist(
+        {
+            "id": 123,
+            "tracklist": [
+                {
+                    "position": "A1",
+                    "title": "Opening",
+                    "duration": "4:05",
+                    "type_": "track",
+                },
+                {
+                    "position": "",
+                    "title": "Side A",
+                    "duration": "",
+                    "type_": "heading",
+                },
+            ],
+        }
+    )
+
+    assert rows == [
+        {
+            "position": "A1",
+            "title": "Opening",
+            "duration": "4:05",
+            "type": "track",
+            "is_audio_track": True,
+        },
+        {
+            "position": None,
+            "title": "Side A",
+            "duration": None,
+            "type": "heading",
+            "is_audio_track": False,
+        },
+    ]
+
+
+def test_extract_release_tracklist_rejects_invalid_shape():
+    client = DiscogsClient(token="token")
+    with pytest.raises(DiscogsApiError, match="tracklist had unexpected format"):
+        client._extract_release_tracklist({"tracklist": {"position": "A1"}})

@@ -7,13 +7,19 @@ from discogs_player.data.db import get_connection
 from discogs_player.use_cases import device_management
 
 
-class _FakeSpotifyClient:
+class _FakeBackend:
     devices: list[dict[str, object]] = []
 
-    def __init__(self, access_token: str):
-        self.access_token = access_token
+    @classmethod
+    def addon_available(cls) -> bool:
+        return True
 
-    def list_devices(self) -> list[dict[str, object]]:
+    def is_configured(self, *, conn=None) -> bool:
+        _ = conn
+        return True
+
+    def list_devices(self, *, conn=None) -> list[dict[str, object]]:
+        _ = conn
         return [dict(item) for item in self.devices]
 
 
@@ -45,7 +51,7 @@ def test_choose_auto_device_requires_devices():
 
 
 def test_run_list_devices_marks_default(isolated_xdg, monkeypatch):
-    _FakeSpotifyClient.devices = [
+    _FakeBackend.devices = [
         {
             "id": "dev-1",
             "name": "Desk",
@@ -74,8 +80,9 @@ def test_run_list_devices_marks_default(isolated_xdg, monkeypatch):
     finally:
         conn.close()
 
-    monkeypatch.setattr(device_management, "SpotifyClient", _FakeSpotifyClient)
-    monkeypatch.setattr(device_management, "get_spotify_access_token", lambda conn=None: "token")
+    monkeypatch.setattr(
+        device_management, "get_player_backend", lambda: _FakeBackend()
+    )
 
     devices = device_management.run_list_devices()
     assert len(devices) == 2
@@ -83,7 +90,7 @@ def test_run_list_devices_marks_default(isolated_xdg, monkeypatch):
 
 
 def test_run_set_default_device_persists_selection(isolated_xdg, monkeypatch):
-    _FakeSpotifyClient.devices = [
+    _FakeBackend.devices = [
         {
             "id": "dev-1",
             "name": "Desk",
@@ -94,8 +101,9 @@ def test_run_set_default_device_persists_selection(isolated_xdg, monkeypatch):
         }
     ]
 
-    monkeypatch.setattr(device_management, "SpotifyClient", _FakeSpotifyClient)
-    monkeypatch.setattr(device_management, "get_spotify_access_token", lambda conn=None: "token")
+    monkeypatch.setattr(
+        device_management, "get_player_backend", lambda: _FakeBackend()
+    )
 
     selected = device_management.run_set_default_device("dev-1")
     assert selected == {"id": "dev-1", "name": "Desk"}
@@ -109,7 +117,7 @@ def test_run_set_default_device_persists_selection(isolated_xdg, monkeypatch):
 
 
 def test_run_auto_set_default_device_persists_selection(isolated_xdg, monkeypatch):
-    _FakeSpotifyClient.devices = [
+    _FakeBackend.devices = [
         {
             "id": "dev-1",
             "name": "Living Room",
@@ -128,8 +136,9 @@ def test_run_auto_set_default_device_persists_selection(isolated_xdg, monkeypatc
         },
     ]
 
-    monkeypatch.setattr(device_management, "SpotifyClient", _FakeSpotifyClient)
-    monkeypatch.setattr(device_management, "get_spotify_access_token", lambda conn=None: "token")
+    monkeypatch.setattr(
+        device_management, "get_player_backend", lambda: _FakeBackend()
+    )
 
     selected = device_management.run_auto_set_default_device()
     assert selected == {"id": "dev-2", "name": "Linux Desktop"}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from discogs_player.core.settings import set_setting
 from discogs_player.use_cases.config_management import (
     run_config_set,
     run_config_show,
@@ -35,3 +36,27 @@ def test_config_key_validation(isolated_xdg):
 
     with pytest.raises(ValueError):
         run_config_unset(" ")
+
+
+def test_config_set_discogs_token_normalizes_legacy_key(isolated_xdg):
+    result = run_config_set("DISCOGS_TOKEN", "  token-from-cli  ")
+    assert result == {"key": "discogs_token", "value": "token-from-cli"}
+    assert run_config_show() == {"discogs_token": "token-from-cli"}
+
+
+def test_config_set_discogs_token_rejects_empty_value(isolated_xdg):
+    with pytest.raises(ValueError, match="Discogs token cannot be empty"):
+        run_config_set("discogs_token", "   ")
+
+
+def test_config_unset_discogs_token_removes_legacy_alias(isolated_xdg):
+    run_config_set("discogs_token", "canonical-token")
+    set_setting("DISCOGS_TOKEN", "legacy-token")
+    assert run_config_show() == {
+        "DISCOGS_TOKEN": "legacy-token",
+        "discogs_token": "canonical-token",
+    }
+
+    result = run_config_unset("discogs_token")
+    assert result == {"key": "discogs_token", "removed": True}
+    assert run_config_show() == {}

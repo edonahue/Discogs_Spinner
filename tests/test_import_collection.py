@@ -17,7 +17,9 @@ from discogs_player.data.repo import (
 from discogs_player.use_cases.import_collection import run_import_collection
 
 
-def _release(release_id: int, *, artist: str = "Artist", title: str = "Album") -> dict[str, object]:
+def _release(
+    release_id: int, *, artist: str = "Artist", title: str = "Album"
+) -> dict[str, object]:
     return {
         "discogs_release_id": release_id,
         "artist": artist,

@@ -87,4 +87,3 @@ def test_auto_set_default_device_action(monkeypatch):
     assert payload["action"] == "auto_set_default"
     assert payload["default_device"] == {"id": "dev-1", "name": "Desk"}
     assert "Auto-selected default device: Desk [dev-1]" == payload["status_message"]
-

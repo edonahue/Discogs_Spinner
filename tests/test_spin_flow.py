@@ -26,7 +26,10 @@ def test_run_spin_action_returns_selected_release(monkeypatch):
 
     assert payload["action"] == "spin"
     assert payload["discogs_release_id"] == 123
-    assert "Spin selected #123: Nirvana - Nevermind (1991) [seed=42]" == payload["status_message"]
+    assert (
+        "Spin selected #123: Nirvana - Nevermind (1991) [seed=42]"
+        == payload["status_message"]
+    )
 
 
 def test_run_spin_action_reports_random_seed(monkeypatch):
@@ -83,4 +86,3 @@ def test_run_play_last_spin_action_fallback(monkeypatch):
         payload["status_message"]
         == "No mapping. Open URL: https://open.spotify.com/search/test"
     )
-

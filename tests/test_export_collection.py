@@ -52,7 +52,9 @@ def test_export_collection_json_snapshot(isolated_xdg, tmp_path):
         conn.close()
 
     output = tmp_path / "backup.json"
-    result = run_export_collection(output_path=str(output), export_format="json", include_inactive=True)
+    result = run_export_collection(
+        output_path=str(output), export_format="json", include_inactive=True
+    )
 
     assert result["ok"] is True
     assert result["export_format"] == "json"
@@ -84,7 +86,9 @@ def test_export_collection_csv_active_only(isolated_xdg, tmp_path):
         conn.close()
 
     output = tmp_path / "backup.csv"
-    result = run_export_collection(output_path=str(output), export_format="csv", include_inactive=False)
+    result = run_export_collection(
+        output_path=str(output), export_format="csv", include_inactive=False
+    )
 
     assert result["export_format"] == "csv"
     assert result["release_count"] == 1
@@ -95,7 +99,7 @@ def test_export_collection_csv_active_only(isolated_xdg, tmp_path):
     assert len(rows) == 1
     assert rows[0]["discogs_release_id"] == "1"
     assert rows[0]["is_active"] == "1"
-    assert rows[0]["genres"] == "[\"Rock\"]"
+    assert rows[0]["genres"] == '["Rock"]'
     assert rows[0]["market_lowest"] == ""
     assert rows[0]["market_currency"] == ""
 

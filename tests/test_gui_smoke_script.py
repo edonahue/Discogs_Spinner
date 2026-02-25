@@ -37,7 +37,9 @@ def test_gui_smoke_script_emits_valid_json_when_gui_runtime_is_available():
             pytest.skip("GUI runtime dependencies unavailable for smoke execution")
         pytest.fail(f"gui smoke script failed: rc={completed.returncode}\n{stderr}")
 
-    lines = [line.strip() for line in (completed.stdout or "").splitlines() if line.strip()]
+    lines = [
+        line.strip() for line in (completed.stdout or "").splitlines() if line.strip()
+    ]
     assert lines, "gui smoke script produced no stdout"
     payload = json.loads(lines[-1])
     assert payload.get("ok") is True

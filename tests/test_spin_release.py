@@ -4,7 +4,7 @@ import pytest
 
 from discogs_player.core.settings import get_setting
 from discogs_player.data.db import get_connection
-from discogs_player.data.repo import upsert_releases
+from discogs_player.data.repo import upsert_market_price, upsert_releases
 from discogs_player.use_cases.spin_release import NoReleasesFoundError, run_spin_release
 
 
@@ -64,6 +64,33 @@ def test_spin_deterministic_and_persists_last_spin(isolated_xdg):
                 ),
             ],
         )
+        upsert_market_price(
+            conn,
+            discogs_release_id=11,
+            lowest=20.0,
+            median=25.0,
+            highest=30.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
+        upsert_market_price(
+            conn,
+            discogs_release_id=22,
+            lowest=10.0,
+            median=12.0,
+            highest=16.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
+        upsert_market_price(
+            conn,
+            discogs_release_id=33,
+            lowest=30.0,
+            median=35.0,
+            highest=42.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
     finally:
         conn.close()
 
@@ -71,6 +98,8 @@ def test_spin_deterministic_and_persists_last_spin(isolated_xdg):
     second = run_spin_release(seed=42)
 
     assert first["discogs_release_id"] == second["discogs_release_id"]
+    assert isinstance(first.get("market_median"), (int, float))
+    assert first.get("market_currency") == "USD"
 
     conn = get_connection()
     try:

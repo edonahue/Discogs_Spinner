@@ -87,3 +87,31 @@ def test_get_or_fetch_cover_path_migrates_legacy_img_cache(isolated_xdg, monkeyp
     assert resolved_path.read_bytes() == b"\xff\xd8\xfflegacy-jpeg-bytes"
     assert not legacy.exists()
     assert calls["count"] == 0
+
+
+def test_get_or_fetch_cover_path_uses_discogs_friendly_headers(
+    isolated_xdg, monkeypatch
+):
+    captured: dict[str, str] = {}
+
+    def _fake_urlopen(request, timeout=None):
+        _ = timeout
+        header_map = {str(k).lower(): str(v) for k, v in request.header_items()}
+        captured["user_agent"] = header_map.get("user-agent", "")
+        captured["referer"] = header_map.get("referer", "")
+        captured["accept"] = header_map.get("accept", "")
+        captured["accept_language"] = header_map.get("accept-language", "")
+        return _FakeResponse(b"image-bytes")
+
+    monkeypatch.setattr(image_cache.urllib.request, "urlopen", _fake_urlopen)
+    result = image_cache.get_or_fetch_cover_path(
+        (
+            "https://i.discogs.com/hash/rs:fit/h:600/w:600/format:webp/"
+            "discogs-images/R-1.jpg"
+        )
+    )
+    assert result is not None
+    assert "Mozilla/5.0" in captured["user_agent"]
+    assert captured["referer"] == "https://www.discogs.com/"
+    assert "image/" in captured["accept"]
+    assert captured["accept_language"] == "en-US,en;q=0.9"

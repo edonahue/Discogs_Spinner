@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 
 from discogs_player.core.settings import set_setting
-from discogs_player.data.db import get_connection
+from discogs_player.data.db import LATEST_SCHEMA_VERSION, get_connection
 from discogs_player.data.repo import (
     get_release_counts,
     get_wantlist_count,
@@ -22,7 +22,15 @@ from discogs_player.use_cases.list_releases import parse_year_range
 from discogs_player.use_cases.status_report import get_status_report
 
 
-def _release(release_id: int, *, artist: str, title: str, year: int, genres: list[str], styles: list[str]):
+def _release(
+    release_id: int,
+    *,
+    artist: str,
+    title: str,
+    year: int,
+    genres: list[str],
+    styles: list[str],
+):
     return {
         "discogs_release_id": release_id,
         "artist": artist,
@@ -43,7 +51,9 @@ def test_db_schema_is_created(isolated_xdg):
     try:
         names = {
             row[0]
-            for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
         }
         user_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
     finally:
@@ -56,8 +66,13 @@ def test_db_schema_is_created(isolated_xdg):
         "wantlist",
         "market_prices",
         "market_value_snapshots",
+        "release_tracklist_cache",
+        "release_tracks",
+        "wantlist_market_prices",
+        "wantlist_tracklist_cache",
+        "wantlist_tracks",
     }.issubset(names)
-    assert user_version == 4
+    assert user_version == LATEST_SCHEMA_VERSION
 
 
 def test_db_migrates_legacy_v0_database(isolated_xdg, tmp_path):
@@ -101,11 +116,15 @@ def test_db_migrates_legacy_v0_database(isolated_xdg, tmp_path):
     try:
         names = {
             row[0]
-            for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
         }
         index_names = {
             row[0]
-            for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'index'").fetchall()
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'index'"
+            ).fetchall()
         }
         user_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
     finally:
@@ -118,6 +137,11 @@ def test_db_migrates_legacy_v0_database(isolated_xdg, tmp_path):
         "wantlist",
         "market_prices",
         "market_value_snapshots",
+        "release_tracklist_cache",
+        "release_tracks",
+        "wantlist_market_prices",
+        "wantlist_tracklist_cache",
+        "wantlist_tracks",
     }.issubset(names)
     assert {
         "idx_releases_is_active",
@@ -129,8 +153,14 @@ def test_db_migrates_legacy_v0_database(isolated_xdg, tmp_path):
         "idx_market_prices_last_updated_at",
         "idx_market_prices_currency",
         "idx_market_value_snapshots_captured_at",
+        "idx_release_tracklist_cache_last_refreshed_at",
+        "idx_release_tracks_release_id_seq",
+        "idx_wantlist_market_prices_last_updated_at",
+        "idx_wantlist_market_prices_currency",
+        "idx_wantlist_tracklist_cache_last_refreshed_at",
+        "idx_wantlist_tracks_release_id_seq",
     }.issubset(index_names)
-    assert user_version == 4
+    assert user_version == LATEST_SCHEMA_VERSION
 
 
 def test_db_migrates_v1_database_to_v4(isolated_xdg, tmp_path):
@@ -177,14 +207,25 @@ def test_db_migrates_v1_database_to_v4(isolated_xdg, tmp_path):
     try:
         names = {
             row[0]
-            for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
         }
         user_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
     finally:
         conn.close()
 
-    assert {"wantlist", "market_prices", "market_value_snapshots"}.issubset(names)
-    assert user_version == 4
+    assert {
+        "wantlist",
+        "market_prices",
+        "market_value_snapshots",
+        "release_tracklist_cache",
+        "release_tracks",
+        "wantlist_market_prices",
+        "wantlist_tracklist_cache",
+        "wantlist_tracks",
+    }.issubset(names)
+    assert user_version == LATEST_SCHEMA_VERSION
 
 
 def test_db_migrates_v3_database_to_v4(isolated_xdg, tmp_path):
@@ -250,14 +291,23 @@ def test_db_migrates_v3_database_to_v4(isolated_xdg, tmp_path):
     try:
         names = {
             row[0]
-            for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
         }
         user_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
     finally:
         conn.close()
 
-    assert "market_value_snapshots" in names
-    assert user_version == 4
+    assert {
+        "market_value_snapshots",
+        "release_tracklist_cache",
+        "release_tracks",
+        "wantlist_market_prices",
+        "wantlist_tracklist_cache",
+        "wantlist_tracks",
+    }.issubset(names)
+    assert user_version == LATEST_SCHEMA_VERSION
 
 
 def test_repo_filters_and_counts(isolated_xdg):
@@ -404,6 +454,10 @@ def test_status_report_shape_and_values(isolated_xdg):
     assert report["release_count_active"] == 1
     assert report["mapped_count"] == 0
     assert report["unmatched_count"] == 1
+    assert report["wantlist_count_total"] == 1
+    assert report["wantlist_count_active"] == 1
+    assert report["wantlist_mapped_count"] == 0
+    assert report["wantlist_unmatched_count"] == 1
     assert report["last_sync_time"] == "2026-02-07T00:00:00+00:00"
     assert report["last_spin_release_id"] == 7
     assert report["default_spotify_device"] == {"id": "device-1", "name": "Desk"}
