@@ -113,6 +113,33 @@ Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
 - Post-checkpoint update: Windows/macOS clean-runner pilot validation automation pass has been recorded (workflow-backed command-path checks).
 - Post-checkpoint update: rollout decision is currently **NO-GO** for widening beyond pilot cohort until remaining manual OS validations close.
 
+## Plan Alignment Snapshot (As Of 2026-02-26)
+
+Reference plan: `project_plan.md` (original CLI-first MVP + stretch-goal baseline).
+
+### Original Plan Goals vs Current State
+
+| Plan area (`project_plan.md`) | Planned scope | Current state | Status |
+| --- | --- | --- | --- |
+| Discogs sync + local cache | Sync collection into SQLite with incremental updates and CLI-verifiable results | Implemented and operating with sync, persistence, migrations, and release/readiness validation evidence | Complete |
+| CLI-lite over SSH | Core commands (`sync`, `status`, `list`, `spin`, `play`, `devices`, `match`, `config`) with JSON options | Implemented and expanded (`setup`, `open`, `recent`, `analytics`, `wantlist`, `value`, `review`, `bootstrap`, etc.) | Complete (exceeds MVP) |
+| Spotify playback (optional) | OAuth, device selection, playback on default device, fallback messaging | Implemented as capability-aware optional addon with auth doctor, device controls, play/open fallback flows | Complete |
+| Desktop UI as thin layer on shared core | Later-phase GTK UI using shared use-cases (no UI-side API calls) | Implemented with browse/wantlist/value surfaces and shared use-case architecture; complexity now needs stabilization hardening | Complete (now in stabilization) |
+| Stretch goals (market value, wantlist, analytics, export) | Designed-in for later expansion | Implemented substantially beyond MVP baseline and already available in CLI/GUI flows | Complete (ahead of plan) |
+| Non-goals guardrail | No embedded audio streaming in app UI | Preserved; documentation and UX explicitly state external-app playback control only | On-plan |
+
+Overall position vs original plan:
+
+- Ahead on feature scope and command/UI breadth.
+- Behind only on final release hardening for wider rollout (manual cross-OS checklist closures still open).
+
+### Dated Roadmap Progress (This File)
+
+- Phase 1 (Documentation Convergence, 2026-02-23 to 2026-03-01): In progress; canonical-state ownership, README alignment, and historical-doc positioning are largely done. Remaining work includes Sphinx toctree/file alignment.
+- Phase 2 (Stabilization And Responsiveness, 2026-03-01 to 2026-03-31): Pre-kickoff groundwork is in place (`STABILIZATION_BACKLOG_2026Q1.md`, execution tracker); full execution is next.
+- Phase 3 (UX Simplification And Flow Hardening, 2026-04-01 to 2026-04-30): Not started.
+- Phase 4 (Next Feature Block, 2026-05-01 to 2026-06-30): Not started.
+
 ## Current Gaps And Risks
 
 1. Documentation drift

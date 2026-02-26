@@ -76,6 +76,7 @@ At this checkpoint:
 Current documentation posture and ownership:
 
 - Canonical product + roadmap state: `PRODUCT_STATE.md`
+- Canonical plan-vs-current alignment snapshot: `PRODUCT_STATE.md` -> `Plan Alignment Snapshot (As Of 2026-02-26)`
 - Live release execution state: `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`
 - Validation evidence ledger: `docs/TESTING_PERFORMED_2026-02-26.md`
 - Release notes record for current RC: `docs/releases/v0.2.0-rc4.md`
