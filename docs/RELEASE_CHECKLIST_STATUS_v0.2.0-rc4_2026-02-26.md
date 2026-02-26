@@ -10,6 +10,7 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 - Tagged-release run: `https://github.com/edonahue/Discogs_Spinner/actions/runs/22426315828`
 - Post-release validation issue: `https://github.com/edonahue/Discogs_Spinner/issues/1`
 - Notes file: `docs/releases/v0.2.0-rc4.md`
+- Step-2 manual validation runbook: `docs/RELEASE_STEP2_MANUAL_VALIDATION_RUNBOOK_v0.2.0-rc4_2026-02-26.md`
 
 ## Global Pre-Release Gate
 
