@@ -1,4 +1,4 @@
-# discogs_player Web App
+# Discogs Spinner Web App
 
 React + TypeScript frontend scaffold for the local `dplayer-api` service.
 
@@ -7,6 +7,7 @@ React + TypeScript frontend scaffold for the local `dplayer-api` service.
 - Reads status data from the API and renders a lightweight dashboard.
 - Uses `GET /api/v1/status` as the primary integration contract.
 - Intended to remain API-first so it can be wrapped by desktop packaging later.
+- Does not stream audio itself; playback is delegated to external services/apps.
 
 ## Prerequisites
 

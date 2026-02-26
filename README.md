@@ -1,7 +1,13 @@
-# discogs_player
+# Discogs Spinner
 
-Discogs-first collection sync and playback helper with a CLI core plus optional
-Spotify, API, web, and desktop-distribution layers.
+Discogs-first collection sync and external-playback helper with a CLI core plus
+optional Spotify, API, web, and desktop-distribution layers.
+
+Important: this app does not stream audio inside its own UI. It opens and
+controls playback in external apps/services (for example Spotify).
+
+Repository name: `Discogs_Spinner`  
+Internal Python package/CLI names currently remain `discogs_player` / `dplayer`.
 
 ## Product State And Roadmap
 

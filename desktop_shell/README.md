@@ -1,6 +1,9 @@
-# discogs_player Desktop Shell
+# Discogs Spinner Desktop Shell
 
 Tauri-oriented desktop packaging scaffold for cross-platform distribution.
+
+This shell is for library browsing and external playback control, not embedded
+audio streaming.
 
 ## Direction
 
