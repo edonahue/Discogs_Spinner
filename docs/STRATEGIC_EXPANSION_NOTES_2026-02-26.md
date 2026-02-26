@@ -135,6 +135,7 @@ Current implementation status against this plan:
 - First release checklist/runbook pass is now recorded (`docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`).
 - Main remaining operational step at checkpoint capture was GitHub credential setup for `git push`.
 - Post-checkpoint update: `master` has been pushed to `origin`.
+- Post-checkpoint update: existing local RC tag `v0.2.0-rc1` has been pushed to GitHub.
 
 Checkpoint references:
 

@@ -31,6 +31,8 @@ npm --prefix webapp run build
 - `npm --prefix webapp run build`: PASS (Vite build completed)
 - `gui_smoke_test.sh 12`: PASS (`ok: true`)
 - `gallery_ux_smoke.sh 12`: PASS (`ok: true`)
+- `git push ... v0.2.0-rc1`: PASS (existing local RC tag pushed to GitHub)
+- `git ls-remote --tags origin v0.2.0-rc1*`: PASS (remote tag confirmed)
 
 ## Global Pre-Release Gate Status
 

@@ -60,5 +60,6 @@ At this checkpoint:
 
 - `master` was pushed to GitHub and now tracks `origin/master`.
 - Push path used SSH auth (`git@github.com:edonahue/Discogs_Spinner.git`) after HTTPS credential flow remained non-interactive in this environment.
+- Existing local RC tag `v0.2.0-rc1` was pushed to GitHub.
 - First checklist/runbook pass execution is recorded in:
   - `docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`
