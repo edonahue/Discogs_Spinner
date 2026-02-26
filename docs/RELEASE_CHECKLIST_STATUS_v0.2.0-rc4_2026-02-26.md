@@ -84,7 +84,7 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 
 - [x] Triage install/auth/playback bug reports.
 - [x] Record top friction points in roadmap/backlog docs.
-- [ ] Decide go/no-go for widening audience beyond initial pilot-user cohort.
+- [x] Decide go/no-go for widening audience beyond initial pilot-user cohort.
 
 ## Notes
 
@@ -97,3 +97,9 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 - Debian open blockers from the same pass:
   - Clean-venv install from Linux artifacts failed because this shell environment currently cannot resolve package index DNS (`httpx` dependency lookup failed), so clean baseline install remains unchecked.
   - Launcher install wiring works (desktop entry/script/icon created), but launcher runtime smoke under headless sandbox remained unstable (`Gtk couldn't be initialized` in this runtime), so launcher integration remains unchecked pending clean desktop-session validation.
+- Debian desktop-session follow-up (2026-02-26 UTC):
+  - Current shell session reports `XDG_SESSION_TYPE=tty` with no `DISPLAY`, so clean desktop-session GUI validation is not available in this environment.
+  - Launcher integration script validation passed for install/uninstall wiring in isolated XDG paths (launcher/desktop-entry/icon created and removed as expected).
+  - Launcher runtime validation remains blocked here (`Gtk couldn't be initialized`) in both direct and `xvfb` runs under this sandbox runtime.
+- Go/no-go decision (2026-02-26 UTC): **NO-GO** for widening audience beyond pilot-user cohort.
+  - Reason: required manual clean-machine validations remain open (Windows FTUX, Debian clean install/launcher runtime in real desktop session, macOS onboarding/Gatekeeper checks).

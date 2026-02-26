@@ -78,6 +78,45 @@ Blocking observations:
 - Clean-venv install from generated artifact wheels failed in this shell environment because `pip` dependency resolution to package index failed (`Could not find a version that satisfies the requirement httpx<1.0,>=0.27` after DNS resolution errors).
 - Launcher install script created desktop entry/launcher/icon as expected in isolated XDG paths, but launcher runtime smoke under this headless sandbox exited non-zero with `Gtk couldn't be initialized`.
 
+## Validation Pass D (All-3 Execution Gates)
+
+Context: user-requested execution of all three next steps with full testing between each.
+
+Full matrix command set (run three times: pre-push, post-push, pre-go/no-go):
+
+```bash
+bash ./scripts/prepublish_hygiene_check.sh
+venv/bin/ruff check .
+venv/bin/python -m mypy src/discogs_player --show-error-codes --hide-error-context
+venv/bin/python -m pytest -q
+npm --prefix webapp run build
+./scripts/gui_smoke_test.sh 12
+./scripts/gallery_ux_smoke.sh 12
+venv/bin/python -m sphinx -b html docs/source /tmp/discogs_player_sphinx_build
+```
+
+Results:
+
+- All three full matrix passes: PASS.
+- `pytest` each run: `369 passed, 3 skipped`.
+
+Debian desktop-session validation commands run during this window:
+
+```bash
+python3 -m venv /tmp/.../core/.venv && /tmp/.../core/.venv/bin/pip install dist/artifacts/linux-x86_64/core-wheel.whl
+python3 -m venv /tmp/.../plus/.venv && /tmp/.../plus/.venv/bin/pip install dist/artifacts/linux-x86_64/plus-wheel.whl
+XDG_DATA_HOME=/tmp/... INSTALL_BIN_DIR=/tmp/... ./scripts/install_desktop_app.sh
+/tmp/.../discogs-player-gui --smoke-test --limit 12
+xvfb-run -a /tmp/.../discogs-player-gui --smoke-test --limit 12
+XDG_DATA_HOME=/tmp/... INSTALL_BIN_DIR=/tmp/... ./scripts/uninstall_desktop_app.sh
+```
+
+Results:
+
+- Clean artifact installs (core/plus): FAIL in this environment due DNS resolution failures to package index dependencies (`httpx`).
+- Launcher integration wiring (install/uninstall): PASS.
+- Launcher runtime smoke (direct + `xvfb`): FAIL (`Gtk couldn't be initialized`) in this tty/headless sandbox runtime.
+
 ## Release Automation Evidence
 
 - `v0.2.0-rc2` tagged-release run: failed on macOS artifact step

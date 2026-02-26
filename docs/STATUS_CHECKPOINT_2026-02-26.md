@@ -69,3 +69,4 @@ At this checkpoint:
   - `https://github.com/edonahue/Discogs_Spinner/releases/tag/v0.2.0-rc4`
 - Live checklist status for `v0.2.0-rc4` is recorded in:
   - `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`
+- Rollout decision as of latest follow-up update: **NO-GO** for widening audience beyond pilot cohort until remaining manual OS validation items are closed.
