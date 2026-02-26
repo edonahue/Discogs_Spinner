@@ -40,8 +40,8 @@ This checklist is optimized for the staged rollout order agreed in strategic pla
 
 ### User Acceptance
 
-- [ ] Technical user path (technical pilot-user) completes without blocker.
-- [ ] Non-technical user path (non-technical pilot-user) completes with guided instructions only.
+- [ ] Technical pilot-user path completes without blocker.
+- [ ] Non-technical pilot-user path completes with guided instructions only.
 
 ## Stage 2: Debian Linux
 

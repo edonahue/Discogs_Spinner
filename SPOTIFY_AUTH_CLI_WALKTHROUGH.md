@@ -14,7 +14,7 @@ pip install -e ".[spotify]"
 
 ## 2) Run from repo immediately (no console-script install required)
 
-From `<repo-root>`:
+From repo root:
 
 ```bash
 source .venv/bin/activate
@@ -101,7 +101,7 @@ Prefer `--callback-url` when possible because it validates OAuth state. `--code`
 
 ## 5) SSH/headless flow (recommended)
 
-If the command runs on the remote machine (`<remote-host>`) but browser is on your local machine, use SSH local port forwarding:
+If the command runs on a remote machine but browser is on your local machine, use SSH local port forwarding:
 
 ```bash
 ssh -L 8765:127.0.0.1:8765 <user>@<remote-host>
@@ -115,7 +115,7 @@ source .venv/bin/activate
 dplayer auth spotify --listen-host 127.0.0.1 --listen-port 8765
 ```
 
-Open the printed Spotify URL in a browser on your local machine. The callback to `127.0.0.1:8765` tunnels back to `<remote-host>`.
+Open the printed Spotify URL in a browser on your local machine. The callback to `127.0.0.1:8765` tunnels back to the remote host.
 
 ## 6) Validate auth
 

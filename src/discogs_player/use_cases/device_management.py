@@ -32,7 +32,7 @@ def _score_device(device: dict[str, object]) -> int:
         score += 10
 
     name = str(device.get("name") or "").lower()
-    for hint in ("desktop", "desktop-host", "linux", "pc"):
+    for hint in ("desktop", "computer", "linux", "pc"):
         if hint in name:
             score += 10
 

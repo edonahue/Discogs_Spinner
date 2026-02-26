@@ -120,7 +120,7 @@ Capture long-range vision, medium-term product goals, and short-term release pri
 
 ## Milestone Intent
 
-- **By ~8-12 weeks:** shareable release suitable for pilot users trials.
+- **By ~8-12 weeks:** shareable release suitable for two pilot-user trials.
 - **After stabilization:** multi-OS easy-install hardening.
 - **Later:** mobile companion and monetization experiments based on usage evidence.
 

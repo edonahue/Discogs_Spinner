@@ -70,7 +70,7 @@ venv/bin/python -m discogs_player.main play 2252753 --open --json
 Outcome (key fields):
 
 - `playback_started: true`
-- `device_name: "desktop-host"`
+- `device_name: "<desktop-device>"`
 - `spotify_album_id: "2aZJ2ficY62PipHzQRJ7IK"`
 - `spotify_open_url: "https://open.spotify.com/album/2aZJ2ficY62PipHzQRJ7IK"`
 

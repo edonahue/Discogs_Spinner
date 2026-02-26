@@ -52,7 +52,7 @@ Before making the repo public:
 - [ ] Add a LICENSE file (MIT, Apache 2.0, or GPL)
 - [ ] Harden `.gitignore` (add `.env`, `*.db`, `exports/`, `*.log`, `.coverage`)
 - [ ] Audit git history for any committed secrets or personal tokens
-- [ ] Remove or genericize hardcoded paths (e.g., `<home-user>/` in walkthrough docs)
+- [ ] Remove or genericize hardcoded paths (use placeholders like `<repo-root>` in walkthrough docs)
 - [ ] Remove personal collection data from `exports/` directory
 - [ ] Remove scratch/debug scripts from repo root (`test_carousel_crash.py`, `test_spin_debug.py`, `reproduce_carousel_spin.py`)
 - [ ] Review all markdown files for personal information
