@@ -103,3 +103,9 @@ Purpose: execution status for expanded-plan steps 1 and 2.
   - Launcher runtime validation remains blocked here (`Gtk couldn't be initialized`) in both direct and `xvfb` runs under this sandbox runtime.
 - Go/no-go decision (2026-02-26 UTC): **NO-GO** for widening audience beyond pilot-user cohort.
   - Reason: required manual clean-machine validations remain open (Windows FTUX, Debian clean install/launcher runtime in real desktop session, macOS onboarding/Gatekeeper checks).
+- Windows/macOS pilot validation automation follow-up (2026-02-26 UTC):
+  - Added clean-runner workflow: `.github/workflows/pilot_validation_windows_macos.yml`.
+  - Added validation harness: `scripts/ci_pilot_validation.py`.
+  - Triggered by push commit `2a682e4` to `master`.
+  - Expected evidence from run: clean artifact install + `setup`/`status`/`sync`(missing-token path)/`list`/`spin`/`play --open`/`auth spotify-doctor` command-path checks on `windows-latest` and `macos-latest`.
+  - Local shell could not query GitHub Actions status due DNS resolution failure (`github.com`/`api.github.com`), so this run outcome is pending explicit capture from Actions UI/API.

@@ -117,6 +117,28 @@ Results:
 - Launcher integration wiring (install/uninstall): PASS.
 - Launcher runtime smoke (direct + `xvfb`): FAIL (`Gtk couldn't be initialized`) in this tty/headless sandbox runtime.
 
+## Validation Pass E (Windows/macOS Pilot Automation Kickoff)
+
+Commands run:
+
+```bash
+venv/bin/ruff check scripts/ci_pilot_validation.py
+venv/bin/python -m py_compile scripts/ci_pilot_validation.py
+venv/bin/python -m pytest -q tests/test_core_plus_ci_workflow.py tests/test_tagged_release_workflow.py
+git push git@github.com:edonahue/Discogs_Spinner.git master:master
+```
+
+Results:
+
+- New workflow added: `.github/workflows/pilot_validation_windows_macos.yml` (clean-runner validation on `windows-latest` + `macos-latest`).
+- New validation harness added: `scripts/ci_pilot_validation.py`.
+- Lint/compile/workflow tests: PASS.
+- Push trigger: PASS (`4390aca..2a682e4  master -> master`).
+
+Blocking observation:
+
+- Follow-up status polling for the triggered run could not be captured from this shell due DNS resolution failure to GitHub hosts (`github.com`, `api.github.com`) at validation time.
+
 ## Release Automation Evidence
 
 - `v0.2.0-rc2` tagged-release run: failed on macOS artifact step
