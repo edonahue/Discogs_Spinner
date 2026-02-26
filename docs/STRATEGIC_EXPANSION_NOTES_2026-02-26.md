@@ -136,6 +136,8 @@ Current implementation status against this plan:
 - Main remaining operational step at checkpoint capture was GitHub credential setup for `git push`.
 - Post-checkpoint update: `master` has been pushed to `origin`.
 - Post-checkpoint update: existing local RC tag `v0.2.0-rc1` has been pushed to GitHub.
+- Post-checkpoint update: tagged-release workflow is green for `v0.2.0-rc4` with published cross-OS assets.
+- Post-checkpoint update: Phase-2 execution has started with tracker `docs/STABILIZATION_EXECUTION_2026Q1.md`.
 
 Checkpoint references:
 

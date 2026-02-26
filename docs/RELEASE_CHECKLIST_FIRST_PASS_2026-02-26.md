@@ -3,6 +3,10 @@
 Date: 2026-02-26 (UTC)  
 Scope: First execution pass of `docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md` and `docs/RC_RELEASE_RUNBOOK.md`.
 
+Follow-up status for the currently published RC is tracked in:
+
+- `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`
+
 ## Run Scope And Context
 
 - Branch at run start: `master`

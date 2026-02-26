@@ -63,3 +63,9 @@ At this checkpoint:
 - Existing local RC tag `v0.2.0-rc1` was pushed to GitHub.
 - First checklist/runbook pass execution is recorded in:
   - `docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`
+- Tagged-release workflow has since been stabilized and is green on `v0.2.0-rc4`:
+  - `https://github.com/edonahue/Discogs_Spinner/actions/runs/22426315828`
+- GitHub release for `v0.2.0-rc4` is published with cross-OS artifacts:
+  - `https://github.com/edonahue/Discogs_Spinner/releases/tag/v0.2.0-rc4`
+- Live checklist status for `v0.2.0-rc4` is recorded in:
+  - `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`

@@ -108,6 +108,8 @@ Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
 - At checkpoint capture time, latest local commits were ready for first push.
 - At checkpoint capture time, `git push` required local GitHub credential setup in this environment.
 - Post-checkpoint update: `master` has been pushed and tracks `origin/master`.
+- Post-checkpoint update: tagged-release workflow is green on `v0.2.0-rc4` (all OS artifact jobs + publish succeeded).
+- Post-checkpoint update: live release checklist status is tracked in `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`.
 
 ## Current Gaps And Risks
 
@@ -197,6 +199,6 @@ Selection rule:
 
 These are the immediate next actions following this document:
 
-1. Complete GitHub auth setup and push `master` to `Discogs_Spinner`.
-2. Execute first public release checklist/runbook pass (`docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md`, `docs/RC_RELEASE_RUNBOOK.md`).
-3. Continue stabilization backlog execution (`STABILIZATION_BACKLOG_2026Q1.md`).
+1. Close remaining manual checklist items for `v0.2.0-rc4` (clean-machine pilot validations on Windows/Debian/macOS + rollout go/no-go).
+2. Execute 72-hour post-release follow-up loop from issue `#1` and capture friction outcomes.
+3. Continue Phase-2 stabilization execution (`STABILIZATION_BACKLOG_2026Q1.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`).

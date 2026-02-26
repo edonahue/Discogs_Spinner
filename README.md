@@ -14,17 +14,19 @@ Internal Python package/CLI names currently remain `discogs_player` / `dplayer`.
 Current canonical product state:
 
 - `PRODUCT_STATE.md` (goals, current capabilities, risks, dated roadmap)
-- `docs/STATUS_CHECKPOINT_2026-02-26.md` (current execution checkpoint + publish blocker/next actions)
+- `docs/STATUS_CHECKPOINT_2026-02-26.md` (execution checkpoint snapshot + post-checkpoint updates)
 - `docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md` (API/web/desktop execution order)
 - `docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md` (ambitious long-term + medium-term + short-term release/monetization intent)
 - `docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md` (staged release gate: Windows -> Debian -> macOS)
 - `docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md` (first checklist/runbook execution evidence)
+- `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md` (live checklist status for `v0.2.0-rc4`)
 - `docs/RC_RELEASE_RUNBOOK.md` (tag-and-publish release-candidate procedure)
 - `docs/RELEASE_NOTES_TEMPLATE.md` (standard release notes format)
 
 Current stabilization execution backlog:
 
 - `STABILIZATION_BACKLOG_2026Q1.md` (Phase 2 kickoff: bug/perf/usability only)
+- `docs/STABILIZATION_EXECUTION_2026Q1.md` (Phase 2 execution tracker and kickoff baseline)
 
 Latest validation evidence:
 

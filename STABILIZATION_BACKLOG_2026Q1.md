@@ -3,6 +3,7 @@
 Date: 2026-02-23 (UTC)
 Scope window: 2026-03-01 to 2026-03-31
 Source roadmap: `PRODUCT_STATE.md` (Phase 2)
+Execution tracker: `docs/STABILIZATION_EXECUTION_2026Q1.md`
 
 ## Scope Guardrails
 
