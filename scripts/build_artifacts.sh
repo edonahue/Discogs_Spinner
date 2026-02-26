@@ -42,12 +42,27 @@ PIP_WHEEL_NO_DEPS="${PIP_WHEEL_NO_DEPS:-0}"
 
 mkdir -p "$ARTIFACT_DIR"
 
+make_temp_dir() {
+  local tmp_dir=""
+  # GNU mktemp supports `mktemp -d`; BSD/macOS requires `-t` when no template is passed.
+  if tmp_dir="$(mktemp -d 2>/dev/null)"; then
+    printf '%s\n' "$tmp_dir"
+    return 0
+  fi
+  if tmp_dir="$(mktemp -d -t discogs_player_artifacts 2>/dev/null)"; then
+    printf '%s\n' "$tmp_dir"
+    return 0
+  fi
+  echo "Failed to create temporary directory with mktemp." >&2
+  return 1
+}
+
 build_profile() {
   local profile="$1"
   local requirement="$2"
 
   local tmp_dir
-  tmp_dir="$(mktemp -d)"
+  tmp_dir="$(make_temp_dir)"
 
   echo "Building ${profile} wheel bundle for ${PLATFORM_TAG}..."
   local wheel_args=()
