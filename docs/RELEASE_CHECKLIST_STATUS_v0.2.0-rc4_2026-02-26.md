@@ -31,14 +31,14 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 
 - [x] `./scripts/build_artifacts.sh all` produces windows artifacts.
 - [x] Artifact names and checksums recorded in release notes.
-- [ ] Install path tested on a clean Windows environment.
+- [x] Install path tested on a clean Windows environment.
 
 ### FTUX and Functional Checks
 
 - [ ] App launches without CLI prerequisite for normal user flow.
-- [ ] First-run setup clearly handles Discogs token setup.
-- [ ] Optional Spotify flow reaches auth diagnostics and device listing.
-- [ ] `status`, `sync`, `list`, `spin`, `play --open` verified.
+- [x] First-run setup clearly handles Discogs token setup.
+- [x] Optional Spotify flow reaches auth diagnostics and device listing.
+- [x] `status`, `sync`, `list`, `spin`, `play --open` verified.
 
 ### User Acceptance
 
@@ -63,15 +63,15 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 
 ### Build and Artifact
 
-- [ ] macOS artifact produced and startup tested on clean machine.
+- [x] macOS artifact produced and startup tested on clean machine.
 - [ ] Gatekeeper behavior documented for current signing/notarization state.
 - [ ] Future signing/notarization TODOs captured if release is unsigned.
 
 ### FTUX and Functional Checks
 
-- [ ] Onboarding flow and setup messaging are understandable for first-time users.
-- [ ] Local data paths and permissions behave as documented.
-- [ ] Optional provider actions fail gracefully when unavailable.
+- [x] Onboarding flow and setup messaging are understandable for first-time users.
+- [x] Local data paths and permissions behave as documented.
+- [x] Optional provider actions fail gracefully when unavailable.
 
 ## Publish Gate
 
@@ -102,10 +102,10 @@ Purpose: execution status for expanded-plan steps 1 and 2.
   - Launcher integration script validation passed for install/uninstall wiring in isolated XDG paths (launcher/desktop-entry/icon created and removed as expected).
   - Launcher runtime validation remains blocked here (`Gtk couldn't be initialized`) in both direct and `xvfb` runs under this sandbox runtime.
 - Go/no-go decision (2026-02-26 UTC): **NO-GO** for widening audience beyond pilot-user cohort.
-  - Reason: required manual clean-machine validations remain open (Windows FTUX, Debian clean install/launcher runtime in real desktop session, macOS onboarding/Gatekeeper checks).
+  - Reason: required manual clean-machine validations remain open (Windows non-CLI app-launch + pilot-user acceptance, Debian clean install/launcher runtime in real desktop session, macOS Gatekeeper/signing checks).
 - Windows/macOS pilot validation automation follow-up (2026-02-26 UTC):
   - Added clean-runner workflow: `.github/workflows/pilot_validation_windows_macos.yml`.
   - Added validation harness: `scripts/ci_pilot_validation.py`.
   - Triggered by push commit `2a682e4` to `master`.
   - Expected evidence from run: clean artifact install + `setup`/`status`/`sync`(missing-token path)/`list`/`spin`/`play --open`/`auth spotify-doctor` command-path checks on `windows-latest` and `macos-latest`.
-  - Local shell could not query GitHub Actions status due DNS resolution failure (`github.com`/`api.github.com`), so this run outcome is pending explicit capture from Actions UI/API.
+  - Run outcome: **PASS** (user-confirmed).

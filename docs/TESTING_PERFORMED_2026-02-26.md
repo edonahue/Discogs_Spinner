@@ -139,6 +139,25 @@ Blocking observation:
 
 - Follow-up status polling for the triggered run could not be captured from this shell due DNS resolution failure to GitHub hosts (`github.com`, `api.github.com`) at validation time.
 
+## Validation Pass F (Windows/macOS Pilot Workflow Result)
+
+Result confirmation:
+
+- Workflow `Pilot Validation (Windows/macOS)` outcome for the triggered clean-runner validation was confirmed as **PASS**.
+
+Coverage confirmed by that workflow:
+
+- Build artifacts on `windows-latest` and `macos-latest`.
+- Clean profile command-path checks from built artifacts:
+  - `setup --json`,
+  - `status --json`,
+  - `sync` (expected missing-token path),
+  - `list --json`,
+  - `spin --json`,
+  - `play --open --json`,
+  - `auth spotify-doctor --json`,
+  - `devices --json` (success or expected missing-token guidance).
+
 ## Release Automation Evidence
 
 - `v0.2.0-rc2` tagged-release run: failed on macOS artifact step
