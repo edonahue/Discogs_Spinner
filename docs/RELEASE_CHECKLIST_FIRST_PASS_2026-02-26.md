@@ -51,3 +51,16 @@ npm --prefix webapp run build
 
 - Stage 1 (Windows), Stage 2 (Debian), and Stage 3 (macOS) validation items are still pending.
 - Publish-gate and 72-hour post-release follow-up items are still pending.
+
+## Tagged Release Workflow Status (v0.2.0-rc2)
+
+- Triggered by pushing tag `v0.2.0-rc2`.
+- Workflow run: `https://github.com/edonahue/Discogs_Spinner/actions/runs/22425924450`
+- Run status: `completed` with `failure`.
+- Job status:
+  - `Build Release Artifacts (ubuntu-latest)`: success
+  - `Build Release Artifacts (windows-latest)`: success
+  - `Build Release Artifacts (macos-latest)`: failure
+  - `Publish GitHub Release`: skipped
+- Failed step on macOS job: `Build core and plus artifacts`.
+- `GET /releases/tags/v0.2.0-rc2` returned `404` immediately after run completion, confirming release publication did not complete for this tag.
