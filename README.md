@@ -8,6 +8,10 @@ Current canonical product state:
 
 - `PRODUCT_STATE.md` (goals, current capabilities, risks, dated roadmap)
 - `docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md` (API/web/desktop execution order)
+- `docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md` (ambitious long-term + medium-term + short-term release/monetization intent)
+- `docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md` (staged release gate: Windows -> Debian -> macOS)
+- `docs/RC_RELEASE_RUNBOOK.md` (tag-and-publish release-candidate procedure)
+- `docs/RELEASE_NOTES_TEMPLATE.md` (standard release notes format)
 
 Current stabilization execution backlog:
 
@@ -22,6 +26,20 @@ Historical snapshots (not canonical current state):
 - `PROJECT_SNAPSHOT.md`
 - `PROJECT_ASSESSMENT.md`
 - `DOCUMENTATION_SUMMARY.md`
+
+## Legal And Compliance Baseline
+
+- `LICENSE`
+- `PRIVACY.md`
+- `TERMS.md`
+- `TRADEMARKS.md`
+- `COMPLIANCE.md`
+
+## OS Quickstarts
+
+- `docs/quickstart_windows.md`
+- `docs/quickstart_debian.md`
+- `docs/quickstart_macos.md`
 
 ## System packages (Pop!_OS)
 
@@ -494,6 +512,8 @@ Tracklist weekly refresh controls:
 - `auth spotify` runs a local callback OAuth flow and stores secrets in keyring when available (falls back to app settings). If callback binding/timeout fails, CLI prompts for manual callback URL/code entry; manual mode is also available via `--manual`.
 - `auth spotify-doctor` reports auth readiness, expected redirect URI, credential/token source availability, and optional device probe results.
 - `setup` provides first-time onboarding state + next-step commands across Discogs core and optional Spotify addon setup.
+- `diagnostics` emits a redacted support bundle for issue reports; use `dplayer diagnostics --json`.
+- Provider registry now lists planned providers separately from enabled providers; YouTube Music scaffold is listed but disabled by default (`DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1` to expose experimental wiring).
 - Architecture guardrail: core/use-case modules must not import Spotify modules directly; use `discogs_player.capabilities.get_player_backend()` and `PlayerBackend` instead.
 - Spotify integration code lives under `src/discogs_player/integrations/spotify/`; keep optional addon behavior capability-aware in CLI/UI (`Enable Spotify (optional)` vs `Connect Spotify`).
 - Keep external bootstrap parsers integration-agnostic and in core/use-case code (`use_cases/bootstrap_import.py`), with direct-schema fallback retained for long-term compatibility.

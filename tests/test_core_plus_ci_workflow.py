@@ -13,6 +13,8 @@ def _workflow_text(rel_path: str) -> str:
 def test_core_plus_ci_workflow_has_split_profiles_and_os_artifacts():
     source = _workflow_text(".github/workflows/core_plus_ci.yml")
     for marker in (
+        "prepublish-hygiene:",
+        "scripts/prepublish_hygiene_check.sh",
         "test-core:",
         "test-plus:",
         "pip install .",

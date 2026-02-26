@@ -1,0 +1,58 @@
+name: Playback failure
+description: Report playback or device selection failures.
+title: "[playback] "
+labels:
+  - bug
+  - playback
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for device-listing, auto-select, match+play, or play action failures.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - CLI
+        - GUI
+        - API/Web
+    validations:
+      required: true
+  - type: input
+    id: command_or_action
+    attributes:
+      label: Command or action
+      placeholder: dplayer play --last-spin --auto-match --open
+    validations:
+      required: true
+  - type: textarea
+    id: device_state
+    attributes:
+      label: Device state
+      description: Paste `dplayer devices --json` output (redact any sensitive info).
+      render: json
+  - type: textarea
+    id: mapping_state
+    attributes:
+      label: Mapping state (if relevant)
+      description: Include release id and any match output/report snippets.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics output
+      description: Paste `dplayer diagnostics --json` output (already redacted).
+      render: json
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result and errors
+      render: shell
+    validations:
+      required: true

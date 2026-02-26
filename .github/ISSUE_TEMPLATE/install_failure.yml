@@ -1,0 +1,61 @@
+name: Install failure
+description: Report problems installing or launching discogs_player.
+title: "[install] "
+labels:
+  - bug
+  - install
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this issue. Please include as much detail as possible so install failures are reproducible.
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      description: Where did this fail?
+      options:
+        - Windows
+        - Debian/Ubuntu Linux
+        - macOS
+        - Other Linux
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: App version
+      description: e.g. v0.2.0 or commit hash
+      placeholder: v0.2.0
+    validations:
+      required: true
+  - type: textarea
+    id: install_steps
+    attributes:
+      label: Steps you ran
+      description: Paste exact commands/click steps used during install.
+      placeholder: |
+        1. Downloaded artifact ...
+        2. Ran installer ...
+        3. Started app ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result and error output
+      description: Paste stack traces, screenshots, and terminal output.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic bundle (optional)
+      description: If available, paste redacted output from `dplayer diagnostics --json`.
+      render: shell

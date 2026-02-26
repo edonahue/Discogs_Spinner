@@ -1,0 +1,104 @@
+name: Tagged Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag to release (for example v0.2.0)"
+        required: true
+        type: string
+
+jobs:
+  build-release-artifacts:
+    name: Build Release Artifacts (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+
+      - name: Build core and plus artifacts
+        shell: bash
+        run: ./scripts/build_artifacts.sh all
+
+      - name: Build SHA256 checksums
+        shell: bash
+        env:
+          CHECKSUM_FILE: CHECKSUMS-${{ matrix.os }}.txt
+        run: |
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+
+          files = sorted(Path("dist/artifacts").glob("**/discogs_player-*.tar.gz"))
+          if not files:
+              raise SystemExit("no artifacts found")
+
+          checksum_file = os.environ.get("CHECKSUM_FILE", "CHECKSUMS.txt")
+          output = Path("dist/artifacts") / checksum_file
+          with output.open("w", encoding="utf-8") as handle:
+              for artifact in files:
+                  digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+                  rel = artifact.as_posix()
+                  handle.write(f"{digest}  {rel}\n")
+          print(f"wrote {output}")
+          PY
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ matrix.os }}
+          path: |
+            dist/artifacts/**/discogs_player-*.tar.gz
+            dist/artifacts/CHECKSUMS-*.txt
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - build-release-artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-artifacts-*
+          merge-multiple: true
+          path: dist/release
+
+      - name: Merge checksum manifests
+        run: |
+          set -euo pipefail
+          test -d dist/release
+          cat dist/release/CHECKSUMS-*.txt > dist/release/CHECKSUMS.ALL.txt
+          sort -u dist/release/CHECKSUMS.ALL.txt -o dist/release/CHECKSUMS.ALL.txt
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          files: |
+            dist/release/**/*.tar.gz
+            dist/release/CHECKSUMS.ALL.txt

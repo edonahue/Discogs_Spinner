@@ -19,8 +19,10 @@ def api_status() -> dict[str, object]:
 @router.get("/capabilities")
 def api_capabilities() -> dict[str, object]:
     def _payload() -> dict[str, object]:
-        spotify = get_capabilities().spotify
-        return {
+        capabilities = get_capabilities()
+        spotify = capabilities.spotify
+
+        payload: dict[str, object] = {
             "spotify": {
                 "addon_available": spotify.addon_available,
                 "configured": spotify.configured,
@@ -28,5 +30,26 @@ def api_capabilities() -> dict[str, object]:
                 "status_message": spotify.status_message,
             }
         }
+        providers: list[dict[str, object]] = []
+        for provider in getattr(capabilities, "providers", ()):
+            providers.append(
+                {
+                    "provider_id": provider.provider_id,
+                    "display_name": provider.display_name,
+                    "listed": provider.listed,
+                    "enabled": provider.enabled,
+                    "importable": provider.importable,
+                    "addon_available": provider.addon_available,
+                    "configured": provider.configured,
+                    "action_label": provider.action_label,
+                    "status_message": provider.status_message,
+                    "docs_url": provider.docs_url,
+                    "experimental": provider.experimental,
+                    "experimental_flag": provider.experimental_flag,
+                }
+            )
+        if providers:
+            payload["providers"] = providers
+        return payload
 
     return run_use_case(_payload)

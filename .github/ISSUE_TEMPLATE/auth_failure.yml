@@ -1,0 +1,58 @@
+name: Auth/setup failure
+description: Report Discogs or streaming-provider authentication/setup failures.
+title: "[auth] "
+labels:
+  - bug
+  - auth
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for onboarding/auth errors (Discogs token, Spotify OAuth, or provider setup).
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - Discogs
+        - Spotify
+        - Other provider
+        - Unknown
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command or UI action
+      description: What action produced the failure?
+      placeholder: dplayer auth spotify --open-browser
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result and error details
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: setup_report
+    attributes:
+      label: Diagnostics output
+      description: Paste `dplayer diagnostics --json` output (already redacted).
+      render: json
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I confirmed no secrets/tokens are included in this issue.
+          required: true
+        - label: I included exact command or click path to reproduce.
+          required: true

@@ -51,6 +51,10 @@ def test_setup_report_requires_discogs_token_and_spotify_addon(
     assert report["onboarding_stage"] == "needs_discogs_token"
     assert report["discogs"]["configured"] is False
     assert report["spotify"]["addon_available"] is False
+    checklist = report["first_run_checklist"]
+    assert checklist["discogs_configured"] is False
+    assert checklist["collection_synced"] is True
+    assert checklist["ready_for_daily_use"] is False
     assert (
         report["discogs"]["token_setup_url"]
         == "https://www.discogs.com/settings/developers"
@@ -94,6 +98,12 @@ def test_setup_report_ready_when_discogs_and_spotify_are_configured(
     assert report["discogs"]["token_source"] == "environment"
     assert report["collection"]["release_count_active"] == 1
     assert report["spotify"]["configured"] is True
+    checklist = report["first_run_checklist"]
+    assert checklist["discogs_configured"] is True
+    assert checklist["collection_synced"] is True
+    assert checklist["spotify_addon_available"] is True
+    assert checklist["spotify_configured"] is True
+    assert checklist["ready_for_daily_use"] is True
     assert report["spotify"]["dashboard_url"] == "https://developer.spotify.com/dashboard"
     assert "dplayer devices --json" in report["next_steps"]
 
@@ -126,6 +136,12 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
     assert report["profile"] == "plus"
     assert report["onboarding_stage"] == "needs_spotify_auth"
     assert report["spotify"]["configured"] is False
+    checklist = report["first_run_checklist"]
+    assert checklist["discogs_configured"] is True
+    assert checklist["collection_synced"] is True
+    assert checklist["spotify_addon_available"] is True
+    assert checklist["spotify_configured"] is False
+    assert checklist["ready_for_daily_use"] is False
     assert any(
         "http://127.0.0.1:8765/callback" in str(step)
         for step in report["next_steps"]

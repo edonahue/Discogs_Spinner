@@ -14,6 +14,10 @@ This document is the single source of truth for:
 
 It reconciles older planning/status documents and should be updated whenever roadmap priorities change.
 
+Related strategic intent notes:
+
+- `docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md` (ambitious platform/monetization vision + staged rollout intent)
+
 ## Source-Of-Truth Order
 
 When docs disagree, use this precedence:

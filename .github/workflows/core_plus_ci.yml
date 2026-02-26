@@ -8,8 +8,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  prepublish-hygiene:
+    name: Prepublish Hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run prepublish hygiene check
+        run: bash ./scripts/prepublish_hygiene_check.sh
+
   test-core:
     name: Test Core Profile
+    needs:
+      - prepublish-hygiene
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,6 +51,8 @@ jobs:
 
   test-plus:
     name: Test Plus Profile
+    needs:
+      - prepublish-hygiene
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -55,6 +55,45 @@ def test_api_capabilities_uses_capability_model(monkeypatch):
     assert body["data"]["spotify"]["action_label"] == "Connect Spotify"
 
 
+def test_api_capabilities_includes_provider_listing_when_available(monkeypatch):
+    spotify = SimpleNamespace(
+        addon_available=True,
+        configured=True,
+        action_label="Spotify Ready",
+        status_message="Spotify playback and matching are available.",
+    )
+    provider = SimpleNamespace(
+        provider_id="youtube_music",
+        display_name="YouTube Music",
+        listed=True,
+        enabled=False,
+        importable=False,
+        addon_available=False,
+        configured=False,
+        action_label="Planned",
+        status_message="Provider listed but disabled.",
+        docs_url="https://music.youtube.com/",
+        experimental=True,
+        experimental_flag="DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC",
+    )
+    monkeypatch.setattr(
+        status,
+        "get_capabilities",
+        lambda: SimpleNamespace(spotify=spotify, providers=(provider,)),
+    )
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/capabilities")
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["ok"] is True
+    providers = body["data"]["providers"]
+    assert isinstance(providers, list)
+    assert providers[0]["provider_id"] == "youtube_music"
+    assert providers[0]["action_label"] == "Planned"
+
+
 def test_api_sync_collection_forwards_allow_empty_deactivate(monkeypatch):
     captured: dict[str, object] = {}
 
@@ -144,4 +183,3 @@ def test_api_validation_errors_use_standard_error_envelope():
     assert body["ok"] is False
     assert body["error"]["code"] == "request_validation_failed"
     assert isinstance(body["error"]["details"], dict)
-

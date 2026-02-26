@@ -419,6 +419,47 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
     assert "links_discogs_token_url" in result.output
 
 
+def test_diagnostics_json_output(monkeypatch):
+    expected = {
+        "app": {"name": "discogs_player", "version": "0.1.0"},
+        "runtime": {"python_version": "3.12.0", "platform": "test-platform"},
+        "paths": {"db_exists": True},
+        "env_presence": {"DISCOGS_TOKEN": False},
+        "settings_presence": {},
+        "capabilities": {"spotify": {"addon_available": False, "configured": False}},
+        "status_report": {"release_count_total": 0},
+        "setup_report": {"onboarding_stage": "needs_discogs_token"},
+        "provider_diagnostics": {"null": {"diagnosis": "addon_missing"}},
+        "command_hint": "dplayer diagnostics --json",
+    }
+    monkeypatch.setattr(commands, "run_diagnostics_report", lambda: expected)
+
+    result = runner.invoke(commands.app, ["diagnostics"])
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == expected
+
+
+def test_diagnostics_table_output(monkeypatch):
+    expected = {
+        "app": {"name": "discogs_player", "version": "0.1.0"},
+        "runtime": {"python_version": "3.12.0", "platform": "test-platform"},
+        "paths": {
+            "data_dir": "/tmp/data",
+            "db_path": "/tmp/data/app.db",
+            "db_exists": True,
+        },
+        "command_hint": "dplayer diagnostics --json",
+    }
+    monkeypatch.setattr(commands, "run_diagnostics_report", lambda: expected)
+
+    result = runner.invoke(commands.app, ["diagnostics", "--no-json"])
+
+    assert result.exit_code == 0
+    assert "discogs_player diagnostics" in result.output
+    assert "command_hint" in result.output
+
+
 def test_analytics_json_output(monkeypatch):
     expected = {
         "release_count_active": 12,

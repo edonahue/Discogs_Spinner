@@ -67,6 +67,7 @@ from discogs_player.use_cases.play_release import (
 from discogs_player.use_cases.spin_release import NoReleasesFoundError, run_spin_release
 from discogs_player.use_cases.status_report import get_status_report
 from discogs_player.use_cases.setup_report import run_setup_report
+from discogs_player.use_cases.diagnostics_report import run_diagnostics_report
 from discogs_player.use_cases.high_res_art_refresh import run_refresh_high_res_art
 from discogs_player.use_cases.sync_wantlist import run_sync_wantlist
 from discogs_player.use_cases.value_missing import (
@@ -286,7 +287,36 @@ def _render_setup_table(report: dict[str, object]) -> None:
             "links_spotify_oauth_guide_url",
             str(links.get("spotify_oauth_guide_url") or ""),
         )
+
+    checklist = _as_dict(report.get("first_run_checklist"))
+    if checklist:
+        table.add_row(
+            "first_run_discogs_configured",
+            str(checklist.get("discogs_configured")),
+        )
+        table.add_row(
+            "first_run_collection_synced",
+            str(checklist.get("collection_synced")),
+        )
+        table.add_row(
+            "first_run_spotify_addon_available",
+            str(checklist.get("spotify_addon_available")),
+        )
+        table.add_row(
+            "first_run_spotify_configured",
+            str(checklist.get("spotify_configured")),
+        )
+        table.add_row(
+            "first_run_ready_for_daily_use",
+            str(checklist.get("ready_for_daily_use")),
+        )
     console.print(table)
+
+    first_run_actions = _as_object_list(report.get("first_run_actions"))
+    if first_run_actions:
+        console.print("[bold]First-Run Actions[/bold]")
+        for index, action in enumerate(first_run_actions, start=1):
+            console.print(f"{index}. [cyan]{action}[/cyan]")
 
     next_steps = _as_object_list(report.get("next_steps"))
     if not next_steps:
@@ -294,6 +324,26 @@ def _render_setup_table(report: dict[str, object]) -> None:
     console.print("[bold]Next Steps[/bold]")
     for index, step in enumerate(next_steps, start=1):
         console.print(f"{index}. [cyan]{step}[/cyan]")
+
+
+def _render_diagnostics_table(report: dict[str, object]) -> None:
+    table = Table(title="discogs_player diagnostics")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+
+    app = _as_dict(report.get("app"))
+    runtime = _as_dict(report.get("runtime"))
+    paths = _as_dict(report.get("paths"))
+
+    table.add_row("app_name", str(app.get("name") or ""))
+    table.add_row("app_version", str(app.get("version") or ""))
+    table.add_row("python_version", str(runtime.get("python_version") or ""))
+    table.add_row("platform", str(runtime.get("platform") or ""))
+    table.add_row("data_dir", str(paths.get("data_dir") or ""))
+    table.add_row("db_path", str(paths.get("db_path") or ""))
+    table.add_row("db_exists", str(paths.get("db_exists")))
+    table.add_row("command_hint", str(report.get("command_hint") or ""))
+    console.print(table)
 
 
 def _render_spotify_auth_doctor_table(report: dict[str, object]) -> None:
@@ -888,6 +938,22 @@ def setup(json_output: bool = typer.Option(False, "--json", help="Output JSON"))
         _emit_json(report)
         return
     _render_setup_table(report)
+
+
+@app.command("diagnostics")
+def diagnostics(
+    json_output: bool = typer.Option(
+        True,
+        "--json/--no-json",
+        help="Output JSON diagnostics payload (default: JSON)",
+    ),
+) -> None:
+    """Emit a redacted diagnostics bundle for issue reporting."""
+    report = run_diagnostics_report()
+    if json_output:
+        _emit_json(report)
+        return
+    _render_diagnostics_table(report)
 
 
 @app.command("analytics")
