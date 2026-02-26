@@ -1,0 +1,56 @@
+name: Pilot Validation (Windows/macOS)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/pilot_validation_windows_macos.yml"
+      - "scripts/ci_pilot_validation.py"
+      - "scripts/build_artifacts.sh"
+      - "src/discogs_player/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+
+jobs:
+  clean-runner-validation:
+    name: Clean Runner Validation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+
+      - name: Build core and plus artifacts
+        shell: bash
+        run: ./scripts/build_artifacts.sh all
+
+      - name: Run clean-runner pilot validation
+        shell: bash
+        run: |
+          python scripts/ci_pilot_validation.py \
+            --workspace . \
+            --output-dir "dist/pilot-validation/${{ matrix.os }}"
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot-validation-${{ matrix.os }}
+          path: dist/pilot-validation/${{ matrix.os }}
+          if-no-files-found: error
