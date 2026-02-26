@@ -134,6 +134,7 @@ Current implementation status against this plan:
 - Validation rerun is green (`ruff`, `mypy`, `pytest`, web build, hygiene script).
 - First release checklist/runbook pass is now recorded (`docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`).
 - Main remaining operational step at checkpoint capture was GitHub credential setup for `git push`.
+- Post-checkpoint update: `master` has been pushed to `origin`.
 
 Checkpoint references:
 

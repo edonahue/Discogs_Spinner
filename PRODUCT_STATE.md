@@ -107,6 +107,7 @@ Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
 - First checklist/runbook pass has been executed (`docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`).
 - At checkpoint capture time, latest local commits were ready for first push.
 - At checkpoint capture time, `git push` required local GitHub credential setup in this environment.
+- Post-checkpoint update: `master` has been pushed and tracks `origin/master`.
 
 ## Current Gaps And Risks
 
