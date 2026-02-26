@@ -1,0 +1,6 @@
+Installed launcher script: /tmp/dplayer_step2_deb_Inmg4B/bin/discogs-player-gui
+Installed desktop entry:  /tmp/dplayer_step2_deb_Inmg4B/xdg_data/applications/discogs-player.desktop
+Installed icon:           /tmp/dplayer_step2_deb_Inmg4B/xdg_data/icons/hicolor/scalable/apps/discogs-player.svg
+
+Open your app launcher and search for 'Discogs Player'.
+To add it to your dock, launch it once, then right-click its icon and choose Pin to Dock.

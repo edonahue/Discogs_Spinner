@@ -67,3 +67,20 @@ dplayer play --last-spin --open
 
 - Keep this as a CLI-first setup path unless a signed macOS app build is provided.
 - If browser callback fails, use manual callback options from `dplayer auth spotify --help`.
+
+## 7) Gatekeeper and Signing Status (2026-02-26)
+
+- Current release artifacts are tarball bundles (`core` and `plus`), not a signed `.app` installer.
+- Code signing and notarization are not yet in place for this RC channel.
+- If you launch unsigned binaries/scripts from Finder, Gatekeeper may block first launch with a developer verification warning.
+- Pilot workaround:
+  - use right-click -> Open for first launch, then confirm,
+  - if needed for testing only, remove quarantine attribute:
+    `xattr -dr com.apple.quarantine <path-to-extracted-artifact-or-launcher>`
+
+## 8) Signing/Notarization TODOs
+
+1. Define signing identity and certificate storage policy for CI.
+2. Add a codesign step for macOS release artifacts in tagged-release workflow.
+3. Add notarization submission + staple workflow and failure handling.
+4. Publish user-facing Gatekeeper troubleshooting section once signed builds ship.

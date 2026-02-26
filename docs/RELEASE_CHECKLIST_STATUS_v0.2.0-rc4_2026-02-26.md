@@ -65,8 +65,8 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 ### Build and Artifact
 
 - [x] macOS artifact produced and startup tested on clean machine.
-- [ ] Gatekeeper behavior documented for current signing/notarization state.
-- [ ] Future signing/notarization TODOs captured if release is unsigned.
+- [x] Gatekeeper behavior documented for current signing/notarization state.
+- [x] Future signing/notarization TODOs captured if release is unsigned.
 
 ### FTUX and Functional Checks
 
@@ -103,7 +103,7 @@ Purpose: execution status for expanded-plan steps 1 and 2.
   - Launcher integration script validation passed for install/uninstall wiring in isolated XDG paths (launcher/desktop-entry/icon created and removed as expected).
   - Launcher runtime validation remains blocked here (`Gtk couldn't be initialized`) in both direct and `xvfb` runs under this sandbox runtime.
 - Go/no-go decision (2026-02-26 UTC): **NO-GO** for widening audience beyond pilot-user cohort.
-  - Reason: required manual clean-machine validations remain open (Windows non-CLI app-launch + pilot-user acceptance, Debian clean install/launcher runtime in real desktop session, macOS Gatekeeper/signing checks).
+  - Reason: required manual clean-machine validations remain open (Windows non-CLI app-launch + pilot-user acceptance, Debian clean install/launcher runtime in real desktop session).
 - Windows/macOS pilot validation automation follow-up (2026-02-26 UTC):
   - Added clean-runner workflow: `.github/workflows/pilot_validation_windows_macos.yml`.
   - Added validation harness: `scripts/ci_pilot_validation.py`.
@@ -113,4 +113,11 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 - Step-2 manual validation execution kickoff (2026-02-26 UTC):
   - Runbook activated with per-task owners, target dates, and evidence links:
     `docs/RELEASE_STEP2_MANUAL_VALIDATION_RUNBOOK_v0.2.0-rc4_2026-02-26.md`
-  - `WIN-*`, `DEB-*`, and `MAC-*` remaining manual gates are now tracked as `IN_PROGRESS`.
+  - `WIN-*`, `DEB-*`, and `MAC-*` remaining manual gates were initially tracked as `IN_PROGRESS` at kickoff.
+- Step-2 execution result snapshot (2026-02-26 UTC):
+  - Evidence ledger:
+    `docs/evidence/STEP2_MANUAL_VALIDATION_EVIDENCE_v0.2.0-rc4_2026-02-26.md`
+  - Windows manual gates (`WIN-FTUX-01`, `WIN-UA-01`, `WIN-UA-02`): `BLOCKED` (pending clean-machine pilot sessions).
+  - Debian manual gates (`DEB-BLD-01`, `DEB-BLD-02`, `DEB-FTUX-01`): `BLOCKED` in this runtime (dependency DNS resolution failures + headless GTK runtime limits).
+  - macOS documentation gates (`MAC-BLD-01`, `MAC-BLD-02`): `PASS` (Gatekeeper/signing status + TODOs documented in `docs/quickstart_macos.md`).
+  - Go/no-go re-evaluation: `NO-GO` (manual Windows and Debian validations still open).

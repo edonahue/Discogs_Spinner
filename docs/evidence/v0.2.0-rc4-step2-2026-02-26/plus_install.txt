@@ -1,0 +1,9 @@
+Processing /tmp/dplayer_step2_deb_Inmg4B/plus/discogs_player-0.1.0-py3-none-any.whl (from discogs-player==0.1.0)
+WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x70cd82cc6d20>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/httpx/
+WARNING: Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x70cd81b17d70>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/httpx/
+WARNING: Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x70cd81b17dd0>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/httpx/
+WARNING: Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x70cd81b16780>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/httpx/
+WARNING: Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x70cd81b16420>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/httpx/
+INFO: pip is looking at multiple versions of discogs-player to determine which version is compatible with other requirements. This could take a while.
+ERROR: Could not find a version that satisfies the requirement httpx<1.0,>=0.27 (from discogs-player) (from versions: none)
+ERROR: No matching distribution found for httpx<1.0,>=0.27

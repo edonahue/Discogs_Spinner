@@ -1,0 +1,3 @@
+Processing /tmp/dplayer_step2_deb_Inmg4B/plus/discogs_player-0.1.0-py3-none-any.whl (from discogs-player==0.1.0)
+Installing collected packages: discogs-player
+Successfully installed discogs-player-0.1.0

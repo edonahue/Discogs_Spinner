@@ -1,0 +1,9 @@
+/tmp/dplayer_step2_deb_Inmg4B/bin/discogs-player-gui: line 30: /home/erich/.local/state/discogs_player/gui-launch.log: Permission denied
+/tmp/dplayer_step2_deb_Inmg4B/bin/discogs-player-gui: line 30: /home/erich/.local/state/discogs_player/gui-launch.log: Permission denied
+/tmp/dplayer_step2_deb_Inmg4B/bin/discogs-player-gui: line 66: /home/erich/.local/state/discogs_player/gui-launch.log: Permission denied
+/tmp/dplayer_step2_deb_Inmg4B/bin/discogs-player-gui: line 30: /home/erich/.local/state/discogs_player/gui-launch.log: Permission denied
+Discogs Player launcher failed. See /home/erich/.local/state/discogs_player/gui-launch.log
+GTK4/libadwaita Python bindings are not available.
+Install on Pop!_OS with:
+  sudo apt update && sudo apt install -y python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libadwaita-1-0 gir1.2-gdkpixbuf-2.0
+Could not connect: Operation not permitted
