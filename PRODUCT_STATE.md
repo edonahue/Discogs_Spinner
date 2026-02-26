@@ -1,6 +1,6 @@
-# Product State: discogs_player
+# Product State: Discogs Spinner (internal: `discogs_player`)
 
-Date: 2026-02-23 (UTC)
+Date: 2026-02-26 (UTC)
 Owner: Product/Engineering
 Status: Active
 
@@ -17,6 +17,7 @@ It reconciles older planning/status documents and should be updated whenever roa
 Related strategic intent notes:
 
 - `docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md` (ambitious platform/monetization vision + staged rollout intent)
+- `docs/STATUS_CHECKPOINT_2026-02-26.md` (current implementation checkpoint + push blocker)
 
 ## Source-Of-Truth Order
 
@@ -24,9 +25,10 @@ When docs disagree, use this precedence:
 
 1. `PRODUCT_STATE.md` (this file)
 2. `README.md` (user-facing usage + setup)
-3. `docs/TESTING_PERFORMED_2026-02-23.md` (latest validation evidence)
-4. ADRs in `docs/adr/`
-5. Older summaries (`PROJECT_SNAPSHOT.md`, `PROJECT_ASSESSMENT.md`, `DOCUMENTATION_SUMMARY.md`)
+3. `docs/STATUS_CHECKPOINT_2026-02-26.md` (latest execution checkpoint)
+4. `docs/TESTING_PERFORMED_2026-02-26.md` (latest validation evidence)
+5. ADRs in `docs/adr/`
+6. Older summaries (`PROJECT_SNAPSHOT.md`, `PROJECT_ASSESSMENT.md`, `DOCUMENTATION_SUMMARY.md`)
 
 ## Product Intent (Reconciled)
 
@@ -85,23 +87,31 @@ GUI also includes:
 - Device picker and Spotify capability-aware controls
 - Value dashboard with refresh/snapshot operations
 
-### Validation Baseline (As Of 2026-02-23)
+### Validation Baseline (As Of 2026-02-26)
 
 Most recent recorded validation:
 
+- `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
-- `mypy`: passing
-- `pytest -q`: `319 passed, 3 skipped`
-- GUI smoke: passing
-- Gallery UX smoke: passing
+- `mypy`: passing (`92` source files checked)
+- `pytest -q`: `369 passed, 3 skipped`
+- `npm --prefix webapp run build`: passing
 
-Reference: `docs/TESTING_PERFORMED_2026-02-23.md`
+Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
+
+### Current Delivery Checkpoint (As Of 2026-02-26)
+
+- Public repo target is set to `https://github.com/edonahue/Discogs_Spinner.git`.
+- Docs are aligned to public naming (`Discogs Spinner`) and explicitly state no embedded in-app streaming.
+- Repository sanitation pass and `.gitignore` hardening are complete.
+- Latest local commits are ready for first push.
+- Current blocker: `git push` requires local GitHub credential setup in this environment.
 
 ## Current Gaps And Risks
 
 1. Documentation drift
 
-- Some status files report outdated test counts/completeness snapshots.
+- Some historical status files report outdated test counts/completeness snapshots.
 - Sphinx toctree references pages that are not present under `docs/source/`.
 
 2. Product focus drift
@@ -185,6 +195,6 @@ Selection rule:
 
 These are the immediate next actions following this document:
 
-1. Documentation sync pass (README + status docs + Sphinx index)
-2. Stabilization backlog execution (`STABILIZATION_BACKLOG_2026Q1.md`)
-3. GUI behavior-test expansion for high-risk interactions
+1. Complete GitHub auth setup and push `master` to `Discogs_Spinner`.
+2. Execute first public release checklist/runbook pass (`docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md`, `docs/RC_RELEASE_RUNBOOK.md`).
+3. Continue stabilization backlog execution (`STABILIZATION_BACKLOG_2026Q1.md`).

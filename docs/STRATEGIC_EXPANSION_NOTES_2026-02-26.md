@@ -124,6 +124,21 @@ Capture long-range vision, medium-term product goals, and short-term release pri
 - **After stabilization:** multi-OS easy-install hardening.
 - **Later:** mobile companion and monetization experiments based on usage evidence.
 
+## Execution Checkpoint (2026-02-26)
+
+Current implementation status against this plan:
+
+- Release-process docs are now in place (`RC_RELEASE_RUNBOOK`, release checklist, release-notes template).
+- Public-release sanitation pass is complete (`.gitignore` hardening + secret/personal-data sweeps).
+- Public-facing docs are rebranded to `Discogs Spinner` and now explicitly clarify external playback behavior.
+- Validation rerun is green (`ruff`, `mypy`, `pytest`, web build, hygiene script).
+- Main remaining blocker for first public release is GitHub credential setup for `git push`.
+
+Checkpoint references:
+
+- `docs/STATUS_CHECKPOINT_2026-02-26.md`
+- `docs/TESTING_PERFORMED_2026-02-26.md`
+
 ## Notes
 
 This document records intention and direction, not implementation completion.
