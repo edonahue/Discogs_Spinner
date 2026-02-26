@@ -70,3 +70,21 @@ At this checkpoint:
 - Live checklist status for `v0.2.0-rc4` is recorded in:
   - `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`
 - Rollout decision as of latest follow-up update: **NO-GO** for widening audience beyond pilot cohort until remaining manual OS validation items are closed.
+
+## Documentation Position Note (2026-02-26)
+
+Current documentation posture and ownership:
+
+- Canonical product + roadmap state: `PRODUCT_STATE.md`
+- Live release execution state: `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`
+- Validation evidence ledger: `docs/TESTING_PERFORMED_2026-02-26.md`
+- Release notes record for current RC: `docs/releases/v0.2.0-rc4.md`
+
+Current point-in-time status:
+
+- `v0.2.0-rc4` release is published and tagged-release automation is green.
+- Windows/macOS clean-runner pilot validation workflow has been added and pass-confirmed.
+- Rollout remains **NO-GO** beyond pilot cohort pending remaining manual checklist items:
+  - Windows non-CLI launch + pilot-user acceptance,
+  - Debian clean install + launcher runtime in real desktop session,
+  - macOS Gatekeeper/signing/notarization documentation closure.
