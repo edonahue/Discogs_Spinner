@@ -18,6 +18,7 @@ Current canonical product state:
 - `docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md` (API/web/desktop execution order)
 - `docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md` (ambitious long-term + medium-term + short-term release/monetization intent)
 - `docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md` (staged release gate: Windows -> Debian -> macOS)
+- `docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md` (first checklist/runbook execution evidence)
 - `docs/RC_RELEASE_RUNBOOK.md` (tag-and-publish release-candidate procedure)
 - `docs/RELEASE_NOTES_TEMPLATE.md` (standard release notes format)
 
@@ -167,9 +168,10 @@ CI workflow for the same split is defined in:
   - plus profile: `pip install ".[spotify]"`
 - Artifact build/upload matrix: Linux, macOS, Windows
 
-Latest local verification report:
+Latest local verification reports:
 
-- `docs/TESTING_PERFORMED_2026-02-23.md`
+- `docs/TESTING_PERFORMED_2026-02-26.md`
+- `docs/TESTING_PERFORMED_2026-02-23.md` (previous baseline)
 
 ## Spotify Live Smoke Test
 

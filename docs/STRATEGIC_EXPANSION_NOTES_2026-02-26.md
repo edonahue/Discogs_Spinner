@@ -132,7 +132,8 @@ Current implementation status against this plan:
 - Public-release sanitation pass is complete (`.gitignore` hardening + secret/personal-data sweeps).
 - Public-facing docs are rebranded to `Discogs Spinner` and now explicitly clarify external playback behavior.
 - Validation rerun is green (`ruff`, `mypy`, `pytest`, web build, hygiene script).
-- Main remaining blocker for first public release is GitHub credential setup for `git push`.
+- First release checklist/runbook pass is now recorded (`docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`).
+- Main remaining operational step at checkpoint capture was GitHub credential setup for `git push`.
 
 Checkpoint references:
 

@@ -5,8 +5,8 @@ Scope: Current implementation and release-readiness checkpoint.
 
 ## Summary
 
-Project is in a first-public-push-ready state locally, with cleanup and release docs in place.
-Primary blocker is GitHub authentication from this execution environment.
+Project reached a first-public-push-ready local state, with cleanup and release docs in place.
+This document records the checkpoint state at the time it was captured.
 
 ## Completed In This Checkpoint
 
@@ -25,8 +25,9 @@ Primary blocker is GitHub authentication from this execution environment.
 ## Current Local Git State
 
 - Branch: `master`
-- HEAD: `c656348` (`docs: brand as Discogs Spinner and clarify external playback`)
+- HEAD: `7888216` (`docs: record 2026-02-26 checkpoint and validation status`)
 - Recent local commits not yet pushed:
+  - `7888216` status checkpoint + validation evidence
   - `c656348` docs branding + playback clarification
   - `9ff3e42` `.gitignore` sanitation hardening
   - `fdc39a4` README first-push refresh
@@ -43,9 +44,9 @@ At this checkpoint:
 - pytest: PASS (`369 passed, 3 skipped`)
 - web build: PASS
 
-## Known Blocker
+## Known Blocker At Checkpoint Capture
 
-- `git push` from this environment is blocked by missing interactive GitHub credentials:
+- At checkpoint capture time, `git push` from this environment was blocked by missing interactive GitHub credentials:
   - HTTPS attempt could not read username/password.
   - SSH attempt failed due to missing/unauthorized public key.
 

@@ -17,7 +17,7 @@ It reconciles older planning/status documents and should be updated whenever roa
 Related strategic intent notes:
 
 - `docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md` (ambitious platform/monetization vision + staged rollout intent)
-- `docs/STATUS_CHECKPOINT_2026-02-26.md` (current implementation checkpoint + push blocker)
+- `docs/STATUS_CHECKPOINT_2026-02-26.md` (current implementation checkpoint snapshot)
 
 ## Source-Of-Truth Order
 
@@ -104,8 +104,9 @@ Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
 - Public repo target is set to `https://github.com/edonahue/Discogs_Spinner.git`.
 - Docs are aligned to public naming (`Discogs Spinner`) and explicitly state no embedded in-app streaming.
 - Repository sanitation pass and `.gitignore` hardening are complete.
-- Latest local commits are ready for first push.
-- Current blocker: `git push` requires local GitHub credential setup in this environment.
+- First checklist/runbook pass has been executed (`docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`).
+- At checkpoint capture time, latest local commits were ready for first push.
+- At checkpoint capture time, `git push` required local GitHub credential setup in this environment.
 
 ## Current Gaps And Risks
 
