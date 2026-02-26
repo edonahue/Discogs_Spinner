@@ -72,7 +72,11 @@ build_profile() {
   if [[ "$PIP_WHEEL_NO_DEPS" == "1" ]]; then
     wheel_args+=("--no-deps")
   fi
-  "$PYTHON_BIN" -m pip wheel "${wheel_args[@]}" --wheel-dir "$tmp_dir" "$requirement"
+  if ((${#wheel_args[@]})); then
+    "$PYTHON_BIN" -m pip wheel "${wheel_args[@]}" --wheel-dir "$tmp_dir" "$requirement"
+  else
+    "$PYTHON_BIN" -m pip wheel --wheel-dir "$tmp_dir" "$requirement"
+  fi
 
   cat >"${tmp_dir}/INSTALL.txt" <<TXT
 Profile: ${profile}
