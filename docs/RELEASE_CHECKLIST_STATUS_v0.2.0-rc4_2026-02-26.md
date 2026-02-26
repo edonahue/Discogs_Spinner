@@ -55,9 +55,9 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 
 ### FTUX and Functional Checks
 
-- [ ] Discogs-only core profile works end-to-end.
+- [x] Discogs-only core profile works end-to-end.
 - [ ] Plus profile install (`.[spotify]`) and auth doctor path validated.
-- [ ] GUI smoke checks pass in target runtime.
+- [x] GUI smoke checks pass in target runtime.
 
 ## Stage 3: macOS
 
@@ -90,3 +90,10 @@ Purpose: execution status for expanded-plan steps 1 and 2.
 
 - Open install/auth/playback issue count at snapshot time: `0` user-reported (excluding tracking issue `#1`).
 - Remaining open items are primarily manual pilot-environment validations and rollout decisioning.
+- Debian follow-up pass (2026-02-26 UTC) evidence:
+  - Core flow pass on local Debian host: `setup --json`, `sync`, `status --json`, `list --limit 5 --json`, `spin --json`.
+  - Plus auth-doctor path pass: `venv/bin/python -m discogs_player.main auth spotify-doctor --json`.
+  - GUI smoke pass: `./scripts/gui_smoke_test.sh 12`, `./scripts/gallery_ux_smoke.sh 12`.
+- Debian open blockers from the same pass:
+  - Clean-venv install from Linux artifacts failed because this shell environment currently cannot resolve package index DNS (`httpx` dependency lookup failed), so clean baseline install remains unchecked.
+  - Launcher install wiring works (desktop entry/script/icon created), but launcher runtime smoke under headless sandbox remained unstable (`Gtk couldn't be initialized` in this runtime), so launcher integration remains unchecked pending clean desktop-session validation.

@@ -47,6 +47,37 @@ Results:
 - `./scripts/gui_smoke_test.sh 12`: PASS (`ok: true`)
 - `./scripts/gallery_ux_smoke.sh 12`: PASS (`ok: true`)
 
+## Validation Pass C (Checklist Continuation)
+
+Commands run:
+
+```bash
+PIP_NO_BUILD_ISOLATION=1 PIP_WHEEL_NO_DEPS=1 ./scripts/build_artifacts.sh core
+PIP_NO_BUILD_ISOLATION=1 PIP_WHEEL_NO_DEPS=1 ./scripts/build_artifacts.sh plus
+venv/bin/python -m discogs_player.main setup --json
+venv/bin/python -m discogs_player.main sync
+venv/bin/python -m discogs_player.main status --json
+venv/bin/python -m discogs_player.main list --limit 5 --json
+venv/bin/python -m discogs_player.main spin --json
+venv/bin/python -m discogs_player.main auth spotify-doctor --json
+venv/bin/python -m discogs_player.main devices --json
+./scripts/gui_smoke_test.sh 12
+./scripts/gallery_ux_smoke.sh 12
+```
+
+Results:
+
+- Artifact rebuild: PASS for `core` and `plus` (fresh Linux tarballs include wheel + install text).
+- Core workflow commands: PASS (`setup`, `sync`, `status`, `list`, `spin`).
+- Plus diagnostics path: PASS (`auth spotify-doctor --json`).
+- Device listing call: PASS (`devices --json` returned empty list in this environment).
+- GUI smoke scripts: PASS (`ok: true` for both smoke scripts).
+
+Blocking observations:
+
+- Clean-venv install from generated artifact wheels failed in this shell environment because `pip` dependency resolution to package index failed (`Could not find a version that satisfies the requirement httpx<1.0,>=0.27` after DNS resolution errors).
+- Launcher install script created desktop entry/launcher/icon as expected in isolated XDG paths, but launcher runtime smoke under this headless sandbox exited non-zero with `Gtk couldn't be initialized`.
+
 ## Release Automation Evidence
 
 - `v0.2.0-rc2` tagged-release run: failed on macOS artifact step
