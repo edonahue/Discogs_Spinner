@@ -1,6 +1,7 @@
 # discogs_player
 
-CLI-first Discogs collection sync tool designed for SSH use on Pop!_OS/Linux.
+Discogs-first collection sync and playback helper with a CLI core plus optional
+Spotify, API, web, and desktop-distribution layers.
 
 ## Product State And Roadmap
 
@@ -40,6 +41,29 @@ Historical snapshots (not canonical current state):
 - `docs/quickstart_windows.md`
 - `docs/quickstart_debian.md`
 - `docs/quickstart_macos.md`
+
+## Component READMEs
+
+- `webapp/README.md`
+- `desktop_shell/README.md`
+
+## Before First Public Push
+
+Run this minimum release hygiene gate from repo root:
+
+```bash
+git status -sb
+bash ./scripts/prepublish_hygiene_check.sh
+venv/bin/ruff check .
+venv/bin/python -m mypy src/discogs_player --show-error-codes --hide-error-context
+venv/bin/python -m pytest -q
+npm --prefix webapp run build
+```
+
+Notes:
+
+- Keep only placeholder values in `.env.example`.
+- Do not commit real `.env` files, tokens, local databases, logs, or exports.
 
 ## System packages (Pop!_OS)
 
@@ -95,7 +119,8 @@ export SPOTIFY_SECRET="..."
 export SPOTIFY_REFRESH_TOKEN="..."
 ```
 
-You can also keep values in `.env` (see `.env.example`).
+You can also keep values in `.env` (see `.env.example`), but keep `.env` local-only
+and out of version control.
 
 ## Core vs Plus profiles
 
@@ -168,6 +193,16 @@ dplayer-api
 
 This starts the API server on `http://127.0.0.1:8768`.
 
+Run API + web app locally:
+
+```bash
+# terminal 1
+dplayer-api
+
+# terminal 2
+npm --prefix webapp run dev
+```
+
 Primary endpoints:
 
 - `GET /healthz`
@@ -185,13 +220,13 @@ Primary endpoints:
 - `GET /api/v1/value/dashboard`
 - `POST /api/v1/value/refresh`
 
-Initial web-client scaffold lives in:
+Web-client scaffold docs live in:
 
-- `webapp/`
+- `webapp/README.md`
 
-Initial desktop-shell scaffold (Tauri-oriented) lives in:
+Desktop-shell scaffold docs live in:
 
-- `desktop_shell/`
+- `desktop_shell/README.md`
 
 ## Slow External Spotify Mapping (Hours-Scale)
 

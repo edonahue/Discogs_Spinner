@@ -1,14 +1,26 @@
-# discogs_player Desktop Shell (Scaffold)
+# discogs_player Desktop Shell
 
-This directory is the planned desktop shell layer for cross-platform delivery.
+Tauri-oriented desktop packaging scaffold for cross-platform distribution.
 
 ## Direction
 
-- Target runtime: Tauri wrapping the `webapp/` build output.
-- Backend process: `dplayer-api` local service.
-- Platforms: Windows, macOS, Debian Linux.
+- Runtime target: Tauri wrapping `../webapp/dist`.
+- Local backend target: `dplayer-api`.
+- Distribution targets: Windows, macOS, Debian Linux.
 
 ## Current state
 
-- Configuration scaffold only.
-- Production packaging/signing/notarization is intentionally deferred to a later release stage.
+- `tauri.conf.json` is present as a baseline config scaffold.
+- Full Tauri project bootstrap (`src-tauri/`, signing, installers, notarization) is not
+  implemented yet.
+- Packaging/signing is intentionally deferred to later release stages.
+
+## Repository role
+
+This folder documents and anchors desktop packaging intent while the project
+prioritizes core CLI/API/web stability and release-candidate workflows.
+
+For staged execution order, see:
+
+- `../docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md`
+- `../docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md`
