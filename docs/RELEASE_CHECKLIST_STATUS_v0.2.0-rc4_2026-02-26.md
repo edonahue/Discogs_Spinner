@@ -110,3 +110,7 @@ Purpose: execution status for expanded-plan steps 1 and 2.
   - Triggered by push commit `2a682e4` to `master`.
   - Expected evidence from run: clean artifact install + `setup`/`status`/`sync`(missing-token path)/`list`/`spin`/`play --open`/`auth spotify-doctor` command-path checks on `windows-latest` and `macos-latest`.
   - Run outcome: **PASS** (user-confirmed).
+- Step-2 manual validation execution kickoff (2026-02-26 UTC):
+  - Runbook activated with per-task owners, target dates, and evidence links:
+    `docs/RELEASE_STEP2_MANUAL_VALIDATION_RUNBOOK_v0.2.0-rc4_2026-02-26.md`
+  - `WIN-*`, `DEB-*`, and `MAC-*` remaining manual gates are now tracked as `IN_PROGRESS`.

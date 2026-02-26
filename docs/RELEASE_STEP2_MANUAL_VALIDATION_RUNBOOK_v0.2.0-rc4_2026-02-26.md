@@ -2,7 +2,7 @@
 
 Date opened: 2026-02-26 (UTC)  
 Owner: Engineering  
-Status: Open
+Status: In Progress
 
 Source checklist: `docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md`  
 Live status ledger: `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`
@@ -39,14 +39,14 @@ If a task fails, add:
 
 | ID | Checklist Item | Primary Owner | Backup Owner | Target Date (UTC) | Environment / Tester | Evidence Link(s) | Status | Notes / Blockers |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| WIN-FTUX-01 | App launches without CLI prerequisite for normal user flow. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 1 -> FTUX |
-| WIN-UA-01 | Technical pilot-user path completes without blocker. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 1 -> User Acceptance |
-| WIN-UA-02 | Non-technical pilot-user path completes with guided instructions only. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 1 -> User Acceptance |
-| DEB-BLD-01 | Debian artifact installs on supported distro baseline. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 2 -> Build and Artifact |
-| DEB-BLD-02 | Launcher integration works after install. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 2 -> Build and Artifact |
-| DEB-FTUX-01 | Plus profile install (`.[spotify]`) and auth doctor path validated. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 2 -> FTUX |
-| MAC-BLD-01 | Gatekeeper behavior documented for current signing/notarization state. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 3 -> Build and Artifact |
-| MAC-BLD-02 | Future signing/notarization TODOs captured if release is unsigned. | TBD | TBD | TBD | TBD | TBD | OPEN | Source: Stage 3 -> Build and Artifact |
+| WIN-FTUX-01 | App launches without CLI prerequisite for normal user flow. | Windows Validation Lead | Engineering Backup | 2026-02-27 | Clean Windows pilot machine (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; capture launch proof + install path evidence. |
+| WIN-UA-01 | Technical pilot-user path completes without blocker. | Pilot Ops Lead | Engineering Backup | 2026-02-28 | Technical pilot user session (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; gather guided walkthrough transcript. |
+| WIN-UA-02 | Non-technical pilot-user path completes with guided instructions only. | UX Validation Lead | Pilot Ops Backup | 2026-02-28 | Non-technical pilot user session (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; collect friction notes and blocker issues. |
+| DEB-BLD-01 | Debian artifact installs on supported distro baseline. | Debian Validation Lead | Engineering Backup | 2026-03-01 | Clean Debian desktop session (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; prior tty/headless run was insufficient. |
+| DEB-BLD-02 | Launcher integration works after install. | Debian Validation Lead | QA Backup | 2026-03-01 | Clean Debian desktop session (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; require launcher runtime proof in desktop session. |
+| DEB-FTUX-01 | Plus profile install (`.[spotify]`) and auth doctor path validated. | Debian Validation Lead | Engineering Backup | 2026-03-01 | Clean Debian + plus profile (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; rerun on clean baseline and attach transcript. |
+| MAC-BLD-01 | Gatekeeper behavior documented for current signing/notarization state. | macOS Validation Lead | Engineering Backup | 2026-03-02 | Clean macOS pilot machine (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; collect prompt/screenshots and decision notes. |
+| MAC-BLD-02 | Future signing/notarization TODOs captured if release is unsigned. | macOS Validation Lead | Product/Engineering Backup | 2026-03-02 | macOS release documentation pass (TBD) | https://github.com/edonahue/Discogs_Spinner/issues/1 | IN_PROGRESS | Kickoff started 2026-02-26 UTC; record TODO owner/date for signing closure. |
 
 ## Execution Notes By Platform
 
