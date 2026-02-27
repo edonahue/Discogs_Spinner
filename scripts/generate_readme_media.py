@@ -493,9 +493,9 @@ def main() -> None:
 
     shots = [
         ("01-browse-gallery.png", browse),
-        ("02-wantlist-priority.png", wantlist),
+        ("02-spin-result.png", wantlist),
         ("03-market-value-dashboard.png", value),
-        ("04-cli-to-ui-flow.png", cli),
+        ("04-wantlist-view.png", cli),
     ]
     for name, img in shots:
         save_screenshot(img, SCREENSHOT_DIR / name)
