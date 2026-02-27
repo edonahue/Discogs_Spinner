@@ -24,8 +24,6 @@ from __future__ import annotations
 import sys
 import types
 
-import pytest
-
 # ============================================================
 # Full gi / formatting stub setup — self-contained so this file
 # can be run alone (pytest tests/test_widget_behavior_gui.py) or

@@ -94,7 +94,7 @@ Most recent recorded validation:
 - `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
 - `mypy`: passing (`92` source files checked)
-- `pytest -q`: `419 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
+- `pytest -q`: `425 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
 - `npm --prefix webapp run build`: passing
 
 Reference: `docs/TESTING_PERFORMED_2026-02-26.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`
@@ -142,9 +142,9 @@ Overall position vs original plan:
 
 1. Documentation drift
 
-- Some historical status files report outdated test counts/completeness snapshots.
-- Sphinx toctree references pages that are not present under `docs/source/`.
-- **Status**: Reduced. Current test count (419) is authoritative here.
+- Some historical status files report outdated test counts/completeness snapshots. These are now positioned as timestamped historical evidence; `PRODUCT_STATE.md` is authoritative.
+- Sphinx toctree: **Resolved**. All 9 toctree entries have corresponding RST files; `sphinx -b html` builds cleanly with zero warnings (confirmed 2026-02-26).
+- **Status**: Closed.
 
 2. Product focus drift
 
@@ -154,7 +154,7 @@ Overall position vs original plan:
 
 3. Test strategy imbalance
 
-- ~~Strong automated coverage exists, but many GUI checks are static marker tests and smoke checks.~~ **Closed by Phase 2**: three behavior-driven test modules now cover animation state machines, gallery/detail selection flows, screenshot pipeline, and keyboard-focus edge cases (47 assertions). 419 total tests passing.
+- ~~Strong automated coverage exists, but many GUI checks are static marker tests and smoke checks.~~ **Closed by Phase 2**: three behavior-driven test modules now cover animation state machines, gallery/detail selection flows, screenshot pipeline, and keyboard-focus edge cases (47 assertions). 425 total tests passing.
 
 4. Release readiness housekeeping
 
@@ -218,7 +218,7 @@ Execution reference: `docs/STABILIZATION_EXECUTION_2026Q1.md`
 
 **Exit criteria status:**
 
-- [x] No P0/P1 open regressions in key UI flows — 419 tests passing, 4 skipped; full smoke matrix green.
+- [x] No P0/P1 open regressions in key UI flows — 425 tests passing, 4 skipped; full smoke matrix green.
 - [x] Two measurable responsiveness improvements documented — three hotspots instrumented with `time.perf_counter()` hooks; `dplayer-gui --timing` activates per-load latency output.
 - [x] Three high-risk GUI interactions covered by behavior assertions — 47 tests across `test_widget_animation.py`, `test_widget_behavior_gui.py`, `test_headless_screenshot_script.py`.
 - [x] Phase-2 outcome summary added to `PRODUCT_STATE.md` — this section.

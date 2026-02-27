@@ -158,6 +158,31 @@ Coverage confirmed by that workflow:
   - `auth spotify-doctor --json`,
   - `devices --json` (success or expected missing-token guidance).
 
+## Validation Pass G (Phase 2 Stabilization Close)
+
+Commands run:
+
+```bash
+venv/bin/ruff check .
+venv/bin/python -m mypy src/discogs_player --show-error-codes --hide-error-context
+venv/bin/python -m pytest -q
+venv/bin/python -m sphinx -b html docs/source /tmp/discogs_player_sphinx_build
+```
+
+Results:
+
+- `ruff check .`: PASS
+- `mypy`: PASS (`Success: no issues found in 92 source files`)
+- `pytest -q`: PASS (`425 passed, 4 skipped`) — up from 369/3 at Phase 2 kickoff
+- Sphinx build: PASS (`build succeeded`, zero warnings, all toctree pages present)
+
+New test modules added since Pass D:
+
+- `tests/test_widget_animation.py` (10 tests)
+- `tests/test_widget_behavior_gui.py` (36 tests)
+- `tests/test_headless_screenshot_script.py` (8 tests)
+- `tests/test_performance_optimizations.py` (+3 infrastructure tests)
+
 ## Release Automation Evidence
 
 - `v0.2.0-rc2` tagged-release run: failed on macOS artifact step

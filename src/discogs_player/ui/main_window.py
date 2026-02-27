@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import OrderedDict
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
-import importlib.util
 import json
 from pathlib import Path
 import sys
@@ -72,10 +71,6 @@ from discogs_player.use_cases.value_refresh import run_refresh_market_values
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.ui.sorting import sort_release_items
 from discogs_player.ui.widgets.album_detail import AlbumDetail
-
-_HAS_PERFORMANCE_MODULE = (
-    importlib.util.find_spec("discogs_player.ui.performance") is not None
-)
 
 # Set to True via set_timing_enabled() (or --timing CLI flag) to print
 # per-operation latency samples to stderr during a session.
@@ -2956,8 +2951,10 @@ class MainWindow(Gtk.ApplicationWindow):
         _t_widgets = time.perf_counter() - _t2
 
         if _TIMING_ENABLED:
-            _t_query = float(payload.get("_timing_query_s") or 0.0)
-            _t_sort = float(payload.get("_timing_sort_s") or 0.0)
+            _rq = payload.get("_timing_query_s")
+            _rs = payload.get("_timing_sort_s")
+            _t_query = float(_rq) if isinstance(_rq, (int, float)) else 0.0
+            _t_sort = float(_rs) if isinstance(_rs, (int, float)) else 0.0
             print(
                 f"[timing] browse-load: n={len(items)}"
                 f"  query={_t_query * 1000:.1f}ms"
@@ -3102,8 +3099,10 @@ class MainWindow(Gtk.ApplicationWindow):
         _t_widgets = time.perf_counter() - _t2
 
         if _TIMING_ENABLED:
-            _t_query = float(payload.get("_timing_query_s") or 0.0)
-            _t_sort = float(payload.get("_timing_sort_s") or 0.0)
+            _rq = payload.get("_timing_query_s")
+            _rs = payload.get("_timing_sort_s")
+            _t_query = float(_rq) if isinstance(_rq, (int, float)) else 0.0
+            _t_sort = float(_rs) if isinstance(_rs, (int, float)) else 0.0
             print(
                 f"[timing] wantlist-load: n={len(items)}"
                 f"  query={_t_query * 1000:.1f}ms"

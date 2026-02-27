@@ -1,4 +1,17 @@
-"""UI Performance optimizations for Discogs Player."""
+"""UI Performance optimizations for Discogs Player.
+
+Status: DEFERRED (Phase 2 close, 2026-02-26)
+
+VirtualizedGrid, LazyImageLoader, and PerformanceMonitor were pre-built
+for a future virtualization pass. They are not wired into the live app yet.
+The active timing infrastructure lives in main_window.py (_TIMING_ENABLED,
+set_timing_enabled(), --timing CLI flag).
+
+Integration path: Phase 3 or later, contingent on pilot timing run results.
+If widget-population latency (Hotspot 3) exceeds ~200ms for typical
+collection sizes, VirtualizedGrid is the candidate replacement for the
+FlowBox grid in CoverGrid.
+"""
 
 from __future__ import annotations
 

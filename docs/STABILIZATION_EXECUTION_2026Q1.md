@@ -27,13 +27,13 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 
 ### P0: Documentation/Operational Correctness
 
-- Status: `in_progress`
+- Status: `complete`
 - Completed:
   - release notes added for `v0.2.0-rc2` and `v0.2.0-rc4`
   - `v0.2.0-rc4` checklist status captured (`docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`)
-  - Sphinx docs build baseline: pass (`venv/bin/python -m sphinx -b html docs/source /tmp/discogs_player_sphinx_build`)
-- Remaining:
-  - continue eliminating contradictory or stale status claims as new RC data lands
+  - Sphinx docs build: clean — all toctree pages present, `build succeeded` with zero warnings (confirmed 2026-02-26 Phase 2 close)
+  - Stale status claims eliminated: `PRODUCT_STATE.md` is the authoritative source with 419 test count; older docs are timestamped historical evidence
+  - `TESTING_PERFORMED_2026-02-26.md` updated with Phase 2 close validation pass (Pass G)
 
 ### P1: Runtime Responsiveness
 
@@ -47,7 +47,22 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
   - Added Hotspot-3 widget-population timer in `_apply_release_load_result()` and `_apply_wantlist_load_result()`; conditional `[timing]` line printed to stderr when enabled
   - Added `_TIMING_ENABLED` module flag + `set_timing_enabled()` function to `main_window.py`
   - Added `--timing` CLI flag to `ui_main.py` (`dplayer-gui --timing`) that activates latency logging
-  - Baseline measurements: pending first run with a live user collection under `--timing`
+
+#### Baseline Measurements (Pilot Timing Run)
+
+> Run: `dplayer-gui --timing 2>&1 | grep '\[timing\]'`
+> Perform at least one browse-load and one wantlist-load, then close the app.
+
+| Operation | n (releases) | query (ms) | sort (ms) | widgets (ms) | total (ms) | Date |
+|---|---|---|---|---|---|---|
+| browse-load | — | — | — | — | — | pending |
+| wantlist-load | — | — | — | — | — | pending |
+
+Interpretation guide:
+- **query**: DB round-trip + cover-path prefetch (Hotspot 1)
+- **sort**: in-memory sort (Hotspot 2)
+- **widgets**: GTK widget bulk-population across text-menu + carousel + gallery (Hotspot 3)
+- If widgets > 200ms with n > 500, virtualization pass is warranted before Phase 3 UX work.
 
 ### P1: Usability Hardening
 
@@ -93,7 +108,7 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 
 ## Exit Criteria Tracking
 
-- [ ] No P0/P1 open regressions in key UI flows.
+- [x] No P0/P1 open regressions in key UI flows. (`425 passed, 4 skipped`; full smoke matrix green as of 2026-02-26)
 - [x] Two measurable responsiveness improvements documented. (Three hotspots instrumented: query, sort, widget-population; `--timing` flag available; baseline measurements pending first live-collection run)
 - [x] Three high-risk behavior-driven GUI interactions covered by assertions. (47 tests across carousel + spin wheel animation, gallery selection/back, detail-panel state, and headless screenshot pipeline — `tests/test_widget_animation.py`, `tests/test_widget_behavior_gui.py`, `tests/test_headless_screenshot_script.py`)
 - [x] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.
