@@ -35,10 +35,10 @@ def test_release_notes_template_references_quickstarts_and_diagnostics():
         assert marker in source
 
 
-def test_readme_links_release_runbook_and_template():
+def test_readme_links_release_runbook_and_release_notes():
     source = _read("README.md")
     for marker in (
         "docs/RC_RELEASE_RUNBOOK.md",
-        "docs/RELEASE_NOTES_TEMPLATE.md",
+        "docs/releases/",
     ):
         assert marker in source
