@@ -50,13 +50,13 @@ pip install -e ".[spotify]"
 dplayer auth spotify-doctor --json
 ```
 
-## Docs
-
-Setup guides:
+## OS Quickstarts
 
 - [Windows Quickstart](docs/quickstart_windows.md)
 - [Debian Quickstart](docs/quickstart_debian.md)
 - [macOS Quickstart](docs/quickstart_macos.md)
+
+## Docs
 
 Technical references:
 
