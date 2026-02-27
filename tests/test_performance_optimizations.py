@@ -181,9 +181,67 @@ def test_image_cache_optimization():
     print("  Contains scroll debouncing")
 
 
+def test_main_window_timing_infrastructure_present():
+    """Verify that per-operation timing hooks exist in main_window.py.
+
+    Hotspot 1: run_browse_release_grid / run_browse_wantlist_grid query time.
+    Hotspot 2: sort_release_items time.
+    Hotspot 3: widget bulk-population time (main thread).
+
+    The hooks record elapsed times via time.perf_counter() and include them in
+    the return dicts (_timing_query_s, _timing_sort_s).  set_timing_enabled()
+    gates stderr output.
+    """
+    root_dir = Path(__file__).parents[1]
+    mw_file = root_dir / "src" / "discogs_player" / "ui" / "main_window.py"
+    assert mw_file.exists(), "main_window.py not found"
+
+    src = mw_file.read_text()
+
+    assert "import time" in src, "time module must be imported"
+    assert "_TIMING_ENABLED" in src, "_TIMING_ENABLED module flag must be present"
+    assert "set_timing_enabled" in src, "set_timing_enabled() function must be present"
+    assert "_timing_query_s" in src, "Hotspot-1 timing key must be in return dict"
+    assert "_timing_sort_s" in src, "Hotspot-2 timing key must be in return dict"
+    assert "[timing] browse-load" in src, "browse-load timing print must be present"
+    assert "[timing] wantlist-load" in src, "wantlist-load timing print must be present"
+
+
+def test_ui_main_timing_flag_present():
+    """Verify --timing CLI argument is wired up in ui_main.py."""
+    root_dir = Path(__file__).parents[1]
+    ui_main_file = root_dir / "src" / "discogs_player" / "ui_main.py"
+    assert ui_main_file.exists(), "ui_main.py not found"
+
+    src = ui_main_file.read_text()
+    assert "--timing" in src, "--timing argument must be declared in ui_main.py"
+    assert "set_timing_enabled" in src, "set_timing_enabled must be called in ui_main.py"
+
+
+def test_main_window_empty_state_messages_use_plain_quotes():
+    """Empty-state status messages must use plain quotes, not shell backticks.
+
+    GTK status labels render backticks literally; plain quotes are cleaner
+    in a GUI context.
+    """
+    root_dir = Path(__file__).parents[1]
+    mw_file = root_dir / "src" / "discogs_player" / "ui" / "main_window.py"
+    src = mw_file.read_text()
+
+    assert "Run `dplayer sync`" not in src, (
+        "Empty-state message must not use backtick-quoted CLI commands"
+    )
+    assert "Run `dplayer wantlist sync`" not in src, (
+        "Empty-state wantlist message must not use backtick-quoted CLI commands"
+    )
+
+
 if __name__ == "__main__":
     test_virtualized_grid_performance()
     test_lazy_image_loader_performance()
     test_performance_monitor()
     test_image_cache_optimization()
+    test_main_window_timing_infrastructure_present()
+    test_ui_main_timing_flag_present()
+    test_main_window_empty_state_messages_use_plain_quotes()
     print("\n🎉 All performance tests passed!")

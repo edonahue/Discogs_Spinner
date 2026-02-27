@@ -8,6 +8,8 @@ from concurrent.futures import Future, ThreadPoolExecutor
 import importlib.util
 import json
 from pathlib import Path
+import sys
+import time
 import traceback
 
 import gi
@@ -74,6 +76,18 @@ from discogs_player.ui.widgets.album_detail import AlbumDetail
 _HAS_PERFORMANCE_MODULE = (
     importlib.util.find_spec("discogs_player.ui.performance") is not None
 )
+
+# Set to True via set_timing_enabled() (or --timing CLI flag) to print
+# per-operation latency samples to stderr during a session.
+_TIMING_ENABLED: bool = False
+
+
+def set_timing_enabled(enabled: bool) -> None:
+    """Enable or disable per-operation latency logging to stderr."""
+    global _TIMING_ENABLED
+    _TIMING_ENABLED = bool(enabled)
+
+
 from discogs_player.ui.widgets.cover_carousel import CoverCarousel
 from discogs_player.ui.widgets.cover_grid import CoverGrid
 from discogs_player.ui.widgets.device_picker import DevicePicker
@@ -2845,6 +2859,8 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         normalized_genres = list(genres or [])
         normalized_styles = list(styles or [])
+        # Hotspot 1: DB query + cover prefetch
+        _t0 = time.perf_counter()
         items_raw = run_browse_release_grid(
             limit=effective_limit,
             q=q,
@@ -2854,7 +2870,11 @@ class MainWindow(Gtk.ApplicationWindow):
             unmatched=unmatched,
             preload_covers=self._preload_covers,
         )
+        _t_query = time.perf_counter() - _t0
+        # Hotspot 2: in-memory sort
+        _t1 = time.perf_counter()
         items = sort_release_items(items_raw, sort_mode=sort_mode)
+        _t_sort = time.perf_counter() - _t1
         cover_count = sum(1 for item in items if item.get("cover_path"))
 
         value_dashboard_report: dict[str, object] | None = None
@@ -2884,6 +2904,8 @@ class MainWindow(Gtk.ApplicationWindow):
             "limit": effective_limit,
             "value_dashboard_report": value_dashboard_report,
             "value_dashboard_error": value_dashboard_error,
+            "_timing_query_s": _t_query,
+            "_timing_sort_s": _t_sort,
         }
 
     def _apply_release_load_result(
@@ -2922,6 +2944,8 @@ class MainWindow(Gtk.ApplicationWindow):
                     value_dashboard, update_status=False
                 )
 
+        # Hotspot 3: widget population (main thread)
+        _t2 = time.perf_counter()
         self._syncing_selection = True
         try:
             self._text_menu.set_items(items)
@@ -2929,6 +2953,19 @@ class MainWindow(Gtk.ApplicationWindow):
             self._browse_gallery.set_items(items)
         finally:
             self._syncing_selection = False
+        _t_widgets = time.perf_counter() - _t2
+
+        if _TIMING_ENABLED:
+            _t_query = float(payload.get("_timing_query_s") or 0.0)
+            _t_sort = float(payload.get("_timing_sort_s") or 0.0)
+            print(
+                f"[timing] browse-load: n={len(items)}"
+                f"  query={_t_query * 1000:.1f}ms"
+                f"  sort={_t_sort * 1000:.1f}ms"
+                f"  widgets={_t_widgets * 1000:.1f}ms",
+                file=sys.stderr,
+                flush=True,
+            )
 
         restored_selection = False
         if isinstance(preferred_release_id, int):
@@ -2955,7 +2992,7 @@ class MainWindow(Gtk.ApplicationWindow):
         if not items:
             self._album_detail.set_release(None)
             self._set_status(
-                "No releases loaded. Run `dplayer sync` to import your Discogs collection."
+                "No releases loaded. Run \"dplayer sync\" to import your Discogs collection."
             )
         else:
             self._set_status(
@@ -3001,6 +3038,8 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         normalized_genres = list(genres or [])
         normalized_styles = list(styles or [])
+        # Hotspot 1: DB query + cover prefetch
+        _t0 = time.perf_counter()
         items_raw = run_browse_wantlist_grid(
             limit=effective_limit,
             q=q,
@@ -3009,7 +3048,11 @@ class MainWindow(Gtk.ApplicationWindow):
             styles=normalized_styles,
             preload_covers=self._preload_covers,
         )
+        _t_query = time.perf_counter() - _t0
+        # Hotspot 2: in-memory sort
+        _t1 = time.perf_counter()
         items = sort_release_items(items_raw, sort_mode=sort_mode)
+        _t_sort = time.perf_counter() - _t1
         cover_count = sum(1 for item in items if item.get("cover_path"))
         return {
             "ok": True,
@@ -3022,6 +3065,8 @@ class MainWindow(Gtk.ApplicationWindow):
             "styles": normalized_styles,
             "sort": sort_mode,
             "limit": effective_limit,
+            "_timing_query_s": _t_query,
+            "_timing_sort_s": _t_sort,
         }
 
     def _apply_wantlist_load_result(
@@ -3045,6 +3090,8 @@ class MainWindow(Gtk.ApplicationWindow):
             self._visible_wantlist_ids
         )
 
+        # Hotspot 3: widget population (main thread)
+        _t2 = time.perf_counter()
         self._wantlist_syncing_selection = True
         try:
             self._wantlist_text_menu.set_items(items)
@@ -3052,6 +3099,19 @@ class MainWindow(Gtk.ApplicationWindow):
             self._wantlist_gallery.set_items(items)
         finally:
             self._wantlist_syncing_selection = False
+        _t_widgets = time.perf_counter() - _t2
+
+        if _TIMING_ENABLED:
+            _t_query = float(payload.get("_timing_query_s") or 0.0)
+            _t_sort = float(payload.get("_timing_sort_s") or 0.0)
+            print(
+                f"[timing] wantlist-load: n={len(items)}"
+                f"  query={_t_query * 1000:.1f}ms"
+                f"  sort={_t_sort * 1000:.1f}ms"
+                f"  widgets={_t_widgets * 1000:.1f}ms",
+                file=sys.stderr,
+                flush=True,
+            )
 
         restored_selection = False
         if isinstance(preferred_release_id, int):
@@ -3078,7 +3138,7 @@ class MainWindow(Gtk.ApplicationWindow):
         if not items:
             self._wantlist_detail.set_entry(None)
             self._set_status(
-                "No wantlist items loaded. Run `dplayer wantlist sync` to import your Discogs wantlist."
+                "No wantlist items loaded. Run \"dplayer wantlist sync\" to import your Discogs wantlist."
             )
         else:
             self._set_status(

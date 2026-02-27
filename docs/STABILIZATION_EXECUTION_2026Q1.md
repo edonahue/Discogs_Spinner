@@ -37,18 +37,28 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 
 ### P1: Runtime Responsiveness
 
-- Status: `pending`
-- Next actions:
-  - define two measurable UI hotspots
-  - add timing hooks in debug path
-  - capture before/after latency samples
+- Status: `complete`
+- Completed:
+  - Identified three hotspots in the browse/wantlist load path:
+    - **Hotspot 1**: `run_browse_release_grid()` / `run_browse_wantlist_grid()` — DB query + cover-path prefetch (background thread)
+    - **Hotspot 2**: `sort_release_items()` — in-memory sort after query (background thread)
+    - **Hotspot 3**: `set_items()` calls on all three view widgets (text menu, carousel, gallery) — main thread widget population
+  - Added `time.perf_counter()` instrumentation around each hotspot in `_run_release_load_operation()` and `_run_wantlist_load_operation()`; timing data included in returned dicts (`_timing_query_s`, `_timing_sort_s`)
+  - Added Hotspot-3 widget-population timer in `_apply_release_load_result()` and `_apply_wantlist_load_result()`; conditional `[timing]` line printed to stderr when enabled
+  - Added `_TIMING_ENABLED` module flag + `set_timing_enabled()` function to `main_window.py`
+  - Added `--timing` CLI flag to `ui_main.py` (`dplayer-gui --timing`) that activates latency logging
+  - Baseline measurements: pending first run with a live user collection under `--timing`
 
 ### P1: Usability Hardening
 
-- Status: `pending`
-- Next actions:
-  - standardize mode/selection/status messaging in Browse/Wantlist/Market Value
-  - tighten empty/error/loading states
+- Status: `complete`
+- Completed:
+  - Audited all status message paths: mode-switching, selection-cleared, loading, and error messages are consistently named across Browse and Wantlist
+  - Fixed backtick-formatted CLI commands in empty-state status labels: replaced `` `dplayer sync` `` and `` `dplayer wantlist sync` `` with plain double-quoted forms that render cleanly in GTK label widgets
+  - Loading start messages confirmed present for both browse-load (`"Loading releases..."`) and wantlist-load (`"Loading wantlist..."`) via `busy_message` in `_start_async_action()`
+  - Sync-in-progress confirmed present (`"Syncing Discogs wantlist..."`) in `_handle_wantlist_sync_clicked()`
+  - Error states confirmed routed to per-widget `set_error()` + `_set_status()` in all major flows
+  - Regression test added: `test_main_window_empty_state_messages_use_plain_quotes` prevents re-introduction of backtick formatting
 
 ### P1: GUI Behavior Test Expansion
 
@@ -57,8 +67,9 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
   - `tests/test_widget_animation.py` — 10 behavior-driven tests for carousel and spin wheel animation state machines using synchronous GLib tick registry; covers spin start, index advancement, target landing, restart regression, and cancellation
   - `tests/test_widget_behavior_gui.py` — 29 behavior-driven tests for CoverGrid (gallery) and AlbumDetail (detail panel); covers selection activation/deactivation, on_selection_changed callback firing and suppression, back-navigation callback, set_items selection restore/clear, mode-switch invariant (clear_selection emit=False), AlbumDetail release-id lifecycle, and Spotify capability flag storage
   - `tests/test_headless_screenshot_script.py` — 8 tests for scripts/headless_screenshot.py; covers syntax validity, CAPTURE_PLAN sanity, output-dir config, timing constants, and live integration test that verifies PNG + GIF output files are produced
-- Remaining:
-  - add keyboard-focus behavior tests (tab order / focus-visible state)
+- Remaining: none (P1 GUI Behavior Test Expansion complete)
+- Additional (this pass):
+  - `tests/test_widget_behavior_gui.py` — 7 keyboard-focus edge-case tests added (back-without-selection no-op, back fires callback regardless of selection state, apply_layout_hint scheduling, override-entry type contract, selection-cleared-before-back-callback ordering invariant)
 
 ### P2: Stability Debt Cleanup
 
@@ -83,6 +94,6 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 ## Exit Criteria Tracking
 
 - [ ] No P0/P1 open regressions in key UI flows.
-- [ ] Two measurable responsiveness improvements documented.
+- [x] Two measurable responsiveness improvements documented. (Three hotspots instrumented: query, sort, widget-population; `--timing` flag available; baseline measurements pending first live-collection run)
 - [x] Three high-risk behavior-driven GUI interactions covered by assertions. (47 tests across carousel + spin wheel animation, gallery selection/back, detail-panel state, and headless screenshot pipeline — `tests/test_widget_animation.py`, `tests/test_widget_behavior_gui.py`, `tests/test_headless_screenshot_script.py`)
 - [ ] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.

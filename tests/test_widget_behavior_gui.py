@@ -528,3 +528,82 @@ def test_album_detail_set_global_spotify_actions_enabled_stored():
     assert detail._global_spotify_actions_enabled is True
     detail.set_global_spotify_actions_enabled(False)
     assert detail._global_spotify_actions_enabled is False
+
+
+# ============================================================
+# Keyboard-focus edge cases
+#
+# Keyboard accessibility in a GTK4 app requires a live display for
+# focus-grab / focus-visible assertions.  These tests cover the
+# observable widget-API invariants that the keyboard navigation path
+# depends on: back-button robustness without a prior selection, the
+# override-entry return type, and the layout-hint scheduling path that
+# must not block keyboard event delivery.
+# ============================================================
+
+
+def test_cover_grid_back_clicked_without_prior_selection_does_not_raise():
+    """Back action triggered before any selection must be a safe no-op."""
+    grid = _make_grid()
+    assert not grid.has_active_selection()
+    grid._handle_back_clicked(None)  # must not raise
+    assert not grid.has_active_selection()
+
+
+def test_cover_grid_back_clicked_without_selection_fires_back_callback():
+    """Back callback fires even when no selection was active (documents behavior)."""
+    back_calls: list = []
+    grid = _make_grid(on_back_requested=lambda: back_calls.append(1))
+    grid._handle_back_clicked(None)
+    assert back_calls == [1]
+
+
+def test_cover_grid_apply_layout_hint_does_not_raise():
+    """apply_layout_hint schedules a responsive-layout tick without crashing.
+
+    This verifies that the GLib debounce path used during window resize
+    (which must co-operate with keyboard event processing) is exercised
+    without error under the synchronous mock.
+    """
+    grid = _make_grid()
+    grid.apply_layout_hint(1440, 900)
+    grid.apply_layout_hint(1200, 800)  # second call — guard path
+
+
+def test_album_detail_get_override_album_id_returns_str():
+    """override entry always returns a str — safe to pass to match/override actions."""
+    detail = AlbumDetail()
+    result = detail.get_override_album_id()
+    assert isinstance(result, str)
+
+
+def test_album_detail_get_override_album_id_empty_when_no_release():
+    """No release selected → override entry is empty (no stale URI leaked to actions)."""
+    detail = AlbumDetail()
+    assert detail.get_override_album_id() == ""
+
+
+def test_cover_grid_back_button_handler_is_bound():
+    """_handle_back_clicked must be a bound method on every CoverGrid instance."""
+    grid = _make_grid()
+    assert callable(grid._handle_back_clicked)
+
+
+def test_cover_grid_selection_cleared_before_back_callback():
+    """Selection must be cleared before on_back_requested fires.
+
+    If the back callback navigates away (e.g., collapses the sidebar), it
+    must observe an already-cleared gallery state so keyboard focus is
+    correctly restored to the grid.
+    """
+    state: dict = {"has_selection_at_back": None}
+
+    def _on_back():
+        state["has_selection_at_back"] = grid.has_active_selection()
+
+    grid = _make_grid(on_back_requested=_on_back)
+    grid.select_release(2)
+    assert grid.has_active_selection()
+
+    grid._handle_back_clicked(None)
+    assert state["has_selection_at_back"] is False

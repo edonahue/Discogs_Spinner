@@ -44,6 +44,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Load releases once, print JSON report, and exit",
     )
+    parser.add_argument(
+        "--timing",
+        action="store_true",
+        help="Print per-operation latency samples to stderr (browse-load and wantlist-load hotspots)",
+    )
     return parser
 
 
@@ -72,6 +77,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         module_name = exc.name or "unknown"
         print(f"Failed to import GUI module dependency: {module_name}", file=sys.stderr)
         return 1
+
+    if args.timing:
+        import importlib
+        _mw = importlib.import_module("discogs_player.ui.main_window")
+        set_timing_enabled = getattr(_mw, "set_timing_enabled", None)
+        if set_timing_enabled is not None:
+            set_timing_enabled(True)
 
     app = DiscogsPlayerApp(
         limit=max(0, int(args.limit)),
