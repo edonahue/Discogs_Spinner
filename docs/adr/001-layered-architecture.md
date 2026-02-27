@@ -37,12 +37,12 @@ We will use a layered architecture:
 
 ## Implementation
 
-- 36 use case modules implementing all features
+- 43 use case modules implementing all features
 - CLI uses Typer for commands, Rich for output
 - GUI uses GTK4/libadwaita via PyGObject
 - Both call the same use case functions
 
 ## References
-- `src/discogs_player/use_cases/` - 36 modules
+- `src/discogs_player/use_cases/` - 43 modules
 - `src/discogs_player/cli/commands.py` - CLI interface
 - `src/discogs_player/ui/main_window.py` - GUI interface

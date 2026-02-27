@@ -15,8 +15,8 @@ This guide targets first-time users installing `discogs_player` on Windows.
 Open PowerShell:
 
 ```powershell
-git clone https://github.com/<your-user>/discogs_player.git
-cd discogs_player
+git clone https://github.com/edonahue/Discogs_Spinner.git
+cd Discogs_Spinner
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip

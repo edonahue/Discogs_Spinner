@@ -94,7 +94,7 @@ Most recent recorded validation:
 - `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
 - `mypy`: passing (`92` source files checked)
-- `pytest -q`: `369 passed, 3 skipped`
+- `pytest -q`: `362 passed, 4 skipped`
 - `npm --prefix webapp run build`: passing
 
 Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
@@ -105,9 +105,7 @@ Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
 - Docs are aligned to public naming (`Discogs Spinner`) and explicitly state no embedded in-app streaming.
 - Repository sanitation pass and `.gitignore` hardening are complete.
 - First checklist/runbook pass has been executed (`docs/RELEASE_CHECKLIST_FIRST_PASS_2026-02-26.md`).
-- At checkpoint capture time, latest local commits were ready for first push.
-- At checkpoint capture time, `git push` required local GitHub credential setup in this environment.
-- Post-checkpoint update: `master` has been pushed and tracks `origin/master`.
+- `master` is pushed and tracks `origin/master`.
 - Post-checkpoint update: tagged-release workflow is green on `v0.2.0-rc4` (all OS artifact jobs + publish succeeded).
 - Post-checkpoint update: live release checklist status is tracked in `docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md`.
 - Post-checkpoint update: Windows/macOS clean-runner pilot validation automation pass has been recorded (workflow-backed command-path checks).

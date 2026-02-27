@@ -1,4 +1,4 @@
-# Contributing to Discogs Player
+# Contributing to Discogs Spinner
 
 Thank you for your interest in contributing to Discogs Player! This document provides guidelines and information for contributors.
 
@@ -33,8 +33,8 @@ This project follows the standard open-source code of conduct:
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/discogs_player.git
-   cd discogs_player
+   git clone https://github.com/edonahue/Discogs_Spinner.git
+   cd Discogs_Spinner
    ```
 
 2. **Create a virtual environment:**
@@ -46,16 +46,10 @@ This project follows the standard open-source code of conduct:
 3. **Install development dependencies:**
    ```bash
    pip install -r requirements.txt
-   pip install -r requirements-dev.txt  # If available
    pip install -e .
    ```
 
-4. **Install documentation tools (optional):**
-   ```bash
-   pip install sphinx sphinx-rtd-theme
-   ```
-
-5. **Configure environment variables:**
+4. **Configure environment variables:**
    ```bash
    export DISCOGS_TOKEN="your_discogs_personal_token"
    # Optional: Spotify credentials for playback testing
@@ -65,7 +59,7 @@ This project follows the standard open-source code of conduct:
    # export SPOTIFY_CLIENT_SECRET="your_spotify_client_secret"
    ```
 
-6. **Run tests to verify setup:**
+5. **Run tests to verify setup:**
    ```bash
    pytest
    ```
@@ -101,7 +95,7 @@ discogs_player/
 │   │   ├── list_releases.py
 │   │   ├── spin_release.py
 │   │   ├── play_release.py
-│   │   └── ... (36 modules total)
+│   │   └── ... (43 modules total)
 │   ├── ui/                    # GTK4 GUI
 │   │   ├── main_window.py     # Main window
 │   │   ├── sorting.py         # Sorting logic

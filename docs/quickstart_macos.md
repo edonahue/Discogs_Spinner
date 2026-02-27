@@ -19,8 +19,8 @@ brew install python@3.12 git
 ## 2) Clone and install
 
 ```bash
-git clone https://github.com/<your-user>/discogs_player.git
-cd discogs_player
+git clone https://github.com/edonahue/Discogs_Spinner.git
+cd Discogs_Spinner
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
