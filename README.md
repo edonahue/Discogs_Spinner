@@ -6,7 +6,7 @@
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml/badge.svg"></a>
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/pilot_validation_windows_macos.yml"><img alt="Pilot Validation" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/pilot_validation_windows_macos.yml/badge.svg"></a>
   <a href="https://github.com/edonahue/Discogs_Spinner/releases"><img alt="Release" src="https://img.shields.io/github/v/release/edonahue/Discogs_Spinner?include_prereleases"></a>
-  <img alt="Python >=3.10" src="https://img.shields.io/badge/python-3.10%2B-2f5d8a">
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-2f5d8a">
 </p>
 
 <p align="center">
