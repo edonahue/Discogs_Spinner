@@ -32,14 +32,16 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 ## Screenshots
 
 <p align="center">
-  <img src="docs/media/screenshots/01-browse-gallery.png" alt="Browse gallery mode" width="49%">
-  <img src="docs/media/screenshots/02-spin-result.png" alt="Spin result" width="49%">
+  <img src="docs/media/screenshots/01-browse-gallery.png" alt="Browse — gallery view with album art grid" width="49%">
+  <img src="docs/media/screenshots/02-spin-result.png" alt="Browse — carousel with album detail, market data, and tracklist" width="49%">
 </p>
+<p align="center"><em>Browse gallery &nbsp;·&nbsp; Album detail after spin</em></p>
 
 <p align="center">
-  <img src="docs/media/screenshots/03-market-value-dashboard.png" alt="Market value dashboard" width="49%">
-  <img src="docs/media/screenshots/04-wantlist-view.png" alt="Wantlist view" width="49%">
+  <img src="docs/media/screenshots/03-market-value-dashboard.png" alt="Collection Value Dashboard — total, median, top movers" width="49%">
+  <img src="docs/media/screenshots/04-wantlist-view.png" alt="Wantlist gallery view with cover art" width="49%">
 </p>
+<p align="center"><em>Collection Value Dashboard &nbsp;·&nbsp; Wantlist gallery</em></p>
 
 ---
 
