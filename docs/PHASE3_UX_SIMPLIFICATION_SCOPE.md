@@ -30,11 +30,12 @@ open in?
 | Carousel | Familiar CD-spinner metaphor; good for small collections |
 | Text menu | Fastest to load; works over SSH |
 
-**Current default**: none set (last-used mode is remembered per session,
-not persisted across restarts).
-**Recommendation**: default to Gallery for GUI users (most intuitive);
-preserve last-used per session as today.
-**Decision**: _pending_
+**Current default**: Carousel — hardcoded in `MainWindow.__init__` (lines 1132–1133
+for wantlist, 1350–1351 for browse). Mode is not persisted across restarts, so
+the app always opens in Carousel.
+**Decision**: **Carousel (2026-02-27, Erich).** No code change required; existing
+startup behavior is correct. Mode persistence across restarts is explicitly out of
+scope for Phase 3.
 
 ---
 
@@ -53,7 +54,8 @@ Options:
 | Rate-limit (suppress repeats) | Only show if mode actually changed from last shown message |
 
 **Recommendation**: Replace with `Adw.Toast` (transient, non-blocking, auto-dismissed).
-**Decision**: _pending_
+**Decision**: **Keep as-is (2026-02-27, Erich).** The `_set_status()` messages on
+mode toggle are retained. No code change.
 
 ---
 
@@ -70,7 +72,9 @@ Questions:
 **Recommendation**: Add a "Sync now" button to the Browse empty-state label
 (wires to the existing sync handler). Defer full FTUX dialog to Phase 4
 (out of scope for simplification).
-**Decision**: _pending_
+**Decision**: **Complete (2026-02-27).** Implemented in `feat(gui): first-run onboarding`
+and `feat(onboarding)` commits. Browse and Wantlist both have inline Sync buttons,
+three-tier empty-state messages, and per-page progress feedback.
 
 ---
 
@@ -116,8 +120,9 @@ Ordered by dependency:
 
 ## Success Criteria
 
-- [ ] Default mode decision made and implemented; no mode-unknown state on first launch.
-- [ ] Tab-switch status messages replaced or suppressed; no status label updated on every mode toggle.
-- [ ] Empty-state panels include an actionable affordance (button or inline instruction).
-- [ ] Full validation matrix green after each change (`ruff`, `mypy`, `pytest`, web build).
-- [ ] No new P0/P1 regressions introduced.
+- [x] Default mode decision made and implemented; no mode-unknown state on first launch. *(D1: Carousel — existing behavior is correct; no code change required. 2026-02-27)*
+- [x] Tab-switch status message treatment decided. *(D2: Keep as-is — `_set_status()` calls on mode toggle retained. No code change. 2026-02-27)*
+- [x] Empty-state panels include an actionable affordance (button or inline instruction). *(D3: Browse + Wantlist Sync buttons, three-tier messages, per-page progress — shipped in feat(onboarding) commits. 2026-02-27)*
+- [x] Full validation matrix green. *(`454 passed, 4 skipped`; ruff clean; mypy 92 files; npm build — 2026-02-27)*
+- [x] No new P0/P1 regressions introduced. *(454 tests passing; no regressions detected.)*
+- [ ] D4 timing gate: record `dplayer-gui --timing` latencies against live collection in `docs/STABILIZATION_EXECUTION_2026Q1.md`. *(Needs desktop session — pending.)*

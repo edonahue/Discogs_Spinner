@@ -94,7 +94,7 @@ Most recent recorded validation:
 - `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
 - `mypy`: passing (`92` source files checked)
-- `pytest -q`: `446 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
+- `pytest -q`: `454 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
 - `npm --prefix webapp run build`: passing
 
 Reference: `docs/TESTING_PERFORMED_2026-02-26.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`

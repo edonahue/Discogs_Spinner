@@ -108,7 +108,20 @@ Interpretation guide:
 
 ## Exit Criteria Tracking
 
-- [x] No P0/P1 open regressions in key UI flows. (`425 passed, 4 skipped`; full smoke matrix green as of 2026-02-26)
+- [x] No P0/P1 open regressions in key UI flows. (`454 passed, 4 skipped` as of 2026-02-27; full smoke matrix green)
 - [x] Two measurable responsiveness improvements documented. (Three hotspots instrumented: query, sort, widget-population; `--timing` flag available; baseline measurements pending first live-collection run)
 - [x] Three high-risk behavior-driven GUI interactions covered by assertions. (47 tests across carousel + spin wheel animation, gallery selection/back, detail-panel state, and headless screenshot pipeline — `tests/test_widget_animation.py`, `tests/test_widget_behavior_gui.py`, `tests/test_headless_screenshot_script.py`)
 - [x] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.
+
+## Phase 3 Pre-Work Closure (2026-02-27)
+
+Decisions recorded in `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`.
+
+| Decision | Outcome | Code change |
+|---|---|---|
+| D1: Default browse/wantlist mode | **Carousel** — existing startup behavior is already correct | None |
+| D2: Tab-switch status messages | **Keep as-is** — retained; no change to `_set_status()` calls | None |
+| D3: Empty-state "Sync now" button | **Complete** — inline Sync buttons, three-tier messages, per-page progress implemented | Already shipped |
+| D4: Responsiveness gate | **Pending** — `dplayer-gui --timing` baseline run against live collection not yet recorded | Needs desktop session |
+
+Validation at Phase 3 pre-work closure: `454 passed, 4 skipped`; ruff clean; mypy 92 files clean; npm build clean.
