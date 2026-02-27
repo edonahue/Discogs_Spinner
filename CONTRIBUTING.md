@@ -50,6 +50,9 @@ This project follows the standard open-source code of conduct:
    ```
 
 4. **Configure environment variables:**
+
+   See [docs/token_setup.md](docs/token_setup.md) for step-by-step instructions on obtaining these credentials.
+
    ```bash
    export DISCOGS_TOKEN="your_discogs_personal_token"
    # Optional: Spotify credentials for playback testing

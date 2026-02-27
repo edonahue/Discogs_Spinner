@@ -5,8 +5,8 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 ## 1) Prerequisites
 
 - Debian 12+ (or Ubuntu equivalent)
-- Discogs account + personal token
-- Optional: Spotify account (for playback/matching features)
+- Discogs account + personal token ([how to get one](token_setup.md))
+- Optional: Spotify account (for playback/matching features — [how to set up](token_setup.md#spotify-api-credentials))
 
 Install system packages:
 
@@ -45,6 +45,8 @@ pip install -e ".[spotify]"
 
 ## 3) Configure Discogs token
 
+Get your personal access token at [discogs.com/settings/developers](https://www.discogs.com/settings/developers) (Personal Access Tokens → Generate new token).
+
 ```bash
 export DISCOGS_TOKEN="your_discogs_personal_token"
 dplayer setup
@@ -60,7 +62,12 @@ dplayer list --limit 10
 
 ## 5) Optional Spotify onboarding
 
+First, create a Spotify app and get your Client ID + Secret at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard). Add `http://127.0.0.1:8765/callback` as a redirect URI. See [token_setup.md](token_setup.md#spotify-api-credentials) for full steps.
+
 ```bash
+export SPOTIPY_CLIENT_ID="your_client_id"
+export SPOTIPY_CLIENT_SECRET="your_client_secret"
+export SPOTIPY_REDIRECT_URI="http://127.0.0.1:8765/callback"
 dplayer auth spotify-doctor
 dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765
 dplayer devices --json

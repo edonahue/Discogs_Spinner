@@ -61,12 +61,16 @@ dplayer spin
 dplayer play --open
 ```
 
+Need a token? [Get your Discogs personal access token →](docs/token_setup.md)
+
 Optional Spotify addon:
 
 ```bash
 pip install -e ".[spotify]"
 dplayer auth spotify-doctor
 ```
+
+Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#spotify-api-credentials)
 
 ---
 
@@ -75,6 +79,7 @@ dplayer auth spotify-doctor
 - [Windows Quickstart](docs/quickstart_windows.md)
 - [Debian Quickstart](docs/quickstart_debian.md)
 - [macOS Quickstart](docs/quickstart_macos.md)
+- [Token Setup (Discogs + Spotify)](docs/token_setup.md)
 
 ---
 
