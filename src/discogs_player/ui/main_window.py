@@ -1900,7 +1900,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def _apply_split_layout_from_current_size(self) -> bool:
         self._apply_split_layout(max(1, int(self.get_width())))
         return False
-    
+
     def _on_window_state_change(self, window, param) -> None:
         """Handle window state changes (maximized, fullscreen, etc.)."""
         # Trigger resize handling when window state changes
@@ -2348,7 +2348,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # Skip if still initializing (attributes may not exist yet)
         if not hasattr(self, '_status'):
             return
-        
+
         active_view = self._active_main_view()
         # Update status to reflect the current view
         if active_view == "browse":
@@ -4188,11 +4188,11 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _apply_spin_result(self, payload: dict[str, object]) -> None:
         self._carousel.stop_center_spin_animation(invoke_callback=False)
-        
+
         release = payload.get("release")
         if not isinstance(release, dict):
             release = payload
-            
+
         release_id = release.get("discogs_release_id")
         if isinstance(release_id, int):
             quick_detail = self._release_with_cached_tracklist(release)
@@ -4200,7 +4200,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self._selected_release = dict(quick_detail)
             self._album_detail.set_release(quick_detail)
             self._spin_wheel.set_context_release(quick_detail)
-            
+
             GLib.idle_add(lambda: self._focus_release_id(release_id, allow_expand_limit=False) and False)
 
         self._set_status(str(payload.get("status_message") or "Spin complete."))

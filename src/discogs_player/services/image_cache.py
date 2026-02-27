@@ -345,7 +345,7 @@ async def get_or_fetch_cover_path_async(
     if loop is None:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
+
     task = loop.run_in_executor(
         get_image_executor(),
         _download_image_worker,
@@ -355,13 +355,13 @@ async def get_or_fetch_cover_path_async(
         cache_dir,
         digest,
     )
-    
+
     # Track pending request
     _pending_requests[normalized_url] = task
-    
+
     def on_complete(fut):
         _pending_requests.pop(normalized_url, None)
-        
+
     task.add_done_callback(on_complete)
     return await task
 

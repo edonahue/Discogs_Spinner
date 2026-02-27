@@ -2688,25 +2688,25 @@ def recent(
 ) -> None:
     """Show recently added releases from your collection."""
     from discogs_player.use_cases.list_recent import run_recent_releases
-    
+
     result = run_recent_releases(days=days, limit=limit)
-    
+
     if json_output:
         _emit_json(result)
         return
-    
+
     releases = result.get("releases", [])
     if not releases:
         console.print(f"[yellow]No releases added in the last {days} days.[/yellow]")
         return
-    
+
     table = Table(title=f"Recently Added (last {days} days)")
     table.add_column("Added", style="cyan")
     table.add_column("Artist", style="magenta")
     table.add_column("Title", style="white")
     table.add_column("Year", style="green")
     table.add_column("Release ID", style="dim")
-    
+
     for release in releases:
         added_at = str(release.get("added_at", "")[:10])
         table.add_row(
@@ -2716,7 +2716,7 @@ def recent(
             str(release.get("year", "")),
             str(release.get("discogs_release_id", "")),
         )
-    
+
     console.print(table)
     console.print(f"[dim]Showing {len(releases)} release(s)[/dim]")
 

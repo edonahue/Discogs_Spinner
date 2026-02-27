@@ -189,7 +189,7 @@ class ValueDashboard(Gtk.Box):
         self._lists_revealer = self._build_revealer()
         self._trend_revealer = self._build_revealer()
         self._detector_revealer = self._build_revealer()
-        
+
         # Store revealers for staggered animation
         self._dashboard_revealers = [
             self._summary_revealer,

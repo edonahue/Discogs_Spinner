@@ -116,23 +116,23 @@ class FilterBar(Gtk.Box):
     def _apply_recent_filter(self) -> None:
         """Apply filter for recently added releases (last 30 days)."""
         from datetime import datetime, timedelta, timezone
-        
+
         # Calculate date 30 days ago
         recent_date = datetime.now(timezone.utc) - timedelta(days=30)
         year_str = str(recent_date.year)
-        
+
         # Clear other filters
         self._search_entry.set_text("")
         self._genre_entry.set_text("")
         self._style_entry.set_text("")
         self._unmatched_only.set_active(False)
-        
+
         # Set year filter to current year (as a proxy for recent)
         # and sort by added date (not directly available, so use year desc)
         self._year_entry.set_text(year_str)
         self._limit_spin.set_value(50)
         self._sort_dropdown.set_selected(1)  # year_desc
-        
+
         self._trigger_refresh()
 
     @staticmethod
