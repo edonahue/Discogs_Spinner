@@ -55,9 +55,10 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 - Status: `in_progress`
 - Completed:
   - `tests/test_widget_animation.py` — 10 behavior-driven tests for carousel and spin wheel animation state machines using synchronous GLib tick registry; covers spin start, index advancement, target landing, restart regression, and cancellation
+  - `tests/test_widget_behavior_gui.py` — 29 behavior-driven tests for CoverGrid (gallery) and AlbumDetail (detail panel); covers selection activation/deactivation, on_selection_changed callback firing and suppression, back-navigation callback, set_items selection restore/clear, mode-switch invariant (clear_selection emit=False), AlbumDetail release-id lifecycle, and Spotify capability flag storage
+  - `tests/test_headless_screenshot_script.py` — 8 tests for scripts/headless_screenshot.py; covers syntax validity, CAPTURE_PLAN sanity, output-dir config, timing constants, and live integration test that verifies PNG + GIF output files are produced
 - Remaining:
-  - add assertions for gallery selection/back and detail-panel visibility
-  - add mode-toggle and keyboard-focus behavior tests
+  - add keyboard-focus behavior tests (tab order / focus-visible state)
 
 ### P2: Stability Debt Cleanup
 
@@ -83,5 +84,5 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 
 - [ ] No P0/P1 open regressions in key UI flows.
 - [ ] Two measurable responsiveness improvements documented.
-- [x] Three high-risk behavior-driven GUI interactions covered by assertions. (10 tests across carousel + spin wheel animation flows — `tests/test_widget_animation.py`)
+- [x] Three high-risk behavior-driven GUI interactions covered by assertions. (47 tests across carousel + spin wheel animation, gallery selection/back, detail-panel state, and headless screenshot pipeline — `tests/test_widget_animation.py`, `tests/test_widget_behavior_gui.py`, `tests/test_headless_screenshot_script.py`)
 - [ ] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.
