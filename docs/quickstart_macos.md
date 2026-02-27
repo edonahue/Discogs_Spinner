@@ -51,7 +51,14 @@ dplayer status
 dplayer list --limit 10
 ```
 
-## 5) Optional Spotify onboarding
+## 5) Launch the desktop GUI (optional)
+
+> The GTK4 desktop GUI is Linux-only. On macOS, use the CLI (`dplayer`) for all workflows.
+> A native macOS app bundle is planned for a future release (see Gatekeeper section below).
+
+All core features — sync, browse, spin, play, wantlist, analytics — are available via `dplayer` CLI on macOS.
+
+## 6) Optional Spotify onboarding
 
 First, create a Spotify app and get your Client ID + Secret at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard). Add `http://127.0.0.1:8765/callback` as a redirect URI. See [token_setup.md](token_setup.md#spotify-api-credentials) for full steps.
 
@@ -70,12 +77,12 @@ Safe first play fallback:
 dplayer play --last-spin --open
 ```
 
-## 6) Notes
+## 7) Notes
 
 - Keep this as a CLI-first setup path unless a signed macOS app build is provided.
 - If browser callback fails, use manual callback options from `dplayer auth spotify --help`.
 
-## 7) Gatekeeper and Signing Status (2026-02-26)
+## 8) Gatekeeper and Signing Status (2026-02-26)
 
 - Current release artifacts are tarball bundles (`core` and `plus`), not a signed `.app` installer.
 - Code signing and notarization are not yet in place for this RC channel.
@@ -85,7 +92,7 @@ dplayer play --last-spin --open
   - if needed for testing only, remove quarantine attribute:
     `xattr -dr com.apple.quarantine <path-to-extracted-artifact-or-launcher>`
 
-## 8) Signing/Notarization TODOs
+## 9) Signing/Notarization TODOs
 
 1. Define signing identity and certificate storage policy for CI.
 2. Add a codesign step for macOS release artifacts in tagged-release workflow.

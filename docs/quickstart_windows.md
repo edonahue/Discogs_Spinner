@@ -47,7 +47,14 @@ dplayer status
 dplayer list --limit 10
 ```
 
-## 5) Optional Spotify onboarding
+## 5) Launch the desktop GUI (optional)
+
+> The GTK4 desktop GUI is Linux-only. On Windows, use the CLI (`dplayer`) for all workflows.
+> A native Windows GUI is planned for a future release.
+
+All core features — sync, browse, spin, play, wantlist, analytics — are available via `dplayer` CLI on Windows.
+
+## 6) Optional Spotify onboarding
 
 First, create a Spotify app and get your Client ID + Secret at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard). Add `http://127.0.0.1:8765/callback` as a redirect URI. See [token_setup.md](token_setup.md#spotify-api-credentials) for full steps.
 
@@ -66,7 +73,7 @@ Safe first play fallback:
 dplayer play --last-spin --open
 ```
 
-## 6) Troubleshooting
+## 7) Troubleshooting
 
 - If script activation is blocked:
   - run PowerShell as current user and execute

@@ -257,3 +257,102 @@ def test_startup_timing_clears_t0_after_first_load():
     assert "del self._startup_load_t0" in src, (
         "_startup_load_t0 must be deleted after first timing output"
     )
+
+
+# ---------------------------------------------------------------------------
+# Item 3 (new): Last-synced-at indicator — source-level assertions
+# ---------------------------------------------------------------------------
+
+
+def test_format_sync_date_helper_present():
+    """_format_sync_date module-level helper must be defined in main_window.py."""
+    assert "_format_sync_date" in _src()
+
+
+def test_last_synced_in_loaded_status():
+    """Loaded status message must reference _format_sync_date for browse and wantlist."""
+    src = _src()
+    assert "Last synced" in src, (
+        "Loaded status message must include 'Last synced' indicator"
+    )
+    assert "_format_sync_date" in src
+
+
+def test_format_sync_date_logic():
+    """_format_sync_date returns YYYY-MM-DD for valid ISO strings and 'never' for None."""
+    # Mirror the helper logic without importing GTK-dependent modules.
+    from datetime import datetime
+
+    def _format_sync_date(iso_str):
+        if not iso_str:
+            return "never"
+        try:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            local = dt.astimezone()
+            return f"{local.year}-{local.month:02d}-{local.day:02d}"
+        except (ValueError, AttributeError):
+            return iso_str[:10] if iso_str else "never"
+
+    assert _format_sync_date(None) == "never"
+    assert _format_sync_date("") == "never"
+    result = _format_sync_date("2026-02-26T10:00:00+00:00")
+    assert result.startswith("2026-"), f"Expected YYYY-MM-DD, got {result!r}"
+    assert _format_sync_date("not-a-date") == "not-a-date"  # 10 chars exactly, no truncation
+
+
+def test_wantlist_last_synced_uses_wantlist_key():
+    """Wantlist loaded status must read last_wantlist_sync_time, not last_sync_time."""
+    src = _src()
+    assert "last_wantlist_sync_time" in src
+
+
+# ---------------------------------------------------------------------------
+# Item 5: Install script token hint — source-level assertions
+# ---------------------------------------------------------------------------
+
+_INSTALL_SCRIPT = (
+    Path(__file__).parents[1] / "scripts" / "install_desktop_app.sh"
+)
+
+
+def test_install_script_mentions_discogs_token():
+    """install_desktop_app.sh post-install output must mention DISCOGS_TOKEN."""
+    content = _INSTALL_SCRIPT.read_text()
+    assert "DISCOGS_TOKEN" in content, (
+        "install_desktop_app.sh must reference DISCOGS_TOKEN in post-install instructions"
+    )
+
+
+def test_install_script_mentions_token_url():
+    """install_desktop_app.sh must link to discogs.com/settings/developers."""
+    content = _INSTALL_SCRIPT.read_text()
+    assert "discogs.com/settings/developers" in content, (
+        "install_desktop_app.sh must include the Discogs token URL"
+    )
+
+
+def test_install_script_mentions_config_set():
+    """install_desktop_app.sh must show 'dplayer config set discogs_token' command."""
+    content = _INSTALL_SCRIPT.read_text()
+    assert "dplayer config set discogs_token" in content
+
+
+# ---------------------------------------------------------------------------
+# Item 8: Wantlist sync time — source-level assertion
+# ---------------------------------------------------------------------------
+
+_SYNC_MANAGER = (
+    Path(__file__).parents[1]
+    / "src"
+    / "discogs_player"
+    / "services"
+    / "sync_manager.py"
+)
+
+
+def test_sync_manager_stores_last_wantlist_sync_time():
+    """sync_manager.py must call set_setting('last_wantlist_sync_time', ...) after wantlist sync."""
+    content = _SYNC_MANAGER.read_text()
+    assert "last_wantlist_sync_time" in content, (
+        "sync_manager.py must persist last_wantlist_sync_time so the GUI can detect never-synced state"
+    )

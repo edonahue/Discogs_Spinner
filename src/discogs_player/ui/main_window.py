@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
+from datetime import datetime
 import json
 from pathlib import Path
 import sys
@@ -77,6 +78,21 @@ from discogs_player.use_cases.value_refresh import run_refresh_market_values
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.ui.sorting import sort_release_items
 from discogs_player.ui.widgets.album_detail import AlbumDetail
+
+def _format_sync_date(iso_str: str | None) -> str:
+    """Return a short human-readable sync date from an ISO-8601 timestamp.
+
+    Returns "never" for None/empty, or "YYYY-MM-DD" on parse failure.
+    """
+    if not iso_str:
+        return "never"
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        local = dt.astimezone()
+        return f"{local.year}-{local.month:02d}-{local.day:02d}"
+    except (ValueError, AttributeError):
+        return iso_str[:10] if iso_str else "never"
+
 
 # Set to True via set_timing_enabled() (or --timing CLI flag) to print
 # per-operation latency samples to stderr during a session.
@@ -3109,8 +3125,11 @@ class MainWindow(Gtk.ApplicationWindow):
             self._set_status(status_msg)
         else:
             self._browse_empty_box.set_visible(False)
+            last_sync = get_setting("last_sync_time")
             self._set_status(
-                f"Loaded {len(items)} releases ({cover_count} cover images cached)."
+                f"Loaded {len(items)} releases"
+                f" ({cover_count} covers cached)"
+                f" · Last synced {_format_sync_date(last_sync)}"
             )
 
         # Emit startup timing when the first load completes (item 6).
@@ -3295,8 +3314,11 @@ class MainWindow(Gtk.ApplicationWindow):
             self._set_status(wl_status)
         else:
             self._wantlist_empty_box.set_visible(False)
+            wl_last_sync = get_setting("last_wantlist_sync_time")
             self._set_status(
-                f"Loaded {len(items)} wantlist items ({cover_count} cover images cached)."
+                f"Loaded {len(items)} wantlist items"
+                f" ({cover_count} covers cached)"
+                f" · Last synced {_format_sync_date(wl_last_sync)}"
             )
 
         # Sidebar/detail content can change natural width after load; reapply split.

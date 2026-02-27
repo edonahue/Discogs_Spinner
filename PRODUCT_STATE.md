@@ -87,14 +87,14 @@ GUI also includes:
 - Device picker and Spotify capability-aware controls
 - Value dashboard with refresh/snapshot operations
 
-### Validation Baseline (As Of 2026-02-26, Updated 2026-02-26 Phase 2 Close)
+### Validation Baseline (As Of 2026-02-27, Updated Post Phase 3 Onboarding Work)
 
 Most recent recorded validation:
 
 - `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
 - `mypy`: passing (`92` source files checked)
-- `pytest -q`: `425 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
+- `pytest -q`: `446 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
 - `npm --prefix webapp run build`: passing
 
 Reference: `docs/TESTING_PERFORMED_2026-02-26.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`
@@ -154,7 +154,7 @@ Overall position vs original plan:
 
 3. Test strategy imbalance
 
-- ~~Strong automated coverage exists, but many GUI checks are static marker tests and smoke checks.~~ **Closed by Phase 2**: three behavior-driven test modules now cover animation state machines, gallery/detail selection flows, screenshot pipeline, and keyboard-focus edge cases (47 assertions). 425 total tests passing.
+- ~~Strong automated coverage exists, but many GUI checks are static marker tests and smoke checks.~~ **Closed by Phase 2**: three behavior-driven test modules now cover animation state machines, gallery/detail selection flows, screenshot pipeline, and keyboard-focus edge cases (47 assertions). 446 total tests passing.
 
 4. Release readiness housekeeping
 
@@ -281,8 +281,17 @@ Selection rule:
 
 ## Near-Term Action Queue
 
-Updated 2026-02-26 (post Phase 2 close).
+Updated 2026-02-27 (post Phase 3 onboarding work).
 
-1. **Pilot timing run** — Run `dplayer-gui --timing` against the pilot user's real collection and record query/sort/widget-population latencies in `docs/STABILIZATION_EXECUTION_2026Q1.md`. This closes the one open Phase 2 measurement.
-2. **Pilot validation** — Close remaining manual checklist items for `v0.2.0-rc4` (clean-machine pilot validations on Windows/Debian/macOS) and re-evaluate rollout go/no-go.
-3. **Phase 3 kickoff** — Follow the Phase 3 kickoff checklist in the Phase 2 outcome summary above. Start after the timing run result is recorded.
+**Completed since Phase 2 close (2026-02-27):**
+- First-run onboarding improvements: startup token check, empty-state Sync buttons, per-page sync progress, never-synced vs filter-mismatch distinction, startup timing instrumentation.
+- Last-synced-at indicator in Browse/Wantlist status bar.
+- Token setup instructions added to `install_desktop_app.sh` post-install output.
+- Phase 3 scope decisions D3 (empty-state affordance) substantially complete.
+- Quickstart docs updated with GUI launch section.
+- Phase 3 scope doc: `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`.
+
+**Still open:**
+1. **Pilot timing run** — Run `dplayer-gui --timing` against the pilot user's real collection and record latencies in `docs/STABILIZATION_EXECUTION_2026Q1.md`. *(Needs user action.)*
+2. **Pilot validation** — Close remaining manual checklist items (Windows non-CLI launch, Debian desktop session, macOS Gatekeeper docs) and re-evaluate rollout go/no-go. *(Needs user action.)*
+3. **Phase 3 D1/D2** — Decide on default browse mode and tab-switch message treatment (see `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`), then implement.

@@ -60,7 +60,28 @@ dplayer status
 dplayer list --limit 10
 ```
 
-## 5) Optional Spotify onboarding
+## 5) Launch the desktop GUI (optional)
+
+> Linux only. Requires GTK4/libadwaita (installed above in prerequisites).
+
+```bash
+bash scripts/install_desktop_app.sh
+```
+
+This installs a desktop entry and launcher. Open your app launcher and search for **Discogs Player**, or run:
+
+```bash
+discogs-player-gui
+```
+
+**First-launch flow:**
+
+- If your token is not yet set, the app shows a guided message in the status bar.
+- If no sync has run yet, both Browse and Wantlist show a **Sync Collection** / **Sync Wantlist** button — click it to import your records directly from the GUI.
+- Progress is shown in the status bar (`Syncing... page 3 of 12`).
+- After sync, the status bar shows `Loaded N releases · Last synced YYYY-MM-DD`.
+
+## 6) Optional Spotify onboarding
 
 First, create a Spotify app and get your Client ID + Secret at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard). Add `http://127.0.0.1:8765/callback` as a redirect URI. See [token_setup.md](token_setup.md#spotify-api-credentials) for full steps.
 
@@ -79,7 +100,7 @@ Safe first play fallback:
 dplayer play --last-spin --open
 ```
 
-## 6) Troubleshooting
+## 7) Troubleshooting
 
 - Run `dplayer setup` for onboarding hints.
 - If playback fails, confirm a Spotify device is active and selected.
