@@ -96,4 +96,4 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 - [ ] No P0/P1 open regressions in key UI flows.
 - [x] Two measurable responsiveness improvements documented. (Three hotspots instrumented: query, sort, widget-population; `--timing` flag available; baseline measurements pending first live-collection run)
 - [x] Three high-risk behavior-driven GUI interactions covered by assertions. (47 tests across carousel + spin wheel animation, gallery selection/back, detail-panel state, and headless screenshot pipeline — `tests/test_widget_animation.py`, `tests/test_widget_behavior_gui.py`, `tests/test_headless_screenshot_script.py`)
-- [ ] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.
+- [x] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.

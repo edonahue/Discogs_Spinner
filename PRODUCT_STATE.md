@@ -87,17 +87,17 @@ GUI also includes:
 - Device picker and Spotify capability-aware controls
 - Value dashboard with refresh/snapshot operations
 
-### Validation Baseline (As Of 2026-02-26)
+### Validation Baseline (As Of 2026-02-26, Updated 2026-02-26 Phase 2 Close)
 
 Most recent recorded validation:
 
 - `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
 - `mypy`: passing (`92` source files checked)
-- `pytest -q`: `362 passed, 4 skipped`
+- `pytest -q`: `419 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
 - `npm --prefix webapp run build`: passing
 
-Reference: `docs/TESTING_PERFORMED_2026-02-26.md`
+Reference: `docs/TESTING_PERFORMED_2026-02-26.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`
 
 ### Current Delivery Checkpoint (As Of 2026-02-26)
 
@@ -133,9 +133,9 @@ Overall position vs original plan:
 
 ### Dated Roadmap Progress (This File)
 
-- Phase 1 (Documentation Convergence, 2026-02-23 to 2026-03-01): In progress; canonical-state ownership, README alignment, and historical-doc positioning are largely done. Remaining work includes Sphinx toctree/file alignment.
-- Phase 2 (Stabilization And Responsiveness, 2026-03-01 to 2026-03-31): Pre-kickoff groundwork is in place (`STABILIZATION_BACKLOG_2026Q1.md`, execution tracker); full execution is next.
-- Phase 3 (UX Simplification And Flow Hardening, 2026-04-01 to 2026-04-30): Not started.
+- Phase 1 (Documentation Convergence, 2026-02-23 to 2026-03-01): Complete. Canonical-state ownership, README alignment, historical-doc positioning, and release note coverage done. Sphinx toctree gap remains a minor open item.
+- Phase 2 (Stabilization And Responsiveness, 2026-03-01 to 2026-03-31): **Complete (executed early, Feb 26)**. All P1/P2 exit criteria met. See outcome summary below.
+- Phase 3 (UX Simplification And Flow Hardening, 2026-04-01 to 2026-04-30): Ready to start. See recommendation below.
 - Phase 4 (Next Feature Block, 2026-05-01 to 2026-06-30): Not started.
 
 ## Current Gaps And Risks
@@ -144,20 +144,28 @@ Overall position vs original plan:
 
 - Some historical status files report outdated test counts/completeness snapshots.
 - Sphinx toctree references pages that are not present under `docs/source/`.
+- **Status**: Reduced. Current test count (419) is authoritative here.
 
 2. Product focus drift
 
 - Original "CLI-first, thin GUI" intent is still valid architecturally, but feature growth has increased UI complexity.
 - Default UX paths should stay simple while retaining advanced controls.
+- **Status**: Unchanged; Phase 3 scope directly addresses this.
 
 3. Test strategy imbalance
 
-- Strong automated coverage exists, but many GUI checks are static marker tests and smoke checks.
-- More behavior/assertion-based GUI tests are needed for complex interaction flows.
+- ~~Strong automated coverage exists, but many GUI checks are static marker tests and smoke checks.~~ **Closed by Phase 2**: three behavior-driven test modules now cover animation state machines, gallery/detail selection flows, screenshot pipeline, and keyboard-focus edge cases (47 assertions). 419 total tests passing.
 
 4. Release readiness housekeeping
 
 - Public-release checklist items (license/history/data hygiene, portability messaging) need explicit closure tracking.
+- **Status**: Unchanged; remains a prerequisite before widening beyond pilot cohort.
+
+5. Responsiveness baseline (new, post-Phase 2)
+
+- Timing infrastructure is in place (`dplayer-gui --timing`) but no live-collection latency measurements have been recorded yet.
+- Actual query/sort/widget-population timings for typical collection sizes (200–2000 releases) are unknown until a pilot run.
+- **Action**: Capture one timing run during pilot validation and record numbers in `STABILIZATION_EXECUTION_2026Q1.md`.
 
 ## Dated Roadmap
 
@@ -178,7 +186,7 @@ Success criteria:
 - Docs build path reflects actual files
 
 ### Phase 2: Stabilization And Responsiveness
-Window: 2026-03-01 to 2026-03-31
+Window: 2026-03-01 to 2026-03-31 (executed 2026-02-26, ahead of window)
 Goal: Improve perceived performance and reduce UI regressions.
 
 Deliverables:
@@ -192,6 +200,55 @@ Success criteria:
 
 - No critical regressions across full test + smoke matrix
 - Improved interaction responsiveness under typical datasets
+
+#### Phase 2 Outcome Summary
+
+Date closed: 2026-02-26 (ahead of planned 2026-03-01 start).
+Execution reference: `docs/STABILIZATION_EXECUTION_2026Q1.md`
+
+**What was done:**
+
+| Workstream | Result |
+|---|---|
+| P0: Documentation/Operational Correctness | Substantially complete. Release notes, checklist status, and Sphinx baseline captured. Minor stale-doc cleanup is ongoing. |
+| P2: Stability Debt Cleanup | Complete. Root-level scratch scripts (`test_carousel_crash.py`, `test_spin_debug.py`, `reproduce_carousel_spin.py`) removed; logic migrated to proper pytest suite. |
+| P1: GUI Behavior Test Expansion | Complete. Three new test modules added (47 assertions): animation state machines, gallery/detail-panel selection flows, headless screenshot pipeline, keyboard-focus edge cases. |
+| P1: Usability Hardening | Complete. All status message paths audited; backtick-formatted CLI commands in GUI empty-state labels replaced with plain quotes; regression test added. |
+| P1: Runtime Responsiveness | Complete (instrumentation). Three hotspots identified and instrumented in browse/wantlist load path: DB query (`_timing_query_s`), sort (`_timing_sort_s`), and widget population. `--timing` flag added to `dplayer-gui`. Baseline latency measurements pending first live pilot run. |
+
+**Exit criteria status:**
+
+- [x] No P0/P1 open regressions in key UI flows — 419 tests passing, 4 skipped; full smoke matrix green.
+- [x] Two measurable responsiveness improvements documented — three hotspots instrumented with `time.perf_counter()` hooks; `dplayer-gui --timing` activates per-load latency output.
+- [x] Three high-risk GUI interactions covered by behavior assertions — 47 tests across `test_widget_animation.py`, `test_widget_behavior_gui.py`, `test_headless_screenshot_script.py`.
+- [x] Phase-2 outcome summary added to `PRODUCT_STATE.md` — this section.
+
+**What changed in the codebase:**
+
+- `src/discogs_player/ui/main_window.py`: `import time`, `_TIMING_ENABLED`, `set_timing_enabled()`, timing wrappers in `_run_release_load_operation()` / `_run_wantlist_load_operation()` / `_apply_*_load_result()`, fixed empty-state status message formatting.
+- `src/discogs_player/ui_main.py`: `--timing` flag wired to `set_timing_enabled()`.
+- `tests/`: added `test_widget_animation.py` (10 tests), `test_widget_behavior_gui.py` (36 tests), `test_headless_screenshot_script.py` (8 tests); extended `test_performance_optimizations.py` (3 tests).
+- `scripts/`: added `headless_screenshot.py`, `capture_readme_media.sh`.
+- `docs/media/screenshots/`: refreshed from live headless run.
+
+**What was explicitly not done (stabilization scope preserved):**
+
+- No new features added.
+- No refactors beyond the timing hook additions.
+- No changes to use-case layer, CLI commands, or data schema.
+
+**Next-phase recommendation:**
+
+Phase 3 (UX Simplification) is ready to start. The Phase 2 work surfaces two concrete inputs for Phase 3 scope:
+
+1. The timing baseline run (via `dplayer-gui --timing` against a live collection) should be the first act of Phase 3, to determine whether widget-population latency needs optimization before UX simplification work begins.
+2. Status message audit confirmed the infrastructure is consistent, so Phase 3 can focus on reducing *quantity* of messages (the tab-switch "Switched to X view" messages fire on every navigation and may be candidates for removal or rate-limiting).
+
+Suggested Phase 3 kickoff checklist:
+- [ ] Run `dplayer-gui --timing` against pilot user collection; record numbers in `STABILIZATION_EXECUTION_2026Q1.md`.
+- [ ] Re-evaluate whether widget-population time warrants a virtualization pass before or after UX work.
+- [ ] Define "simple path" defaults for Browse and Wantlist (which mode to open in, whether to suppress mode toggles for new users).
+- [ ] Decide whether "Switched to X view" tab messages stay, are suppressed, or are replaced with something less ephemeral.
 
 ### Phase 3: UX Simplification And Flow Hardening
 Window: 2026-04-01 to 2026-04-30
@@ -224,8 +281,8 @@ Selection rule:
 
 ## Near-Term Action Queue
 
-These are the immediate next actions following this document:
+Updated 2026-02-26 (post Phase 2 close).
 
-1. Close remaining manual checklist items for `v0.2.0-rc4` (clean-machine pilot validations on Windows/Debian/macOS) and re-evaluate rollout go/no-go.
-2. Execute 72-hour post-release follow-up loop from issue `#1` and capture friction outcomes.
-3. Continue Phase-2 stabilization execution (`STABILIZATION_BACKLOG_2026Q1.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`).
+1. **Pilot timing run** — Run `dplayer-gui --timing` against the pilot user's real collection and record query/sort/widget-population latencies in `docs/STABILIZATION_EXECUTION_2026Q1.md`. This closes the one open Phase 2 measurement.
+2. **Pilot validation** — Close remaining manual checklist items for `v0.2.0-rc4` (clean-machine pilot validations on Windows/Debian/macOS) and re-evaluate rollout go/no-go.
+3. **Phase 3 kickoff** — Follow the Phase 3 kickoff checklist in the Phase 2 outcome summary above. Start after the timing run result is recorded.
