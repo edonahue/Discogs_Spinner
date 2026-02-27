@@ -18,7 +18,13 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, Gtk
 
 from discogs_player.capabilities import get_capabilities
-from discogs_player.core.settings import get_int_setting, set_setting
+from discogs_player.core.settings import (
+    get_discogs_token,
+    get_int_setting,
+    get_setting,
+    set_setting,
+)
+from discogs_player.use_cases.sync_collection import run_sync_collection
 from discogs_player.integrations.player_backend import (
     PlayerApiError,
     PlayerAuthError,
@@ -139,6 +145,21 @@ window.ipod-shell {
 
 .ipod-filter-bar {
   border-radius: 12px;
+}
+
+.ipod-empty-state {
+  padding: 32px;
+}
+
+.ipod-empty-state-label {
+  color: #8a9ab0;
+  font-size: 1.05em;
+  margin-bottom: 4px;
+}
+
+.ipod-empty-state-button {
+  margin-top: 8px;
+  min-width: 160px;
 }
 
 .ipod-status {
@@ -1019,7 +1040,21 @@ class MainWindow(Gtk.ApplicationWindow):
         )
         self._wantlist_stack.connect("notify::width", self._on_stack_size_change)
         self._wantlist_stack.connect("notify::height", self._on_stack_size_change)
-        wantlist_browser_panel.append(self._wantlist_stack)
+
+        self._wantlist_empty_box, self._wantlist_empty_label = (
+            self._build_empty_state_box(
+                "Sync your wantlist to get started.",
+                "Sync Wantlist",
+                self._handle_wantlist_sync_clicked,
+            )
+        )
+        self._wantlist_empty_box.set_visible(False)
+        wantlist_overlay = Gtk.Overlay()
+        wantlist_overlay.set_hexpand(True)
+        wantlist_overlay.set_vexpand(True)
+        wantlist_overlay.set_child(self._wantlist_stack)
+        wantlist_overlay.add_overlay(self._wantlist_empty_box)
+        wantlist_browser_panel.append(wantlist_overlay)
 
         wantlist_scroll_controller = Gtk.EventControllerScroll.new(
             Gtk.EventControllerScrollFlags.VERTICAL
@@ -1161,7 +1196,21 @@ class MainWindow(Gtk.ApplicationWindow):
         self._browse_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
         self._browse_stack.connect("notify::width", self._on_stack_size_change)
         self._browse_stack.connect("notify::height", self._on_stack_size_change)
-        browser_panel.append(self._browse_stack)
+
+        self._browse_empty_box, self._browse_empty_label = (
+            self._build_empty_state_box(
+                "Sync your collection to get started.",
+                "Sync Collection",
+                self._handle_browse_sync_clicked,
+            )
+        )
+        self._browse_empty_box.set_visible(False)
+        browse_overlay = Gtk.Overlay()
+        browse_overlay.set_hexpand(True)
+        browse_overlay.set_vexpand(True)
+        browse_overlay.set_child(self._browse_stack)
+        browse_overlay.add_overlay(self._browse_empty_box)
+        browser_panel.append(browse_overlay)
         scroll_controller = Gtk.EventControllerScroll.new(
             Gtk.EventControllerScrollFlags.VERTICAL
             | Gtk.EventControllerScrollFlags.HORIZONTAL
@@ -1840,6 +1889,50 @@ class MainWindow(Gtk.ApplicationWindow):
         """Handle window state changes (maximized, fullscreen, etc.)."""
         # Trigger resize handling when window state changes
         self._on_window_resize(window, param)
+
+    def _build_empty_state_box(
+        self,
+        label_text: str,
+        button_label: str,
+        on_click: Callable[[], None],
+    ) -> tuple[Gtk.Box, Gtk.Label]:
+        """Build a centered empty-state overlay with a descriptive label and action button.
+
+        Returns the outer Box and the Label so callers can update the label text later.
+        """
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_valign(Gtk.Align.CENTER)
+        box.add_css_class("ipod-empty-state")
+        box.set_can_target(False)  # pass pointer events through to the stack below
+
+        label = Gtk.Label(label=label_text)
+        label.set_wrap(True)
+        label.set_max_width_chars(48)
+        label.set_xalign(0.5)
+        label.add_css_class("ipod-empty-state-label")
+        box.append(label)
+
+        button = Gtk.Button(label=button_label)
+        button.add_css_class("ipod-empty-state-button")
+        button.set_can_target(True)  # button itself must be clickable
+        button.connect("clicked", lambda _btn: on_click())
+        box.append(button)
+
+        return box, label
+
+    def _make_sync_progress_callback(
+        self, label: str = "Syncing"
+    ) -> Callable[[int, int, int, int], None]:
+        """Return a progress callback that posts status updates to the main thread."""
+
+        def _progress(
+            page: int, pages: int, _num_items: int, total_items: int
+        ) -> None:
+            msg = f"{label}... page {page} of {pages} ({total_items} found)"
+            GLib.idle_add(self._set_status, msg)
+
+        return _progress
 
     def _install_css(self) -> None:
         display = self.get_display()
@@ -2988,13 +3081,50 @@ class MainWindow(Gtk.ApplicationWindow):
         cover_count = _to_int(payload.get("cover_cached_count"))
         if not items:
             self._album_detail.set_release(None)
-            self._set_status(
-                "No releases loaded. Run \"dplayer sync\" to import your Discogs collection."
-            )
+            self._browse_empty_box.set_visible(True)
+            token_missing = not bool(get_discogs_token())
+            last_sync = get_setting("last_sync_time")
+            if token_missing:
+                status_msg = (
+                    "Setup needed: get your Discogs token at"
+                    " discogs.com/settings/developers, set DISCOGS_TOKEN,"
+                    " and restart the app."
+                )
+                self._browse_empty_label.set_text(
+                    "Set your Discogs token and restart to sync your collection."
+                )
+            elif last_sync is None:
+                status_msg = (
+                    "No releases synced yet. Click \"Sync Collection\" to import"
+                    " your Discogs collection for the first time."
+                )
+                self._browse_empty_label.set_text(
+                    "Sync your collection to get started."
+                )
+            else:
+                status_msg = "No releases match the current filters."
+                self._browse_empty_label.set_text(
+                    "No releases match the current filters."
+                )
+            self._set_status(status_msg)
         else:
+            self._browse_empty_box.set_visible(False)
             self._set_status(
                 f"Loaded {len(items)} releases ({cover_count} cover images cached)."
             )
+
+        # Emit startup timing when the first load completes (item 6).
+        if _TIMING_ENABLED:
+            _t0 = getattr(self, "_startup_load_t0", None)
+            if isinstance(_t0, float):
+                _t_startup = time.perf_counter() - _t0
+                print(
+                    f"[timing] startup-load: first-load-total={_t_startup * 1000:.1f}ms"
+                    f" n={len(items)}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                del self._startup_load_t0  # type: ignore[attr-defined]
 
         # Sidebar/detail content can change natural width after load; reapply split.
         GLib.idle_add(self._apply_split_layout_from_current_size)
@@ -3136,10 +3266,35 @@ class MainWindow(Gtk.ApplicationWindow):
         cover_count = _to_int(payload.get("cover_cached_count"))
         if not items:
             self._wantlist_detail.set_entry(None)
-            self._set_status(
-                "No wantlist items loaded. Run \"dplayer wantlist sync\" to import your Discogs wantlist."
-            )
+            self._wantlist_empty_box.set_visible(True)
+            token_missing = not bool(get_discogs_token())
+            last_sync = get_setting("last_wantlist_sync_time")
+            if last_sync is None:
+                last_sync = get_setting("last_sync_time")
+            if token_missing:
+                wl_status = (
+                    "Setup needed: get your Discogs token at"
+                    " discogs.com/settings/developers and set DISCOGS_TOKEN."
+                )
+                self._wantlist_empty_label.set_text(
+                    "Set your Discogs token to sync your wantlist."
+                )
+            elif last_sync is None:
+                wl_status = (
+                    "No wantlist synced yet. Click \"Sync Wantlist\" to import"
+                    " your Discogs wantlist for the first time."
+                )
+                self._wantlist_empty_label.set_text(
+                    "Sync your wantlist to get started."
+                )
+            else:
+                wl_status = "No wantlist items match the current filters."
+                self._wantlist_empty_label.set_text(
+                    "No wantlist items match the current filters."
+                )
+            self._set_status(wl_status)
         else:
+            self._wantlist_empty_box.set_visible(False)
             self._set_status(
                 f"Loaded {len(items)} wantlist items ({cover_count} cover images cached)."
             )
@@ -3841,13 +3996,35 @@ class MainWindow(Gtk.ApplicationWindow):
         release_id_text = str(release_id) if isinstance(release_id, int) else "n/a"
         self._set_status(f"Pricing refreshed for wantlist release {release_id_text}.")
 
+    def _handle_browse_sync_clicked(self) -> None:
+        self._start_async_action(
+            action_key="browse-sync",
+            busy_message="Syncing Discogs collection...",
+            duplicate_message="Collection sync already in progress.",
+            runner=lambda: run_sync_collection(
+                progress_callback=self._make_sync_progress_callback("Syncing collection")
+            ),
+            on_success=self._apply_browse_sync_result,
+            on_error=self._handle_release_load_error,
+        )
+
+    def _apply_browse_sync_result(self, payload: dict[str, object]) -> None:
+        fetched = _to_int(payload.get("fetched_count"))
+        upserted = _to_int(payload.get("upserted_count"))
+        deactivated = _to_int(payload.get("deactivated_count"))
+        self._set_status(
+            f"Sync complete: fetched {fetched}, upserted {upserted}, deactivated {deactivated}."
+        )
+        self.load_releases(background=True)
+
     def _handle_wantlist_sync_clicked(self) -> None:
         self._start_async_action(
             action_key="wantlist-sync",
             busy_message="Syncing Discogs wantlist...",
             duplicate_message="Wantlist sync already in progress.",
             runner=lambda: run_sync_wantlist(
-                progress_callback=None, allow_empty_deactivate=False
+                progress_callback=self._make_sync_progress_callback("Syncing wantlist"),
+                allow_empty_deactivate=False,
             ),
             on_success=self._apply_wantlist_sync_result,
             on_error=self._handle_wantlist_load_error,
@@ -4272,6 +4449,10 @@ class MainWindow(Gtk.ApplicationWindow):
         limit: int | None = None,
         background: bool = True,
     ) -> dict[str, object]:
+        # Record startup t0 on the first call so _apply_release_load_result can
+        # emit a [timing] startup-load line when --timing is active (item 6).
+        if _TIMING_ENABLED and not hasattr(self, "_startup_load_t0"):
+            self._startup_load_t0 = time.perf_counter()  # type: ignore[attr-defined]
         preferred_release_id = self._selected_release_id
         normalized_genres = list(genres or [])
         normalized_styles = list(styles or [])

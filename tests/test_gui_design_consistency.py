@@ -294,7 +294,7 @@ def test_main_window_tracklist_detail_cache_paths_exist():
 def test_main_window_exposes_market_value_dashboard_tab_and_data_refresh_hooks():
     source = _source_text("src/discogs_player/ui/main_window.py")
     for marker in (
-        "from discogs_player.core.settings import get_int_setting, set_setting",
+        "get_int_setting",
         "from discogs_player.use_cases.value_dashboard import run_market_value_dashboard",
         "from discogs_player.use_cases.value_missing import run_market_value_missing",
         "from discogs_player.use_cases.value_refresh import run_refresh_market_values",
