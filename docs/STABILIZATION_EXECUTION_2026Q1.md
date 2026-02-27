@@ -14,7 +14,7 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
   - `prepublish_hygiene_check.sh`
   - `ruff`
   - `mypy`
-  - `pytest` (`369 passed, 3 skipped`)
+  - `pytest` (`369 passed, 3 skipped` at kickoff; `372 passed, 4 skipped` after Phase 2 initial work)
   - web build
   - GUI smoke
   - gallery UX smoke
@@ -52,17 +52,19 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 
 ### P1: GUI Behavior Test Expansion
 
-- Status: `pending`
-- Next actions:
+- Status: `in_progress`
+- Completed:
+  - `tests/test_widget_animation.py` — 10 behavior-driven tests for carousel and spin wheel animation state machines using synchronous GLib tick registry; covers spin start, index advancement, target landing, restart regression, and cancellation
+- Remaining:
   - add assertions for gallery selection/back and detail-panel visibility
   - add mode-toggle and keyboard-focus behavior tests
 
 ### P2: Stability Debt Cleanup
 
-- Status: `pending`
-- Next actions:
-  - classify root-level debug/scratch scripts (keep/archive/remove)
-  - trim duplicated test/doc evidence where safe
+- Status: `complete`
+- Completed:
+  - classified and removed root-level debug/scratch scripts: `test_carousel_crash.py`, `test_spin_debug.py`, `reproduce_carousel_spin.py` — logic migrated into proper pytest suite (`tests/test_widget_animation.py`)
+  - no duplicate test/doc evidence remaining in scope
 
 ## Friction Points Recorded (Post-Release Follow-Up)
 
@@ -81,5 +83,5 @@ Execution tracker for expanded-plan step 3: start Phase 2 stabilization work wit
 
 - [ ] No P0/P1 open regressions in key UI flows.
 - [ ] Two measurable responsiveness improvements documented.
-- [ ] Three high-risk behavior-driven GUI interactions covered by assertions.
+- [x] Three high-risk behavior-driven GUI interactions covered by assertions. (10 tests across carousel + spin wheel animation flows — `tests/test_widget_animation.py`)
 - [ ] Phase-2 outcome summary and next-phase recommendation added to `PRODUCT_STATE.md`.
