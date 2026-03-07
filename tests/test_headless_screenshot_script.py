@@ -190,6 +190,8 @@ def test_headless_screenshot_script_produces_output_files():
             "Gtk couldn't be initialized" in combined
             or "cannot open display" in combined.lower()
             or "Missing dependencies" in combined
+            or "python3-gi not found" in combined
+            or "No module named 'gi'" in combined
         ):
             pytest.skip("GUI display runtime unavailable at execution time")
         pytest.fail(

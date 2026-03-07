@@ -180,6 +180,28 @@ window.ipod-shell {
   min-width: 160px;
 }
 
+.ipod-ftux-card {
+  background: radial-gradient(ellipse at top, rgba(22, 40, 68, 0.92), rgba(6, 10, 18, 0.97));
+  border: 1px solid rgba(96, 150, 196, 0.38);
+  border-radius: 18px;
+  padding: 36px 40px;
+}
+
+.ipod-ftux-icon {
+  color: #5b8dbf;
+}
+
+.ipod-ftux-heading {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: #d8eaf8;
+}
+
+button.ipod-ftux-cta {
+  margin-top: 8px;
+  min-width: 176px;
+}
+
 .ipod-status {
   color: #b9c4d6;
 }
@@ -954,6 +976,14 @@ class MainWindow(Gtk.ApplicationWindow):
         self._main_stack_switcher.set_stack(self._main_stack)
         view_row.append(self._main_stack_switcher)
 
+        self._setup_banner = Adw.Banner()
+        self._setup_banner.set_title(
+            "Discogs not connected \u2014 connect your account to browse and spin your collection"
+        )
+        self._setup_banner.set_button_label("Set Up \u2192")
+        self._setup_banner.connect("button-clicked", lambda _: self._open_setup_wizard())
+        self._setup_banner.set_revealed(False)
+        root.append(self._setup_banner)
         root.append(self._main_stack)
 
         browse_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -1228,6 +1258,9 @@ class MainWindow(Gtk.ApplicationWindow):
         browse_overlay.set_vexpand(True)
         browse_overlay.set_child(self._browse_stack)
         browse_overlay.add_overlay(self._browse_empty_box)
+        self._browse_ftux_box = self._build_ftux_state_box()
+        self._browse_ftux_box.set_visible(False)
+        browse_overlay.add_overlay(self._browse_ftux_box)
         browser_panel.append(browse_overlay)
         scroll_controller = Gtk.EventControllerScroll.new(
             Gtk.EventControllerScrollFlags.VERTICAL
@@ -1939,6 +1972,55 @@ class MainWindow(Gtk.ApplicationWindow):
 
         return box, label
 
+    def _build_ftux_state_box(self) -> Gtk.Box:
+        """Build a rich first-run empty state with icon, heading, and wizard CTA."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_valign(Gtk.Align.CENTER)
+        box.add_css_class("ipod-ftux-card")
+        box.set_can_target(True)
+
+        icon = Gtk.Image.new_from_icon_name("library-music-symbolic")
+        icon.set_pixel_size(52)
+        icon.add_css_class("ipod-ftux-icon")
+        box.append(icon)
+
+        heading = Gtk.Label(label="Welcome to Discogs Spinner")
+        heading.add_css_class("ipod-ftux-heading")
+        heading.set_xalign(0.5)
+        box.append(heading)
+
+        subtitle = Gtk.Label(
+            label="Connect your Discogs account to browse and spin your collection."
+        )
+        subtitle.set_wrap(True)
+        subtitle.set_max_width_chars(44)
+        subtitle.set_xalign(0.5)
+        subtitle.add_css_class("dim-label")
+        box.append(subtitle)
+
+        cta = Gtk.Button(label="Set Up Discogs")
+        cta.add_css_class("suggested-action")
+        cta.add_css_class("ipod-ftux-cta")
+        cta.set_halign(Gtk.Align.CENTER)
+        cta.set_can_target(True)
+        cta.connect("clicked", lambda _: self._open_setup_wizard())
+        box.append(cta)
+
+        return box
+
+    def _open_setup_wizard(self) -> None:
+        """Instantiate and present the setup wizard."""
+        wizard = SetupWizard(self)
+        wizard.connect("setup-complete", self._on_wizard_complete)
+        wizard.present()
+
+    def _update_setup_state(self, *, token_missing: bool) -> None:
+        """Show or hide FTUX surfaces based on whether the Discogs token is set."""
+        self._setup_banner.set_revealed(token_missing)
+        if hasattr(self, "_browse_ftux_box"):
+            self._browse_ftux_box.set_visible(token_missing)
+
     def _make_sync_progress_callback(
         self, label: str = "Syncing"
     ) -> Callable[[int, int, int, int], None]:
@@ -2144,7 +2226,7 @@ class MainWindow(Gtk.ApplicationWindow):
         prefs.present()
 
     def _check_first_run(self) -> None:
-        """Show the setup wizard if Discogs is not yet configured."""
+        """Show the setup wizard and FTUX surfaces if Discogs is not yet configured."""
         from discogs_player.use_cases.setup_report import run_setup_report
 
         try:
@@ -2153,11 +2235,12 @@ class MainWindow(Gtk.ApplicationWindow):
             return
         stage = report.get("onboarding_stage")
         if stage == "needs_discogs_token":
-            wizard = SetupWizard(self)
-            wizard.connect("setup-complete", self._on_wizard_complete)
-            wizard.present()
+            self._update_setup_state(token_missing=True)
+            self._open_setup_wizard()
 
     def _on_wizard_complete(self, _wizard: object) -> None:
+        token_missing = not bool(get_discogs_token())
+        self._update_setup_state(token_missing=token_missing)
         self.load_releases(background=True)
 
     def _focus_value_dashboard_release(self, discogs_release_id: int, *, source: str) -> None:
@@ -3121,34 +3204,33 @@ class MainWindow(Gtk.ApplicationWindow):
         cover_count = _to_int(payload.get("cover_cached_count"))
         if not items:
             self._album_detail.set_release(None)
-            self._browse_empty_box.set_visible(True)
             token_missing = not bool(get_discogs_token())
-            last_sync = get_setting("last_sync_time")
+            self._update_setup_state(token_missing=token_missing)
             if token_missing:
-                status_msg = (
-                    "Setup needed: get your Discogs token at"
-                    " discogs.com/settings/developers, set DISCOGS_TOKEN,"
-                    " and restart the app."
-                )
-                self._browse_empty_label.set_text(
-                    "Set your Discogs token and restart to sync your collection."
-                )
-            elif last_sync is None:
-                status_msg = (
-                    "No releases synced yet. Click \"Sync Collection\" to import"
-                    " your Discogs collection for the first time."
-                )
-                self._browse_empty_label.set_text(
-                    "Sync your collection to get started."
+                self._browse_empty_box.set_visible(False)
+                self._set_status(
+                    "Connect your Discogs account to get started \u2014 use the banner above."
                 )
             else:
-                status_msg = "No releases match the current filters."
-                self._browse_empty_label.set_text(
-                    "No releases match the current filters."
-                )
-            self._set_status(status_msg)
+                self._browse_empty_box.set_visible(True)
+                last_sync = get_setting("last_sync_time")
+                if last_sync is None:
+                    status_msg = (
+                        "No releases synced yet. Click \"Sync Collection\" to import"
+                        " your Discogs collection for the first time."
+                    )
+                    self._browse_empty_label.set_text(
+                        "Sync your collection to get started."
+                    )
+                else:
+                    status_msg = "No releases match the current filters."
+                    self._browse_empty_label.set_text(
+                        "No releases match the current filters."
+                    )
+                self._set_status(status_msg)
         else:
             self._browse_empty_box.set_visible(False)
+            self._update_setup_state(token_missing=False)
             last_sync = get_setting("last_sync_time")
             self._set_status(
                 f"Loaded {len(items)} releases"
@@ -3316,11 +3398,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 last_sync = get_setting("last_sync_time")
             if token_missing:
                 wl_status = (
-                    "Setup needed: get your Discogs token at"
-                    " discogs.com/settings/developers and set DISCOGS_TOKEN."
+                    "Connect your Discogs account to get started \u2014 use the banner above."
                 )
                 self._wantlist_empty_label.set_text(
-                    "Set your Discogs token to sync your wantlist."
+                    "Connect Discogs to browse your wantlist."
                 )
             elif last_sync is None:
                 wl_status = (
