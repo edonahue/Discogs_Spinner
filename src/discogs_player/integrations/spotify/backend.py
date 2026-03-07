@@ -125,14 +125,14 @@ class SpotifyPlayerBackend(PlayerBackend):
 
     def start_album_playback(
         self,
-        spotify_album_id: str,
+        provider_album_id: str,
         *,
         device_id: str | None = None,
         conn=None,
     ) -> None:
         client = self._client(conn=conn)
         try:
-            client.start_album_playback(spotify_album_id, device_id=device_id)
+            client.start_album_playback(provider_album_id, device_id=device_id)
         except SpotifyAuthError as exc:
             raise PlayerAuthError(str(exc)) from exc
         except SpotifyPlaybackError as exc:

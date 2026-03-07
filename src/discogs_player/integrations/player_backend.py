@@ -50,7 +50,7 @@ class PlayerBackend(ABC):
     @abstractmethod
     def start_album_playback(
         self,
-        spotify_album_id: str,
+        provider_album_id: str,
         *,
         device_id: str | None = None,
         conn=None,

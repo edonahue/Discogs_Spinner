@@ -233,6 +233,15 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
         ALTER TABLE spotify_mapping_new RENAME TO spotify_mapping;
         """,
     ),
+    (
+        9,
+        """
+        ALTER TABLE spotify_mapping ADD COLUMN provider_id TEXT NOT NULL DEFAULT 'spotify';
+
+        CREATE INDEX IF NOT EXISTS idx_spotify_mapping_provider_id
+          ON spotify_mapping(provider_id);
+        """,
+    ),
 )
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1][0]
 

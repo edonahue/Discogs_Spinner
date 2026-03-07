@@ -38,12 +38,12 @@ class NullPlayerBackend(PlayerBackend):
 
     def start_album_playback(
         self,
-        spotify_album_id: str,
+        provider_album_id: str,
         *,
         device_id: str | None = None,
         conn=None,
     ) -> None:
-        _ = (spotify_album_id, device_id, conn)
+        _ = (provider_album_id, device_id, conn)
         self._raise_unavailable()
 
     def create_matching_client(self, *, conn=None) -> Any:

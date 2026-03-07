@@ -294,19 +294,22 @@ def upsert_spotify_mapping(
     confidence: float | None,
     last_checked_at: str | None,
     is_override: bool = False,
+    provider_id: str = "spotify",
     commit: bool = True,
 ) -> None:
     conn.execute(
         """
         INSERT INTO spotify_mapping(
-            discogs_release_id, spotify_album_id, confidence, last_checked_at, is_override
+            discogs_release_id, spotify_album_id, confidence, last_checked_at, is_override,
+            provider_id
         )
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(discogs_release_id) DO UPDATE SET
             spotify_album_id = excluded.spotify_album_id,
             confidence = excluded.confidence,
             last_checked_at = excluded.last_checked_at,
-            is_override = excluded.is_override
+            is_override = excluded.is_override,
+            provider_id = excluded.provider_id
         """,
         (
             int(discogs_release_id),
@@ -314,6 +317,7 @@ def upsert_spotify_mapping(
             confidence,
             last_checked_at,
             1 if is_override else 0,
+            str(provider_id) if provider_id else "spotify",
         ),
     )
     if commit:

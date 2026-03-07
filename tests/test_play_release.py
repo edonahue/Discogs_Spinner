@@ -26,13 +26,13 @@ class _FakeBackend:
 
     def start_album_playback(
         self,
-        spotify_album_id: str,
+        provider_album_id: str,
         *,
         device_id: str | None = None,
         conn=None,
     ) -> None:
         _ = conn
-        self.playback_calls.append((spotify_album_id, device_id))
+        self.playback_calls.append((provider_album_id, device_id))
 
     def create_matching_client(self, *, conn=None):
         _ = conn

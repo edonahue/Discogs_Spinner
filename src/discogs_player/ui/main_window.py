@@ -105,6 +105,8 @@ def set_timing_enabled(enabled: bool) -> None:
     _TIMING_ENABLED = bool(enabled)
 
 
+from discogs_player.ui.dialogs.preferences_window import PreferencesWindow
+from discogs_player.ui.dialogs.setup_wizard import SetupWizard
 from discogs_player.ui.widgets.cover_carousel import CoverCarousel
 from discogs_player.ui.widgets.cover_grid import CoverGrid
 from discogs_player.ui.widgets.device_picker import DevicePicker
@@ -2018,6 +2020,7 @@ class MainWindow(Gtk.ApplicationWindow):
             action.connect("clicked", lambda *_: callback())
             popover_box.append(action)
 
+        _add_action("Preferences", self._show_preferences_window)
         _add_action(
             "Open README",
             lambda: self._open_project_doc(
@@ -2135,6 +2138,27 @@ class MainWindow(Gtk.ApplicationWindow):
         self._setup_help_window = window
         window.present()
         self._set_status("Opened setup commands window.")
+
+    def _show_preferences_window(self) -> None:
+        prefs = PreferencesWindow(self)
+        prefs.present()
+
+    def _check_first_run(self) -> None:
+        """Show the setup wizard if Discogs is not yet configured."""
+        from discogs_player.use_cases.setup_report import run_setup_report
+
+        try:
+            report = run_setup_report()
+        except Exception:
+            return
+        stage = report.get("onboarding_stage")
+        if stage == "needs_discogs_token":
+            wizard = SetupWizard(self)
+            wizard.connect("setup-complete", self._on_wizard_complete)
+            wizard.present()
+
+    def _on_wizard_complete(self, _wizard: object) -> None:
+        self.load_releases(background=True)
 
     def _focus_value_dashboard_release(self, discogs_release_id: int, *, source: str) -> None:
         self._main_stack.set_visible_child_name("value")
@@ -4586,3 +4610,6 @@ class DiscogsPlayerApp(Adw.Application):
         if self._smoke_test:
             print(json.dumps(report, sort_keys=True))
             self.quit()
+            return
+
+        GLib.idle_add(window._check_first_run)
