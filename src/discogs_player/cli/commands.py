@@ -80,6 +80,8 @@ from discogs_player.use_cases.value_show import run_market_value_show
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.use_cases.value_status import run_market_value_status
 from discogs_player.use_cases.value_trend import run_market_value_trend
+from discogs_player.use_cases.value_refresh_queue import run_value_refresh_queue
+from discogs_player.use_cases.collection_health import run_collection_health
 from discogs_player.use_cases.tracklist_refresh import run_refresh_release_tracklists
 from discogs_player.use_cases.tracklist_show import run_release_tracklist_show
 from discogs_player.cli.stats_commands import refresh_release_stats
@@ -1347,6 +1349,113 @@ def value_refresh(
             "[yellow]skipped_release_ids:[/yellow] "
             f"{', '.join(str(x) for x in skipped_release_ids)}"
         )
+
+
+@value_app.command("queue")
+def value_queue(
+    limit: int = typer.Option(
+        25, "--limit", min=1, help="Max releases to return in the queue"
+    ),
+    stale_days: int = typer.Option(
+        30, "--stale-days", min=0, help="Treat entries older than N days as stale"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show prioritized market price refresh queue (unpriced first, then stale by value)."""
+    try:
+        result = run_value_refresh_queue(limit=limit, stale_days=stale_days)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    total = _to_int(result.get("total_candidates"))
+    missing = _to_int(result.get("missing_count"))
+    unpriced = _to_int(result.get("unpriced_count"))
+    stale = _to_int(result.get("stale_count"))
+    console.print(
+        f"Refresh queue: [bold]{total}[/bold] candidates "
+        f"(missing=[yellow]{missing}[/yellow] "
+        f"unpriced=[yellow]{unpriced}[/yellow] "
+        f"stale=[cyan]{stale}[/cyan], stale_days={stale_days})"
+    )
+
+    queue = _as_dict_list(result.get("queue"))
+    if not queue:
+        console.print("[dim]No refresh candidates found.[/dim]")
+        return
+
+    table = Table(title=f"Top {len(queue)} refresh candidates")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Priority", style="yellow", width=10)
+    table.add_column("Artist", style="cyan")
+    table.add_column("Title")
+    table.add_column("Median", style="green", width=10)
+    table.add_column("Last Updated", style="dim", width=12)
+
+    for i, item in enumerate(queue, 1):
+        reason = str(item.get("market_need_reason") or "")
+        median_raw = item.get("market_median")
+        median_str = f"${_to_float(median_raw):.2f}" if median_raw is not None else "—"
+        updated_raw = str(item.get("market_last_updated_at") or "")
+        updated_str = updated_raw[:10] if updated_raw else "never"
+        table.add_row(
+            str(i),
+            reason,
+            str(item.get("artist") or ""),
+            str(item.get("title") or ""),
+            median_str,
+            updated_str,
+        )
+
+    console.print(table)
+
+
+@app.command("health")
+def health(
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show collection data-quality health score and per-bucket breakdown."""
+    result = run_collection_health()
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    score = _to_int(result.get("score"))
+    total = _to_int(result.get("total_active"))
+
+    score_color = "green" if score >= 80 else "yellow" if score >= 50 else "red"
+    console.print(
+        f"Collection health: [{score_color}]{score}/100[/{score_color}] "
+        f"([dim]{total} active releases[/dim])"
+    )
+
+    buckets = _as_dict_list(result.get("buckets"))
+    if not buckets:
+        return
+
+    table = Table(title="Health breakdown")
+    table.add_column("Bucket", style="cyan")
+    table.add_column("Gap count", style="yellow", justify="right")
+    table.add_column("Gap %", style="yellow", justify="right")
+    table.add_column("Deduction", style="red", justify="right")
+
+    for bucket in buckets:
+        gap = _to_int(bucket.get("gap_count"))
+        pct = _to_float(bucket.get("gap_pct"))
+        ded = _to_float(bucket.get("deduction"))
+        table.add_row(
+            str(bucket.get("label") or bucket.get("name") or ""),
+            str(gap),
+            f"{pct:.1f}%",
+            f"-{ded:.1f}",
+        )
+
+    console.print(table)
 
 
 @tracks_app.command("show")

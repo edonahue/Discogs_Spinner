@@ -94,7 +94,7 @@ Most recent recorded validation:
 - `prepublish_hygiene_check.sh`: passing
 - `ruff`: passing
 - `mypy`: passing (`92` source files checked)
-- `pytest -q`: `454 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
+- `pytest -q`: `488 passed, 4 skipped` (up from `362 passed, 4 skipped` at Phase 1 close)
 - `npm --prefix webapp run build`: passing
 
 Reference: `docs/TESTING_PERFORMED_2026-02-26.md`, `docs/STABILIZATION_EXECUTION_2026Q1.md`
@@ -218,7 +218,7 @@ Execution reference: `docs/STABILIZATION_EXECUTION_2026Q1.md`
 
 **Exit criteria status:**
 
-- [x] No P0/P1 open regressions in key UI flows — 425 tests passing, 4 skipped; full smoke matrix green.
+- [x] No P0/P1 open regressions in key UI flows — 488 tests passing, 4 skipped; full smoke matrix green.
 - [x] Two measurable responsiveness improvements documented — three hotspots instrumented with `time.perf_counter()` hooks; `dplayer-gui --timing` activates per-load latency output.
 - [x] Three high-risk GUI interactions covered by behavior assertions — 47 tests across `test_widget_animation.py`, `test_widget_behavior_gui.py`, `test_headless_screenshot_script.py`.
 - [x] Phase-2 outcome summary added to `PRODUCT_STATE.md` — this section.
@@ -291,7 +291,17 @@ Updated 2026-02-27 (post Phase 3 onboarding work).
 - Quickstart docs updated with GUI launch section.
 - Phase 3 scope doc: `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`.
 
+**Completed since 2026-02-27 (Phase 4 pre-work):**
+- Phase 3 D1/D2/D3 decisions closed; success criteria ticked in `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`.
+- pyproject.toml version corrected: `0.1.0` → `0.2.0rc5` (diagnostics now reports correct version).
+- Trailing whitespace cleaned from 8 source files (ruff W293).
+- Phase 4 Track A (Price Refresh Prioritizer): `use_cases/value_refresh_queue.py` + `dplayer value queue` CLI + 16 tests.
+- Phase 4 Track B (Collection Health Score): `use_cases/collection_health.py` + `dplayer health` CLI + 18 tests.
+- Version regression test added: `test_pyproject_version_not_default_placeholder`.
+- `docs/PHASE4_FEATURE_SCOPE.md` created; schema constraint on Value Movers documented.
+
 **Still open:**
 1. **Pilot timing run** — Run `dplayer-gui --timing` against the pilot user's real collection and record latencies in `docs/STABILIZATION_EXECUTION_2026Q1.md`. *(Needs user action.)*
 2. **Pilot validation** — Close remaining manual checklist items (Windows non-CLI launch, Debian desktop session, macOS Gatekeeper docs) and re-evaluate rollout go/no-go. *(Needs user action.)*
-3. **Phase 3 D1/D2** — Decide on default browse mode and tab-switch message treatment (see `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`), then implement.
+3. **Phase 4 GUI wiring** — Wire `value queue` and `health` into GUI panels (post-CLI phase; Track A and B CLI complete).
+4. **Phase 4 Track C (Value Movers)** — Requires schema design decision (D4) before implementation; see `docs/PHASE4_FEATURE_SCOPE.md`.

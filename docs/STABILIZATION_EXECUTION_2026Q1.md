@@ -125,3 +125,5 @@ Decisions recorded in `docs/PHASE3_UX_SIMPLIFICATION_SCOPE.md`.
 | D4: Responsiveness gate | **Pending** — `dplayer-gui --timing` baseline run against live collection not yet recorded | Needs desktop session |
 
 Validation at Phase 3 pre-work closure: `454 passed, 4 skipped`; ruff clean; mypy 92 files clean; npm build clean.
+
+Validation at Phase 4 Track A+B CLI completion (2026-02-27): `488 passed, 4 skipped`; ruff clean; mypy 92 files clean.
