@@ -78,3 +78,12 @@ def test_preferences_uses_launch_default_for_uri():
     assert "launch_default_for_uri" in _PREFS_SOURCE, (
         "PreferencesWindow must use Gio.AppInfo.launch_default_for_uri to open URLs"
     )
+
+
+def test_preferences_shuts_down_executor_on_close():
+    assert "close-request" in _PREFS_SOURCE, (
+        "PreferencesWindow must connect to close-request to shut down executor"
+    )
+    assert "shutdown" in _PREFS_SOURCE, (
+        "PreferencesWindow must call executor.shutdown() to prevent thread leaks"
+    )

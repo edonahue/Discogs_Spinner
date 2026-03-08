@@ -2010,10 +2010,20 @@ class MainWindow(Gtk.ApplicationWindow):
         return box
 
     def _open_setup_wizard(self) -> None:
-        """Instantiate and present the setup wizard."""
+        """Instantiate and present the setup wizard, focusing it if already open."""
+        existing = getattr(self, "_active_setup_wizard", None)
+        if isinstance(existing, SetupWizard) and existing.get_visible():
+            existing.present()
+            return
         wizard = SetupWizard(self)
         wizard.connect("setup-complete", self._on_wizard_complete)
+        wizard.connect("close-request", self._on_wizard_closed)
         wizard.present()
+        self._active_setup_wizard: SetupWizard | None = wizard
+
+    def _on_wizard_closed(self, _wizard: object) -> bool:
+        self._active_setup_wizard = None
+        return False
 
     def _update_setup_state(self, *, token_missing: bool) -> None:
         """Show or hide FTUX surfaces based on whether the Discogs token is set."""

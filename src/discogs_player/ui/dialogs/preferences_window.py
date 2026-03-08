@@ -32,6 +32,7 @@ class PreferencesWindow(Adw.PreferencesWindow):
         self.set_default_size(560, 480)
 
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="prefs")
+        self.connect("close-request", lambda _: self._executor.shutdown(wait=False) or False)
 
         services_page = Adw.PreferencesPage(
             title="Services",

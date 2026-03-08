@@ -59,6 +59,7 @@ class SetupWizard(Adw.Window):
 
         self._token_saved = False
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="wizard")
+        self.connect("close-request", self._on_close_request)
 
         self._stack = Gtk.Stack()
         self._stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT)
@@ -331,7 +332,11 @@ class SetupWizard(Adw.Window):
 
     # ------------------------------------------------------------------ Finish
 
-    def _finish(self) -> None:
+    def _on_close_request(self, _window: object) -> bool:
+        """Ensure executor is cleaned up on any close path (including the X button)."""
         self._executor.shutdown(wait=False)
+        return False  # allow the close to proceed
+
+    def _finish(self) -> None:
         self.emit("setup-complete")
-        self.close()
+        self.close()  # triggers _on_close_request which shuts down executor

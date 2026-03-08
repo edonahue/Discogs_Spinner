@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from discogs_player.capabilities import AppCapabilities, SpotifyCapabilities
+from discogs_player.core.settings import set_setting
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import upsert_releases
 from discogs_player.use_cases import setup_report
+from discogs_player.use_cases.setup_report import _discogs_token_source
 
 
 def _release(release_id: int) -> dict[str, object]:
@@ -155,3 +157,47 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
         == "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
     )
     assert "dplayer auth spotify-doctor" in report["next_steps"]
+
+
+# ── Regression tests for bug fixes ──────────────────────────────────────────
+
+def test_token_source_reports_app_settings_for_canonical_key(isolated_xdg, monkeypatch):
+    """Token stored under canonical 'discogs_token' key should report app_settings."""
+    monkeypatch.delenv("DISCOGS_TOKEN", raising=False)
+    conn = get_connection()
+    try:
+        set_setting("discogs_token", "my_token", conn=conn)
+    finally:
+        conn.close()
+
+    source = _discogs_token_source()
+    assert source == "app_settings", f"Expected 'app_settings', got '{source}'"
+
+
+def test_token_source_reports_app_settings_for_alias_key(isolated_xdg, monkeypatch):
+    """Token stored under alias 'DISCOGS_TOKEN' DB key should report app_settings, not environment."""
+    monkeypatch.delenv("DISCOGS_TOKEN", raising=False)
+    conn = get_connection()
+    try:
+        # Simulate token stored under the uppercase alias key (edge case)
+        set_setting("DISCOGS_TOKEN", "my_alias_token", conn=conn)
+    finally:
+        conn.close()
+
+    source = _discogs_token_source()
+    # Must not incorrectly return "environment" — the env var is not set
+    assert source == "app_settings", f"Fallthrough should return 'app_settings', got '{source}'"
+
+
+def test_token_source_reports_environment_for_env_var(isolated_xdg, monkeypatch):
+    """Token from env var should report environment."""
+    monkeypatch.setenv("DISCOGS_TOKEN", "env_token")
+    source = _discogs_token_source()
+    assert source == "environment"
+
+
+def test_token_source_reports_missing_when_no_token(isolated_xdg, monkeypatch):
+    """No token anywhere should report missing."""
+    monkeypatch.delenv("DISCOGS_TOKEN", raising=False)
+    source = _discogs_token_source()
+    assert source == "missing"

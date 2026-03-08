@@ -85,3 +85,15 @@ def test_wizard_spawns_spotify_oauth_in_background():
     assert "on_authorization_url" in _WIZARD_SOURCE, (
         "Step 3 must pass on_authorization_url callback"
     )
+
+
+def test_wizard_hooks_close_request_for_executor_cleanup():
+    assert "close-request" in _WIZARD_SOURCE, (
+        "SetupWizard must connect to close-request to shut down executor on X-close"
+    )
+
+
+def test_wizard_executor_shutdown_not_only_in_finish():
+    assert "_on_close_request" in _WIZARD_SOURCE, (
+        "SetupWizard must have a close-request handler separate from _finish"
+    )

@@ -34,7 +34,9 @@ def _discogs_token_source(conn=None) -> str:
     if stored_value:
         return "app_settings"
 
-    return "environment"
+    # Token was found by get_discogs_token() but not under the env var or the
+    # canonical "discogs_token" key — must be under an alias key in app_settings.
+    return "app_settings"
 
 
 def run_setup_report() -> dict[str, object]:
