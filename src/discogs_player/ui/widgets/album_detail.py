@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import urllib.parse
 from collections.abc import Callable
 
 import gi
@@ -19,6 +20,32 @@ from discogs_player.ui.utils.formatting import (
     format_tracklist_body_text,
     format_tracklist_meta_text,
 )
+
+_YOUTUBE_ICON_SVG = (
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+    b'<rect width="24" height="24" rx="5" fill="#FF0000"/>'
+    b'<polygon points="9.5,7 18,12 9.5,17" fill="white"/>'
+    b'</svg>'
+)
+
+
+def _make_youtube_icon() -> Gtk.Image:
+    try:
+        from gi.repository import GdkPixbuf
+        loader = GdkPixbuf.PixbufLoader.new_with_type("svg")
+        loader.set_size(16, 16)
+        loader.write(_YOUTUBE_ICON_SVG)
+        loader.close()
+        return Gtk.Image.new_from_pixbuf(loader.get_pixbuf())
+    except Exception:
+        return Gtk.Image()
+
+
+def _build_youtube_search_url(artist: str, title: str, year: int | None) -> str:
+    parts = [p for p in [artist, title, str(year) if year else None] if p]
+    query = urllib.parse.quote_plus(" ".join(parts))
+    return f"https://www.youtube.com/results?search_query={query}"
+
 
 _SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard"
 _SPOTIFY_OAUTH_GUIDE_URL = (
@@ -109,6 +136,18 @@ class AlbumDetail(Gtk.Box):
         self._discogs_link_button.add_css_class("dim-label")
         self._discogs_link_button.set_sensitive(False)
         self.append(self._discogs_link_button)
+
+        self._youtube_link_button = Gtk.LinkButton.new("https://www.youtube.com")
+        _ytb_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        _ytb_box.append(_make_youtube_icon())
+        _ytb_box.append(Gtk.Label(label="Search on YouTube"))
+        self._youtube_link_button.set_child(_ytb_box)
+        self._youtube_link_button.set_halign(Gtk.Align.START)
+        self._youtube_link_button.set_valign(Gtk.Align.START)
+        self._youtube_link_button.add_css_class("dim-label")
+        self._youtube_link_button.set_sensitive(False)
+        self._youtube_link_button.set_tooltip_text("Search YouTube for this release")
+        self.append(self._youtube_link_button)
 
         self._marketplace_button = Gtk.Button(label="View on Discogs Marketplace")
         self._marketplace_button.set_halign(Gtk.Align.START)
@@ -425,6 +464,19 @@ class AlbumDetail(Gtk.Box):
             self._marketplace_button.set_sensitive(False)
             self._current_release_id = None
 
+    def _set_youtube_link(self, artist: str | None, title: str | None, year: int | None) -> None:
+        if artist or title:
+            url = _build_youtube_search_url(
+                str(artist or "").strip(),
+                str(title or "").strip(),
+                year,
+            )
+            self._youtube_link_button.set_uri(url)
+            self._youtube_link_button.set_sensitive(True)
+        else:
+            self._youtube_link_button.set_uri("https://www.youtube.com")
+            self._youtube_link_button.set_sensitive(False)
+
     def _on_marketplace_clicked(self, _button: Gtk.Button) -> None:
         import webbrowser
         if isinstance(self._current_release_id, int):
@@ -456,6 +508,7 @@ class AlbumDetail(Gtk.Box):
             self._result_label.set_text("Status: idle")
             self._override_entry.set_text("")
             self._set_discogs_link(None)
+            self._set_youtube_link(None, None, None)
             self._view_market_value_button.set_sensitive(False)
             self.set_actions_enabled(False)
             return
@@ -483,6 +536,11 @@ class AlbumDetail(Gtk.Box):
 
         release_id = item.get("discogs_release_id")
         self._set_discogs_link(release_id if isinstance(release_id, int) else None)
+        self._set_youtube_link(
+            item.get("artist"),  # type: ignore[arg-type]
+            item.get("title"),  # type: ignore[arg-type]
+            item.get("year"),  # type: ignore[arg-type]
+        )
         self._market_value_label.set_text(format_market_summary(item))
         self._market_metrics_label.set_text(format_market_metrics(item))
         self._community_stats_label.set_text(format_community_stats(item))
