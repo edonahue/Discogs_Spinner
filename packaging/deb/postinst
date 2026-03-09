@@ -1,0 +1,58 @@
+#!/bin/bash
+# postinst — run after dpkg installs the discogs-spinner .deb.
+#
+# Creates a virtualenv at /opt/discogs-spinner/venv and installs the
+# discogs_player package into it (GTK4 GUI profile).
+set -euo pipefail
+
+INSTALL_PREFIX="/opt/discogs-spinner"
+VENV_PATH="${INSTALL_PREFIX}/venv"
+PACKAGE_NAME="discogs-spinner"
+
+case "$1" in
+    configure)
+        echo "Setting up Discogs Spinner virtualenv..."
+
+        # Create venv if it doesn't exist yet.
+        if [[ ! -d "$VENV_PATH" ]]; then
+            python3 -m venv --system-site-packages "$VENV_PATH"
+        fi
+
+        # Install/upgrade the package from PyPI.
+        # The wheel was installed by fpm into INSTALL_PREFIX; use --find-links
+        # if a local wheel is present, otherwise fall back to PyPI.
+        if ls "${INSTALL_PREFIX}/wheels"/discogs_player-*.whl >/dev/null 2>&1; then
+            "${VENV_PATH}/bin/pip" install --quiet --upgrade \
+                --find-links "${INSTALL_PREFIX}/wheels" \
+                discogs-spinner
+        else
+            "${VENV_PATH}/bin/pip" install --quiet --upgrade discogs-spinner
+        fi
+
+        # Update desktop database so the launcher is indexed.
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database /usr/share/applications || true
+        fi
+
+        echo ""
+        echo "Discogs Spinner installed."
+        echo ""
+        echo "First-time setup:"
+        echo "  1. Get your Discogs token:"
+        echo "     https://www.discogs.com/settings/developers"
+        echo "  2. Store it:"
+        echo "       dplayer config set discogs_token <your_token>"
+        echo "     or export DISCOGS_TOKEN=\"your_token\" in your shell profile."
+        echo "  3. Launch: search for 'Discogs Spinner' in your app launcher."
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument: '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

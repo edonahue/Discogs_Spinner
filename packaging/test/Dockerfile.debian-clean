@@ -1,0 +1,6 @@
+FROM ubuntu:22.04
+ARG DEB_PATH
+COPY ${DEB_PATH} /tmp/dplayer.deb
+RUN apt-get update -q && apt-get install -y -q /tmp/dplayer.deb
+RUN dplayer --version
+RUN dplayer-api --help

@@ -1,0 +1,303 @@
+name: Installer Build
+
+# Builds cross-platform GUI installers:
+#   Windows   → .msi + .exe  (Tauri + PyInstaller sidecar)
+#   macOS     → .dmg         (Tauri + PyInstaller sidecar)
+#   Linux     → .deb + .AppImage (Tauri + PyInstaller sidecar)
+#   Debian    → .deb         (GTK4 native, via fpm) — ubuntu runner only
+#
+# Triggers:
+#   - Tag push  (v*) → produces artifacts and attaches to GitHub Release
+#   - Manual dispatch for one-off installer testing
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag / version label (e.g. v0.2.0)"
+        required: false
+        default: "dev"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Phase B: Build the PyInstaller API sidecar on each platform
+  # ---------------------------------------------------------------------------
+  build-sidecar:
+    name: Sidecar (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target_triple: x86_64-unknown-linux-gnu
+          - os: macos-14
+            target_triple: aarch64-apple-darwin
+          - os: macos-13
+            target_triple: x86_64-apple-darwin
+          - os: windows-2022
+            target_triple: x86_64-pc-windows-msvc
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project (web extras for API)
+        run: pip install -e ".[web]"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build sidecar binary
+        shell: bash
+        run: ./scripts/build_sidecar.sh --target-triple "${{ matrix.target_triple }}"
+
+      - name: Smoke-test sidecar startup (Linux only)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          binary="desktop_shell/src-tauri/binaries/dplayer-api-${{ matrix.target_triple }}"
+          chmod +x "$binary"
+          "$binary" &
+          PID=$!
+          for i in $(seq 1 10); do
+            if curl -sf http://127.0.0.1:8768/healthz; then break; fi
+            sleep 1
+          done
+          if ! curl -sf http://127.0.0.1:8768/healthz; then
+            kill $PID || true
+            echo "ERROR: sidecar did not respond on /healthz after 10 seconds." >&2
+            exit 1
+          fi
+          kill $PID
+
+      - name: Upload sidecar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidecar-${{ matrix.target_triple }}
+          path: desktop_shell/src-tauri/binaries/dplayer-api-${{ matrix.target_triple }}*
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Phase A + D: Build Tauri installers (requires sidecar from prior job)
+  # ---------------------------------------------------------------------------
+  build-tauri:
+    name: Tauri Installer (${{ matrix.os }})
+    needs: build-sidecar
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target_triple: x86_64-unknown-linux-gnu
+            tauri_targets: deb,appimage
+          - os: macos-14
+            target_triple: aarch64-apple-darwin
+            tauri_targets: dmg
+          - os: macos-13
+            target_triple: x86_64-apple-darwin
+            tauri_targets: dmg
+          - os: windows-2022
+            target_triple: x86_64-pc-windows-msvc
+            tauri_targets: msi,nsis
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -- Linux system deps for GTK (needed for Tauri WebKitGTK on Linux) --
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libfuse2
+
+      # -- Rust toolchain --
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "desktop_shell/src-tauri -> target"
+
+      # -- Node for the React webapp build --
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install webapp dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Build webapp
+        working-directory: webapp
+        run: npm run build
+
+      # -- Download the pre-built sidecar for this platform --
+      - name: Download sidecar binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sidecar-${{ matrix.target_triple }}
+          path: desktop_shell/src-tauri/binaries/
+
+      - name: Make sidecar executable (Unix)
+        if: runner.os != 'Windows'
+        run: chmod +x desktop_shell/src-tauri/binaries/dplayer-api-${{ matrix.target_triple }}
+
+      # -- Tauri build --
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2" --locked
+
+      - name: Build Tauri installers
+        working-directory: desktop_shell
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ""
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: |
+          cargo tauri build --target ${{ matrix.target_triple }} \
+            --bundles ${{ matrix.tauri_targets }}
+
+      # -- Collect installer artifacts --
+      - name: Upload Tauri installers (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-linux-${{ matrix.target_triple }}
+          path: |
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/deb/*.deb
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+
+      - name: Upload Tauri installers (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-macos-${{ matrix.target_triple }}
+          path: |
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+      - name: Upload Tauri installers (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows-${{ matrix.target_triple }}
+          path: |
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Phase C: GTK4 .deb via fpm (Debian/Ubuntu native, no Tauri)
+  # ---------------------------------------------------------------------------
+  build-gtk4-deb:
+    name: GTK4 .deb (fpm)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruby + fpm
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ruby ruby-dev build-essential
+          sudo gem install fpm --no-document
+
+      - name: Build GTK4 .deb
+        run: ./scripts/build_deb.sh
+
+      - name: Upload GTK4 .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-gtk4-deb
+          path: dist/installers/*.deb
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Validate GTK4 .deb via Docker clean install
+  # ---------------------------------------------------------------------------
+  validate-deb:
+    name: Validate GTK4 .deb (Docker clean install)
+    needs: build-gtk4-deb
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download GTK4 .deb artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer-gtk4-deb
+          path: dist/installers/
+
+      - name: Run Docker clean-install test
+        run: |
+          DEB_FILE="$(ls -t dist/installers/*.deb | head -1)"
+          DEB_REL="${DEB_FILE#"${GITHUB_WORKSPACE}/"}"
+          docker build \
+            --build-arg "DEB_PATH=${DEB_REL}" \
+            -f packaging/test/Dockerfile.debian-clean \
+            -t dplayer-debian-clean-test:ci \
+            .
+          echo "PASS: Debian clean install succeeded."
+
+  # ---------------------------------------------------------------------------
+  # Publish to GitHub Release (tag pushes only)
+  # ---------------------------------------------------------------------------
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build-tauri
+      - build-gtk4-deb
+      - validate-deb
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: installer-*
+          merge-multiple: true
+          path: dist/release/
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd dist/release
+          sha256sum * > CHECKSUMS-INSTALLERS.txt || true
+          cat CHECKSUMS-INSTALLERS.txt
+
+      - name: Publish installers to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/release/*.deb
+            dist/release/*.AppImage
+            dist/release/*.dmg
+            dist/release/*.msi
+            dist/release/*.exe
+            dist/release/CHECKSUMS-INSTALLERS.txt

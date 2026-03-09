@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Discogs Spinner
+Comment=Browse Discogs collection and control Spotify/YouTube Music playback
+Exec=dplayer-gui
+Icon=discogs-spinner
+Terminal=false
+Categories=AudioVideo;Audio;Player;Music;
+Keywords=Discogs;Spotify;YouTube;Collection;Music;Vinyl;
+StartupNotify=true
+StartupWMClass=com.discogs-spinner.app
