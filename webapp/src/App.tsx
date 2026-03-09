@@ -1,63 +1,62 @@
 import { useEffect, useState } from "react";
-
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { getJson } from "./api";
+import { Nav } from "./components/Nav";
+import { CollectionPage } from "./pages/CollectionPage";
+import { HomePage } from "./pages/HomePage";
+import { SetupPage } from "./pages/SetupPage";
+import { ValuePage } from "./pages/ValuePage";
+import { WantlistPage } from "./pages/WantlistPage";
 
-type StatusPayload = {
-  release_count_total: number;
-  release_count_active: number;
-  mapped_count: number;
-  unmatched_count: number;
-  spotify_capability?: {
-    addon_available: boolean;
-    configured: boolean;
-    action_label: string;
-  };
+type SetupPayload = {
+  onboarding_stage: string;
 };
 
-export function App() {
-  const [status, setStatus] = useState<StatusPayload | null>(null);
-  const [error, setError] = useState<string>("");
+function AppRoutes() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    getJson<StatusPayload>("/status")
+    getJson<SetupPayload>("/setup")
       .then((payload) => {
-        if (!cancelled) {
-          setStatus(payload.data);
+        if (payload.data?.onboarding_stage === "needs_discogs_token") {
+          navigate("/setup", { replace: true });
         }
       })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unknown API error.");
-        }
+      .catch(() => {
+        // If API is unreachable, let routes render normally
+      })
+      .finally(() => {
+        setChecked(true);
       });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!checked) {
+    return <p style={{ fontFamily: "system-ui, sans-serif", margin: "2rem" }}>Loading…</p>;
+  }
+
+  const showNav = location.pathname !== "/setup";
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "2rem", lineHeight: 1.5 }}>
-      <h1>discogs_player</h1>
-      <p>API-first web client scaffold</p>
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {!error && !status ? <p>Loading status...</p> : null}
-      {status ? (
-        <section>
-          <p>Total releases: {status.release_count_total}</p>
-          <p>Active releases: {status.release_count_active}</p>
-          <p>Mapped releases: {status.mapped_count}</p>
-          <p>Unmatched releases: {status.unmatched_count}</p>
-          {status.spotify_capability ? (
-            <p>
-              Spotify: {status.spotify_capability.action_label}
-              {" ("}
-              {status.spotify_capability.addon_available ? "addon installed" : "addon unavailable"}
-              {")"}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-    </main>
+    <>
+      {showNav ? <Nav /> : null}
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/collection" element={<CollectionPage />} />
+        <Route path="/wantlist" element={<WantlistPage />} />
+        <Route path="/value" element={<ValuePage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  );
+}
+
+export function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }

@@ -1,13 +1,53 @@
 # Discogs Spinner Web App
 
-React + TypeScript frontend scaffold for the local `dplayer-api` service.
+React + TypeScript multi-page frontend for the local `dplayer-api` service.
 
-## Current scope
+API-first design — all data flows through the FastAPI backend so the webapp can be
+wrapped by Tauri for desktop distribution or served directly from any browser.
+Does not stream audio; playback is delegated to external services.
 
-- Reads status data from the API and renders a lightweight dashboard.
-- Uses `GET /api/v1/status` as the primary integration contract.
-- Intended to remain API-first so it can be wrapped by desktop packaging later.
-- Does not stream audio itself; playback is delegated to external services/apps.
+## Pages
+
+| Route | Page |
+|-------|------|
+| `/` | Home — status dashboard, collection counts, last sync, sync trigger buttons |
+| `/collection` | Collection — searchable, filterable, sortable release list with genre tags and optional market value |
+| `/wantlist` | Wantlist — searchable, filterable, sortable wantlist with genre tags and optional market value |
+| `/value` | Value — top releases by market price, last-updated timestamp, refresh trigger |
+| `/setup` | Setup — first-run token configuration; redirected to if unconfigured |
+
+## Features
+
+### Collection & Wantlist
+- **Search** — debounced text search across artist/title
+- **Filter bar** — year input, genre input, "Unmatched only" toggle (Collection only), "Show value" toggle
+- **Sort** — client-side: Artist A→Z/Z→A, Title A→Z, Year newest/oldest, Value high→low (when value shown)
+- **Genre/style pills** — up to 3 tags shown per release row
+- **Market value column** — median price in green when "Show value" is checked; enables value sort
+- **Load more** — pagination in increments of 25
+
+### Home
+- Collection stats (total, active, mapped, unmatched, wantlist count, last sync time)
+- **Sync Collection** and **Sync Wantlist** buttons with syncing/success/error feedback
+
+### Value dashboard
+- Top 10 releases by median market price
+- Last-updated timestamp from the API
+- **Refresh Values** button — triggers a background value refresh, reloads on completion
+
+## API surface
+
+| Method | Endpoint | Params | Used by |
+|--------|----------|--------|---------|
+| `GET` | `/api/v1/status` | — | Home |
+| `POST` | `/api/v1/sync/collection` | — | Home |
+| `POST` | `/api/v1/sync/wantlist` | — | Home |
+| `GET` | `/api/v1/releases` | `q`, `year`, `genres[]`, `styles[]`, `unmatched`, `with_value`, `limit` | Collection |
+| `GET` | `/api/v1/wantlist` | `q`, `year`, `genres[]`, `styles[]`, `with_value`, `limit` | Wantlist |
+| `GET` | `/api/v1/value/dashboard` | `top_limit` | Value |
+| `POST` | `/api/v1/value/refresh` | `from_missing`, `limit`, `stale_days` | Value |
+| `GET` | `/api/v1/setup` | — | Setup |
+| `POST` | `/api/v1/setup` | — | Setup |
 
 ## Prerequisites
 
