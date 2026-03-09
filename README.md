@@ -37,7 +37,7 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 |------|---------|----------|
 | **CLI** | `dplayer` | Terminal users, SSH, scripting |
 | **Desktop GUI** | `dplayer-gui` | Linux desktop; [Windows 11 via WSL2](docs/quickstart_wsl2.md) |
-| **Web App** | `dplayer-api` then open browser | Windows / macOS / remote access |
+| **Web App** | `dplayer-api` then open browser | [Windows / macOS / Linux](docs/quickstart_web.md) |
 
 ---
 
@@ -97,6 +97,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 - [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 - [Debian Quickstart](docs/quickstart_debian.md)
 - [macOS Quickstart](docs/quickstart_macos.md)
+- [Web App Quickstart](docs/quickstart_web.md)
 - [Token Setup (Discogs + Spotify)](docs/token_setup.md)
 
 ---

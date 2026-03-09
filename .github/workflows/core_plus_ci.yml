@@ -35,7 +35,7 @@ jobs:
       - name: Install core profile
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .
+          python -m pip install ".[dev]"
 
       - name: Run core tests
         run: |
@@ -66,7 +66,7 @@ jobs:
       - name: Install plus profile
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ".[spotify]"
+          python -m pip install ".[dev,spotify]"
 
       - name: Run plus tests
         run: |

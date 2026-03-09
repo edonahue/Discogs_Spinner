@@ -25,6 +25,7 @@ def main() -> int:
         print(_missing_dependency_message(module_name), file=sys.stderr)
         return 1
 
+    print("Discogs Spinner API — http://127.0.0.1:8768  (Ctrl+C to stop)")
     app = create_app()
     uvicorn.run(
         app,
