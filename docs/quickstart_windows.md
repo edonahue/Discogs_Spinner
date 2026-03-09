@@ -49,8 +49,11 @@ dplayer list --limit 10
 
 ## 5) Launch the desktop GUI (optional)
 
-> The GTK4 desktop GUI is Linux-only. On Windows, use the CLI (`dplayer`) for all workflows.
-> A native Windows GUI is planned for a future release.
+**Want the full GUI on Windows?** Use WSL2 — see [WSL2 Quickstart](quickstart_wsl2.md).
+
+> Native Windows (without WSL2): The GTK4 desktop GUI requires Linux. All core features
+> are available via `dplayer` CLI on Windows. A native Windows app is planned for a future
+> release.
 
 All core features — sync, browse, spin, play, wantlist, analytics — are available via `dplayer` CLI on Windows.
 

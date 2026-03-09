@@ -18,7 +18,7 @@ def _missing_gui_dependency_message(module_name: str) -> str:
         [
             f"Missing GUI dependency: {module_name}",
             "",
-            "Install required Pop!_OS GUI packages:",
+            "Install required Debian/Ubuntu/WSL2 GUI packages:",
             f"  {GUI_APT_INSTALL_CMD}",
         ]
     )

@@ -82,6 +82,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 ## OS Quickstarts
 
 - [Windows Quickstart](docs/quickstart_windows.md)
+- [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 - [Debian Quickstart](docs/quickstart_debian.md)
 - [macOS Quickstart](docs/quickstart_macos.md)
 - [Token Setup (Discogs + Spotify)](docs/token_setup.md)
