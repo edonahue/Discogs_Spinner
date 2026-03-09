@@ -106,7 +106,6 @@ class SetupWizard(Adw.Window):
 
         self._token_entry = Gtk.PasswordEntry()
         self._token_entry.set_show_peek_icon(True)
-        self._token_entry.set_placeholder_text("Paste your token here…")
         self._token_entry.set_hexpand(True)
         box.append(self._token_entry)
 

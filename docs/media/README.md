@@ -9,6 +9,7 @@ This directory stores visual assets used in the top section of `README.md`.
 - `screenshots/02-spin-result.png`
 - `screenshots/03-market-value-dashboard.png`
 - `screenshots/04-wantlist-view.png`
+- `screenshots/05-setup-wizard.png`
 
 ## Capture Real Screenshots
 

@@ -17,6 +17,7 @@ Output:
     docs/media/screenshots/02-spin-result.png
     docs/media/screenshots/03-market-value-dashboard.png
     docs/media/screenshots/04-wantlist-view.png
+    docs/media/screenshots/05-setup-wizard.png
     docs/media/gif/product-demo.gif
 """
 from __future__ import annotations
@@ -47,12 +48,13 @@ os.environ["XDG_RUNTIME_DIR"] = _xdg
 sys.path.insert(0, str(ROOT / "src"))
 
 # ── Screenshot capture plan ───────────────────────────────────────────────────
-# (main_stack_name, sub_stack_name_or_None, output_filename)
+# (main_stack_name, sub_stack_name_or_None, output_filename, special_or_None)
 CAPTURE_PLAN = [
-    ("browse",   "gallery",  "01-browse-gallery.png"),
-    ("browse",   "carousel", "02-spin-result.png"),
-    ("value",    None,       "03-market-value-dashboard.png"),
-    ("wantlist", "gallery",  "04-wantlist-view.png"),
+    ("browse",   "gallery",  "01-browse-gallery.png",         None),
+    ("browse",   "carousel", "02-spin-result.png",            None),
+    ("value",    None,       "03-market-value-dashboard.png", None),
+    ("wantlist", "gallery",  "04-wantlist-view.png",          None),
+    ("browse",   "gallery",  "05-setup-wizard.png",           "open_wizard"),
 ]
 # ms to wait after navigation before capturing
 NAV_SETTLE_MS = 1200
@@ -147,7 +149,7 @@ class _Sequencer:
             self._GLib.timeout_add(300, self._finish)
             return False
 
-        main_page, sub_page, filename = CAPTURE_PLAN[self._step]
+        main_page, sub_page, filename, special = CAPTURE_PLAN[self._step]
         self._step += 1
         self._pending = SCREENSHOTS_DIR / filename
 
@@ -164,6 +166,9 @@ class _Sequencer:
                 w._browse_stack.set_visible_child_name(sub_page)
             elif main_page == "wantlist" and hasattr(w, "_wantlist_stack"):
                 w._wantlist_stack.set_visible_child_name(sub_page)
+
+        if special == "open_wizard":
+            w._open_setup_wizard()
 
         self._GLib.timeout_add(NAV_SETTLE_MS, self._capture)
         return False

@@ -43,6 +43,11 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 </p>
 <p align="center"><em>Collection Value Dashboard &nbsp;·&nbsp; Wantlist gallery</em></p>
 
+<p align="center">
+  <img src="docs/media/screenshots/05-setup-wizard.png" alt="Setup Wizard — first-run Discogs token configuration" width="49%">
+</p>
+<p align="center"><em>Setup Wizard — first-run token configuration</em></p>
+
 ---
 
 ## Quick Start
