@@ -7,6 +7,8 @@ Run the full Discogs Spinner GTK4 desktop GUI on Windows via WSL2 + WSLg.
 
 ---
 
+> **Estimated time:** ~15 minutes
+
 ## 1) Enable WSL2 and install Ubuntu
 
 Open PowerShell **as Administrator** and run:
@@ -101,6 +103,15 @@ WSLg passes the GTK4 window through to your Windows desktop — it appears as a 
 window with no extra setup required.
 
 ---
+
+## Done? Verify it works
+
+```bash
+dplayer status
+dplayer spin
+```
+
+If `dplayer status` shows your collection count and last sync date, you're all set.
 
 ## Troubleshooting
 

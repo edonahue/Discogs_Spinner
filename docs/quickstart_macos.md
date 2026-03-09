@@ -4,6 +4,8 @@ This guide targets first-time users installing `discogs_player` on macOS.
 
 ## 1) Prerequisites
 
+> **Estimated time:** ~5 minutes
+
 - macOS 13+
 - Homebrew installed
 - Discogs account + personal token ([how to get one](token_setup.md))
@@ -99,9 +101,11 @@ open "/Applications/Discogs Spinner.app"
 > This is only required once per install. Signed builds that remove this step are planned when
 > Apple Developer ID is acquired.
 
-## 9) Signing/Notarization TODOs
+## Done? Verify it works
 
-1. Define signing identity and certificate storage policy for CI.
-2. Add a codesign step for macOS release artifacts in tagged-release workflow.
-3. Add notarization submission + staple workflow and failure handling.
-4. Publish user-facing Gatekeeper troubleshooting section once signed builds ship.
+```bash
+dplayer status
+dplayer spin
+```
+
+If `dplayer status` shows your collection count and last sync date, you're all set.

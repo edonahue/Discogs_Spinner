@@ -4,6 +4,8 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 ## 1) Prerequisites
 
+> **Estimated time:** ~5 minutes
+
 - Windows 10/11
 - Python 3.10+ (`py --version`)
 - Git
@@ -86,6 +88,15 @@ complete the in-app token setup wizard.
 **Pilot testers:** follow the step-by-step checklist at
 [`docs/validation/windows_tauri_ftux.md`](validation/windows_tauri_ftux.md) and report any step
 that fails.
+
+## Done? Verify it works
+
+```powershell
+dplayer status
+dplayer spin
+```
+
+If `dplayer status` shows your collection count and last sync date, you're all set.
 
 ## 8) Troubleshooting
 

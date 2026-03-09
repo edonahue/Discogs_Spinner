@@ -4,6 +4,8 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 
 ## 1) Prerequisites
 
+> **Estimated time:** ~10 minutes
+
 - Debian 12+ (or Ubuntu equivalent)
 - Discogs account + personal token ([how to get one](token_setup.md))
 - Optional: Spotify account (for playback/matching features — [how to set up](token_setup.md#spotify-api-credentials))
@@ -119,6 +121,15 @@ Safe first play fallback:
 ```bash
 dplayer play --last-spin --open
 ```
+
+## Done? Verify it works
+
+```bash
+dplayer status
+dplayer spin
+```
+
+If `dplayer status` shows your collection count and last sync date, you're all set.
 
 ## 7) Troubleshooting
 

@@ -146,3 +146,12 @@ No blocker for the pilot cohort.
 2. Go to **Settings → Secrets and variables → Actions**.
 3. Click **New repository secret** for each secret listed above.
 4. After adding secrets, re-run the `installer_build.yml` workflow to produce signed artifacts.
+
+---
+
+## macOS Signing/Notarization TODOs
+
+1. Define signing identity and certificate storage policy for CI.
+2. Add a codesign step for macOS release artifacts in tagged-release workflow.
+3. Add notarization submission + staple workflow and failure handling.
+4. Publish user-facing Gatekeeper troubleshooting section once signed builds ship.

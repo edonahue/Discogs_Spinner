@@ -7,6 +7,8 @@
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/pilot_validation_windows_macos.yml"><img alt="Pilot Validation" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/pilot_validation_windows_macos.yml/badge.svg"></a>
   <a href="https://github.com/edonahue/Discogs_Spinner/releases"><img alt="Release" src="https://img.shields.io/github/v/release/edonahue/Discogs_Spinner?include_prereleases"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-2f5d8a">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
+  <img alt="Platforms" src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-blue">
 </p>
 
 <p align="center">
@@ -16,6 +18,16 @@
 Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, spin a random pick, and track market value — all stored locally, no subscription required.
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
+
+---
+
+## Why Discogs Spinner?
+
+Your Discogs collection lives in a browser tab. You scroll it when you can't decide what to spin,
+squint at market prices in a second tab, and open Spotify in a third. Discogs Spinner pulls all
+of that into one place — a local app that knows your collection, picks records for you, shows you
+what they're worth today, and queues them up in Spotify with one command. No cloud account. No
+subscription. Runs on your machine.
 
 ---
 
@@ -92,6 +104,13 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 
 ## OS Quickstarts
 
+> **New here?**
+> - Easiest cross-platform start: [Web App Quickstart](docs/quickstart_web.md) (Windows / macOS / Linux — no GTK required)
+> - Linux desktop: [Debian Quickstart](docs/quickstart_debian.md)
+> - Windows native installer: [Windows Quickstart](docs/quickstart_windows.md)
+> - Windows GUI without WSL2: [Web App Quickstart](docs/quickstart_web.md)
+
+- [Not sure where to start? → START HERE](docs/START_HERE.md)
 - [Windows Quickstart](docs/quickstart_windows.md)
 - [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 - [Debian Quickstart](docs/quickstart_debian.md)
@@ -108,24 +127,25 @@ Technical references:
 - [Web App README](webapp/README.md)
 - [Desktop Shell README](desktop_shell/README.md)
 - [Code Signing Guide](docs/SIGNING.md)
-- [Cross-Platform Implementation Roadmap](docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md)
 - [Architecture ADRs](docs/adr/001-layered-architecture.md)
 
-Product goals:
+<details>
+<summary>Project & release docs</summary>
 
 - [Product State](PRODUCT_STATE.md)
+- [Cross-Platform Implementation Roadmap](docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md)
 - [Stabilization Execution Tracker](docs/STABILIZATION_EXECUTION_2026Q1.md)
-
-Release:
-
 - [RC Release Runbook](docs/RC_RELEASE_RUNBOOK.md)
 - [Release Notes (v0.2.0-rc5)](docs/releases/v0.2.0-rc5.md)
+
+</details>
 
 ---
 
 ## Contributing & Legal
 
 - [Contributing](CONTRIBUTING.md)
+- [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
 - [LICENSE](LICENSE)
 - [PRIVACY.md](PRIVACY.md)
 - [TERMS.md](TERMS.md)

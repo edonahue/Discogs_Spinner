@@ -11,6 +11,8 @@ The web app consists of two parts running on your local machine:
 
 ## Prerequisites
 
+> **Estimated time:** ~10 minutes
+
 | Tool | Version | Notes |
 |------|---------|-------|
 | Python | 3.10+ | Already required for the CLI |
@@ -119,6 +121,15 @@ The initial sync fetches all releases and wantlist items from Discogs. Subsequen
 incremental and much faster.
 
 ---
+
+## Done? Verify it works
+
+Open **http://localhost:5173** in your browser and click **Spin**. If it returns a record from
+your collection, you're all set. You can also verify from the terminal:
+
+```bash
+dplayer status
+```
 
 ## Troubleshooting
 
