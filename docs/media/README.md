@@ -13,14 +13,20 @@ This directory stores visual assets used in the top section of `README.md`.
 
 ## Capture Real Screenshots
 
-Preferred: capture real screenshots and a GIF from the running GTK4 app.
+Preferred: headless capture from the live GTK4 app (no desktop session required).
+
+```bash
+python3 scripts/headless_screenshot.py
+```
+
+Runs under Xvfb at 1440×900, navigates all views automatically, and assembles
+the GIF. Requires `Xvfb` (system) and `python-xlib` + `Pillow` (venv).
+
+Legacy semi-automated script (X11/Wayland, requires desktop session):
 
 ```bash
 bash scripts/capture_readme_media.sh
 ```
-
-Supports X11 and Wayland (Pop!OS / COSMIC). Guided semi-automated mode prompts
-for navigation on Wayland; fully automated on X11 with `xdotool`.
 
 ## Synthetic Fallback
 
@@ -36,4 +42,4 @@ and renders placeholder PNGs + demo GIF using PIL.
 ## Size Targets
 
 - Demo GIF: under 8 MB (GitHub renders inline up to ~10 MB)
-- Screenshots: under 200 KB each
+- Screenshots: under 700 KB each (1440×900 headless PNG; lossless optipng if needed)
