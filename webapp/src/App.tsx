@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import { getJson } from "./api";
 import { Nav } from "./components/Nav";
 import { CollectionPage } from "./pages/CollectionPage";
+import { HealthPage } from "./pages/HealthPage";
 import { HomePage } from "./pages/HomePage";
 import { SetupPage } from "./pages/SetupPage";
 import { ValuePage } from "./pages/ValuePage";
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="/collection" element={<CollectionPage />} />
         <Route path="/wantlist" element={<WantlistPage />} />
         <Route path="/value" element={<ValuePage />} />
+        <Route path="/health" element={<HealthPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

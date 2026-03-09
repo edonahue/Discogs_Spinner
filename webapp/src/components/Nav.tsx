@@ -28,6 +28,9 @@ export function Nav() {
       <NavLink to="/value" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
         Value
       </NavLink>
+      <NavLink to="/health" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
+        Health
+      </NavLink>
     </nav>
   );
 }

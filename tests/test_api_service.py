@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from discogs_player_api.app import create_app
 from discogs_player_api.routers import catalog, matching, status, sync
+from discogs_player_api.routers import value as value_router
 
 
 def test_api_status_uses_envelope(monkeypatch):
@@ -170,6 +171,42 @@ def test_api_maps_use_case_value_error_to_consistent_envelope(monkeypatch):
     assert body["error"]["code"] == "invalid_request"
     assert "bad review request" in body["error"]["message"]
     assert body["error"]["retryable"] is False
+
+
+def test_api_value_queue_returns_envelope(monkeypatch):
+    stub = {
+        "total_candidates": 3,
+        "missing_count": 1,
+        "unpriced_count": 1,
+        "stale_count": 1,
+        "stale_days": 30,
+        "limit": 25,
+        "queue": [],
+    }
+    monkeypatch.setattr(value_router, "run_value_refresh_queue", lambda **_: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/value/queue")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"] == stub
+
+
+def test_api_collection_health_returns_envelope(monkeypatch):
+    stub = {
+        "score": 82,
+        "total_active": 200,
+        "buckets": [],
+    }
+    monkeypatch.setattr(value_router, "run_collection_health", lambda: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/value/health")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"] == stub
 
 
 def test_api_validation_errors_use_standard_error_envelope():

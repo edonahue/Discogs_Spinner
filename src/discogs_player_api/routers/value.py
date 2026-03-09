@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
+from discogs_player.use_cases.collection_health import run_collection_health
 from discogs_player.use_cases.value_dashboard import run_market_value_dashboard
 from discogs_player.use_cases.value_refresh import run_refresh_market_values
+from discogs_player.use_cases.value_refresh_queue import run_value_refresh_queue
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.use_cases.value_status import run_market_value_status
 from discogs_player_api.models import ValueRefreshRequest
@@ -51,3 +53,18 @@ def api_market_value_refresh(request: ValueRefreshRequest) -> dict[str, object]:
 @router.post("/value/snapshot")
 def api_market_value_snapshot() -> dict[str, object]:
     return run_use_case(run_market_value_snapshot)
+
+
+@router.get("/value/queue")
+def api_value_refresh_queue(
+    limit: int = Query(default=25, ge=1),
+    stale_days: int = Query(default=30, ge=0),
+) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_value_refresh_queue(limit=limit, stale_days=stale_days)
+    )
+
+
+@router.get("/value/health")
+def api_collection_health() -> dict[str, object]:
+    return run_use_case(run_collection_health)

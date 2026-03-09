@@ -130,3 +130,48 @@ export function fetchValueDashboard(params?: { top_limit?: number }): Promise<Ap
   const qs = params?.top_limit !== undefined ? `?top_limit=${params.top_limit}` : "";
   return getJson<ValueDashboard>(`/value/dashboard${qs}`);
 }
+
+export interface QueueItem {
+  discogs_release_id: number;
+  artist: string;
+  title: string;
+  market_need_reason: "missing" | "unpriced" | "stale";
+  market_median: number | null;
+}
+export interface ValueRefreshQueue {
+  total_candidates: number;
+  missing_count: number;
+  unpriced_count: number;
+  stale_count: number;
+  stale_days: number;
+  limit: number;
+  queue: QueueItem[];
+}
+export interface HealthBucket {
+  name: string;
+  label: string;
+  gap_count: number;
+  gap_pct: number;
+  max_deduction: number;
+  deduction: number;
+}
+export interface CollectionHealth {
+  score: number;
+  total_active: number;
+  buckets: HealthBucket[];
+}
+
+export function fetchValueQueue(params?: {
+  limit?: number;
+  stale_days?: number;
+}): Promise<ApiEnvelope<ValueRefreshQueue>> {
+  const qs = new URLSearchParams();
+  if (params?.limit != null) qs.set("limit", String(params.limit));
+  if (params?.stale_days != null) qs.set("stale_days", String(params.stale_days));
+  const q = qs.toString() ? `?${qs.toString()}` : "";
+  return getJson<ValueRefreshQueue>(`/value/queue${q}`);
+}
+
+export function fetchCollectionHealth(): Promise<ApiEnvelope<CollectionHealth>> {
+  return getJson<CollectionHealth>("/value/health");
+}
