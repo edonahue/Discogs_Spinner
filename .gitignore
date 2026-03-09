@@ -77,6 +77,18 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Tauri / Rust build artifacts
+desktop_shell/src-tauri/target/
+desktop_shell/src-tauri/gen/
+
+# PyInstaller sidecar binaries (built by CI / build_sidecar.sh)
+# Keep the .gitkeep placeholder; ignore actual binaries
+desktop_shell/src-tauri/binaries/*
+!desktop_shell/src-tauri/binaries/.gitkeep
+
+# Installer output (built by build_deb.sh / Tauri CI)
+dist/installers/
+
 # Local tooling state
 .claude/
 .cache/

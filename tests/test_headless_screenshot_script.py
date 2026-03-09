@@ -3,7 +3,7 @@
 Static tests (always run, no GTK/Xvfb needed):
   - script exists and is executable
   - script is syntactically valid Python
-  - CAPTURE_PLAN covers the expected four views
+  - CAPTURE_PLAN covers the expected five views
   - output directories are rooted under docs/media/
 
 Integration test (skipped when Xvfb or optional deps are absent):
@@ -29,6 +29,7 @@ EXPECTED_OUTPUT_FILENAMES = [
     "02-spin-result.png",
     "03-market-value-dashboard.png",
     "04-wantlist-view.png",
+    "05-setup-wizard.png",
 ]
 
 
@@ -87,13 +88,13 @@ def test_headless_screenshot_script_is_syntactically_valid():
     assert result.stdout.strip() == "ok"
 
 
-def test_headless_screenshot_capture_plan_covers_four_views():
+def test_headless_screenshot_capture_plan_covers_five_views():
     if not SCRIPT.exists():
         pytest.skip("script not present")
     constants = _ast_constants()
     plan = constants.get("CAPTURE_PLAN")
     assert plan is not None, "CAPTURE_PLAN not found in script"
-    assert len(plan) == 4, f"Expected 4 capture steps, got {len(plan)}: {plan}"
+    assert len(plan) == 5, f"Expected 5 capture steps, got {len(plan)}: {plan}"
 
     main_pages = {entry[0] for entry in plan}
     assert "browse" in main_pages, "CAPTURE_PLAN missing 'browse' view"

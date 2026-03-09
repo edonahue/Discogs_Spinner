@@ -6,12 +6,14 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from discogs_player_api.contracts import error_envelope, success_envelope
 from discogs_player_api.routers.catalog import router as catalog_router
 from discogs_player_api.routers.matching import router as matching_router
 from discogs_player_api.routers.playback import router as playback_router
+from discogs_player_api.routers.setup import router as setup_router
 from discogs_player_api.routers.status import router as status_router
 from discogs_player_api.routers.sync import router as sync_router
 from discogs_player_api.routers.value import router as value_router
@@ -41,6 +43,13 @@ def create_app() -> FastAPI:
         title="discogs_player API",
         version="0.1.0",
         summary="Local-first Discogs Player API for web and desktop clients.",
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "tauri://localhost"],
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type", "Accept"],
     )
 
     @app.get("/healthz")
@@ -88,6 +97,7 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=500, content=payload)
 
     api_prefix = "/api/v1"
+    app.include_router(setup_router, prefix=api_prefix)
     app.include_router(status_router, prefix=api_prefix)
     app.include_router(catalog_router, prefix=api_prefix)
     app.include_router(sync_router, prefix=api_prefix)

@@ -60,6 +60,25 @@ dplayer status
 dplayer list --limit 10
 ```
 
+## Option B: Portable AppImage (no install required)
+
+Download `Discogs_Spinner_0.2.0_amd64.AppImage` from the [GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases), then:
+
+```bash
+chmod +x Discogs_Spinner_0.2.0_amd64.AppImage
+./Discogs_Spinner_0.2.0_amd64.AppImage
+```
+
+- No root required; runs from any directory.
+- Handy for USB-drive installs or a display-attached server where you don't want to touch system packages.
+- On Ubuntu 22.04+ you may need FUSE:
+  ```bash
+  sudo apt install libfuse2
+  ```
+- On first run, a browser window opens automatically to `http://127.0.0.1:5173` for token setup.
+
+---
+
 ## 5) Launch the desktop GUI (optional)
 
 > Linux only. Requires GTK4/libadwaita (installed above in prerequisites).

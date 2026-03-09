@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
-from typing import Any
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 import discogs_player.integrations.youtube_music.backend as yt_backend_module
 from discogs_player.integrations.youtube_music.backend import (

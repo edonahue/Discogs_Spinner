@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "discogs_player",
-  "version": "0.1.0",
-  "identifier": "com.discogsplayer.app",
+  "productName": "Discogs Spinner",
+  "version": "0.2.0",
+  "identifier": "com.discogs-spinner.app",
   "build": {
     "beforeDevCommand": "cd ../webapp && npm run dev",
     "beforeBuildCommand": "cd ../webapp && npm run build",
@@ -12,15 +12,48 @@
   "app": {
     "windows": [
       {
-        "title": "discogs_player",
+        "title": "Discogs Spinner",
         "width": 1280,
         "height": 820,
-        "resizable": true
+        "resizable": true,
+        "fullscreen": false
       }
-    ]
+    ],
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
-    "active": false,
-    "targets": "all"
+    "active": true,
+    "targets": ["deb", "appimage", "msi", "nsis", "dmg"],
+    "identifier": "com.discogs-spinner.app",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": ["binaries/dplayer-api"],
+    "category": "Music",
+    "shortDescription": "Browse your Discogs collection and control playback.",
+    "longDescription": "Discogs Spinner lets you browse your vinyl collection, discover wantlist picks, and control Spotify or YouTube Music playback — all from a single desktop app.",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    }
   }
 }

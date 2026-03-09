@@ -22,10 +22,22 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 ## What You Get
 
 - **Browse & Spin** — gallery, carousel, or text-menu view with a one-click random pick
-- **Market Value Tracking** — price history, snapshot diffs, and value movers
+- **Market Value Tracking** — price history, snapshot diffs, value movers, and a refresh priority queue
+- **Collection Health** — scored summary of mapping coverage and staleness
 - **Wantlist Management** — priority signals, opportunity comparisons, and filtered views
-- **Spotify Control** *(optional)* — play directly via Spotify Connect from any view
+- **Playback Control** *(optional)* — Spotify Connect or YouTube Music (open-in-browser)
+- **Setup Wizard** — first-run token configuration, no terminal required
 - **CLI-first & SSH-ready** — every workflow available from `dplayer` in a terminal
+
+---
+
+## Three Ways to Use
+
+| Mode | Command | Best for |
+|------|---------|----------|
+| **CLI** | `dplayer` | Terminal users, SSH, scripting |
+| **Desktop GUI** | `dplayer-gui` | Linux desktop (GTK4 + libadwaita) |
+| **Web App** | `dplayer-api` then open browser | Windows / macOS / remote access |
 
 ---
 
@@ -95,20 +107,17 @@ Technical references:
 
 - [Web App README](webapp/README.md)
 - [Desktop Shell README](desktop_shell/README.md)
+- [Code Signing Guide](docs/SIGNING.md)
 - [Cross-Platform Implementation Roadmap](docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md)
 - [Architecture ADRs](docs/adr/001-layered-architecture.md)
 
 Product goals:
 
 - [Product State](PRODUCT_STATE.md)
-- [Stabilization Backlog (2026 Q1)](STABILIZATION_BACKLOG_2026Q1.md)
 - [Stabilization Execution Tracker](docs/STABILIZATION_EXECUTION_2026Q1.md)
-- [Status Checkpoint (2026-02-26)](docs/STATUS_CHECKPOINT_2026-02-26.md)
 
 Release:
 
-- [Testing Performed (2026-02-26)](docs/TESTING_PERFORMED_2026-02-26.md)
-- [Release Checklist Status (`v0.2.0-rc4`)](docs/RELEASE_CHECKLIST_STATUS_v0.2.0-rc4_2026-02-26.md)
 - [RC Release Runbook](docs/RC_RELEASE_RUNBOOK.md)
 - [Release Notes (v0.2.0-rc5)](docs/releases/v0.2.0-rc5.md)
 

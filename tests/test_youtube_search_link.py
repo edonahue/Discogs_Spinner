@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import urllib.parse
 
-import pytest
 
 
 def _build_youtube_search_url(artist: str, title: str, year: int | None) -> str:

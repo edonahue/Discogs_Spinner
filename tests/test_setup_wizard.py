@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import ast
-import inspect
 from pathlib import Path
 
-import pytest
 
 _WIZARD_SOURCE = (
     Path(__file__).parent.parent

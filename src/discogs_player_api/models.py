@@ -56,3 +56,7 @@ class ValueRefreshRequest(BaseModel):
     stale_days: int = Field(default=30, ge=0)
     release_ids: list[int] | None = None
     from_missing: bool = False
+
+
+class SetupRequest(BaseModel):
+    discogs_token: str = Field(min_length=1)

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import sqlite3
 
-import pytest
 
-from discogs_player.data.db import apply_migrations, LATEST_SCHEMA_VERSION, MIGRATIONS
+from discogs_player.data.db import apply_migrations, LATEST_SCHEMA_VERSION
 
 
 def _fresh_conn() -> sqlite3.Connection:

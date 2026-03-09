@@ -82,15 +82,22 @@ dplayer play --last-spin --open
 - Keep this as a CLI-first setup path unless a signed macOS app build is provided.
 - If browser callback fails, use manual callback options from `dplayer auth spotify --help`.
 
-## 8) Gatekeeper and Signing Status (2026-02-26)
+## 8) Gatekeeper and Signing Status
 
-- Current release artifacts are tarball bundles (`core` and `plus`), not a signed `.app` installer.
-- Code signing and notarization are not yet in place for this RC channel.
-- If you launch unsigned binaries/scripts from Finder, Gatekeeper may block first launch with a developer verification warning.
-- Pilot workaround:
-  - use right-click -> Open for first launch, then confirm,
-  - if needed for testing only, remove quarantine attribute:
-    `xattr -dr com.apple.quarantine <path-to-extracted-artifact-or-launcher>`
+Current release artifacts (`.dmg`) are unsigned. Gatekeeper will block the app on first launch
+with a "developer cannot be verified" warning. Clear the quarantine flag once after install:
+
+```bash
+# Option A — one-line helper (run from repo root):
+bash scripts/macos_open_app.sh "/Applications/Discogs Spinner.app"
+
+# Option B — manual:
+xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
+open "/Applications/Discogs Spinner.app"
+```
+
+> This is only required once per install. Signed builds that remove this step are planned when
+> Apple Developer ID is acquired.
 
 ## 9) Signing/Notarization TODOs
 

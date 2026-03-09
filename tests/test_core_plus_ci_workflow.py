@@ -47,8 +47,8 @@ def test_pyproject_version_not_default_placeholder():
     assert match, "Could not find version field in pyproject.toml"
     version = match.group(1)
     assert version != "0.1.0", (
-        f"pyproject.toml version is still '0.1.0'. "
-        f"Update it to match the current release tag."
+        "pyproject.toml version is still '0.1.0'. "
+        "Update it to match the current release tag."
     )
     # Must look like a semver or PEP 440 version (e.g. 0.2.0rc5, 1.0.0, 0.2.0)
     assert re.match(r'^\d+\.\d+\.\d+', version), (

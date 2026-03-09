@@ -76,7 +76,18 @@ Safe first play fallback:
 dplayer play --last-spin --open
 ```
 
-## 7) Troubleshooting
+## 7) Tauri Desktop App (installer)
+
+A native Windows installer (`Discogs_Spinner_0.2.0_x64-setup.exe`) is available on the
+[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases). After running the
+installer, accept the SmartScreen prompt ("More info → Run anyway") and complete the in-app token
+setup wizard.
+
+**Pilot testers:** follow the step-by-step checklist at
+[`docs/validation/windows_tauri_ftux.md`](validation/windows_tauri_ftux.md) and report any step
+that fails.
+
+## 8) Troubleshooting
 
 - If script activation is blocked:
   - run PowerShell as current user and execute
