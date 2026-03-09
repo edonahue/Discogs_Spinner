@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
     paths:
       - ".github/workflows/pilot_validation_windows_macos.yml"
       - "scripts/ci_pilot_validation.py"

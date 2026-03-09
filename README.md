@@ -36,7 +36,7 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 | Mode | Command | Best for |
 |------|---------|----------|
 | **CLI** | `dplayer` | Terminal users, SSH, scripting |
-| **Desktop GUI** | `dplayer-gui` | Linux desktop (GTK4 + libadwaita) |
+| **Desktop GUI** | `dplayer-gui` | Linux desktop; [Windows 11 via WSL2](docs/quickstart_wsl2.md) |
 | **Web App** | `dplayer-api` then open browser | Windows / macOS / remote access |
 
 ---
