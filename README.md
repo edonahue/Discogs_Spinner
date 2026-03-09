@@ -22,8 +22,8 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 ## What You Get
 
 - **Browse & Spin** — gallery, carousel, or text-menu view with a one-click random pick
-- **Market Value Tracking** — price history, snapshot diffs, value movers, and a refresh priority queue
-- **Collection Health** — scored summary of mapping coverage and staleness
+- **Market Value Tracking** — price history, snapshot diffs, value movers, a refresh priority queue (`dplayer value queue`), and a market value dashboard
+- **Collection Health** — scored summary of mapping coverage and staleness (`dplayer health`)
 - **Wantlist Management** — priority signals, opportunity comparisons, and filtered views
 - **Playback Control** *(optional)* — Spotify Connect or YouTube Music (open-in-browser)
 - **Setup Wizard** — first-run token configuration, no terminal required
@@ -67,7 +67,6 @@ Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
 pip install -e .
 
 export DISCOGS_TOKEN="your_discogs_personal_token"

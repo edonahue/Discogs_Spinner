@@ -64,7 +64,7 @@ First, create a Spotify app and get your Client ID + Secret at [developer.spotif
 
 ```bash
 export SPOTIPY_CLIENT_ID="your_client_id"
-export SPOTIPY_CLIENT_SECRET="your_client_secret"
+export SPOTIFY_SECRET="your_client_secret"
 export SPOTIPY_REDIRECT_URI="http://127.0.0.1:8765/callback"
 dplayer auth spotify-doctor
 dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765

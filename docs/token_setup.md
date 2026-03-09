@@ -53,7 +53,7 @@ On the app detail page, click **Settings** to reveal:
 
 ```bash
 export SPOTIPY_CLIENT_ID="your_client_id"
-export SPOTIPY_CLIENT_SECRET="your_client_secret"
+export SPOTIFY_SECRET="your_client_secret"
 export SPOTIPY_REDIRECT_URI="http://127.0.0.1:8765/callback"
 ```
 

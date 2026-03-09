@@ -63,7 +63,7 @@ First, create a Spotify app and get your Client ID + Secret at [developer.spotif
 
 ```powershell
 $env:SPOTIPY_CLIENT_ID = "your_client_id"
-$env:SPOTIPY_CLIENT_SECRET = "your_client_secret"
+$env:SPOTIFY_SECRET = "your_client_secret"
 $env:SPOTIPY_REDIRECT_URI = "http://127.0.0.1:8765/callback"
 dplayer auth spotify-doctor
 dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765
@@ -78,10 +78,10 @@ dplayer play --last-spin --open
 
 ## 7) Tauri Desktop App (installer)
 
-A native Windows installer (`Discogs_Spinner_0.2.0_x64-setup.exe`) is available on the
-[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases). After running the
-installer, accept the SmartScreen prompt ("More info → Run anyway") and complete the in-app token
-setup wizard.
+A native Windows installer (`Discogs_Spinner_*_x64-setup.exe`) is available on the
+[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases). Download the latest
+`_x64-setup.exe` file, run it, accept the SmartScreen prompt ("More info → Run anyway"), and
+complete the in-app token setup wizard.
 
 **Pilot testers:** follow the step-by-step checklist at
 [`docs/validation/windows_tauri_ftux.md`](validation/windows_tauri_ftux.md) and report any step

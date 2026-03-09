@@ -62,11 +62,12 @@ dplayer list --limit 10
 
 ## Option B: Portable AppImage (no install required)
 
-Download `Discogs_Spinner_0.2.0_amd64.AppImage` from the [GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases), then:
+Download the latest `Discogs_Spinner_*_amd64.AppImage` from the
+[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases), then:
 
 ```bash
-chmod +x Discogs_Spinner_0.2.0_amd64.AppImage
-./Discogs_Spinner_0.2.0_amd64.AppImage
+chmod +x Discogs_Spinner_*_amd64.AppImage
+./Discogs_Spinner_*_amd64.AppImage
 ```
 
 - No root required; runs from any directory.
@@ -75,7 +76,7 @@ chmod +x Discogs_Spinner_0.2.0_amd64.AppImage
   ```bash
   sudo apt install libfuse2
   ```
-- On first run, a browser window opens automatically to `http://127.0.0.1:5173` for token setup.
+- On first run, if no Discogs token is configured the app opens a Setup screen to guide you through token setup.
 
 ---
 
@@ -106,7 +107,7 @@ First, create a Spotify app and get your Client ID + Secret at [developer.spotif
 
 ```bash
 export SPOTIPY_CLIENT_ID="your_client_id"
-export SPOTIPY_CLIENT_SECRET="your_client_secret"
+export SPOTIFY_SECRET="your_client_secret"
 export SPOTIPY_REDIRECT_URI="http://127.0.0.1:8765/callback"
 dplayer auth spotify-doctor
 dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765
