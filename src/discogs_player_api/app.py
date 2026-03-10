@@ -10,10 +10,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from discogs_player_api.contracts import error_envelope, success_envelope
+from discogs_player_api.routers.cache import router as cache_router
 from discogs_player_api.routers.catalog import router as catalog_router
 from discogs_player_api.routers.matching import router as matching_router
 from discogs_player_api.routers.playback import router as playback_router
 from discogs_player_api.routers.setup import router as setup_router
+from discogs_player_api.routers.share import router as share_router
 from discogs_player_api.routers.status import router as status_router
 from discogs_player_api.routers.sync import router as sync_router
 from discogs_player_api.routers.value import router as value_router
@@ -104,5 +106,7 @@ def create_app() -> FastAPI:
     app.include_router(matching_router, prefix=api_prefix)
     app.include_router(playback_router, prefix=api_prefix)
     app.include_router(value_router, prefix=api_prefix)
+    app.include_router(cache_router, prefix=api_prefix)
+    app.include_router(share_router, prefix=api_prefix)
 
     return app

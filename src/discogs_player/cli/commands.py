@@ -53,6 +53,12 @@ from discogs_player.use_cases.ensure_mapping import (
     run_match_unmatched,
 )
 from discogs_player.use_cases.collection_analytics import run_collection_analytics
+from discogs_player.use_cases.cover_cache import (
+    run_cover_cache_prune,
+    run_cover_cache_stats,
+    run_cover_cache_warm,
+)
+from discogs_player.use_cases.export import run_export_analytics, run_export_value
 from discogs_player.use_cases.bootstrap_import import run_bootstrap_mapping_import
 from discogs_player.use_cases.export_collection import run_export_collection
 from discogs_player.use_cases.import_collection import run_import_collection
@@ -104,6 +110,8 @@ stats_app = typer.Typer(help="Refresh release statistics")
 art_app = typer.Typer(help="Optional high-resolution album art controls")
 bootstrap_app = typer.Typer(help="Bootstrap mapping import helpers")
 review_app = typer.Typer(help="Review/apply/retry match audit results")
+cache_app = typer.Typer(help="Manage local cover image cache")
+share_app = typer.Typer(help="Export analytics and value summaries to portable formats")
 app.add_typer(device_app, name="device")
 app.add_typer(config_app, name="config")
 app.add_typer(auth_app, name="auth")
@@ -114,6 +122,8 @@ app.add_typer(stats_app, name="stats")
 app.add_typer(art_app, name="art")
 app.add_typer(bootstrap_app, name="bootstrap")
 app.add_typer(review_app, name="review")
+app.add_typer(cache_app, name="cache")
+app.add_typer(share_app, name="share")
 console = Console()
 
 # Backwards-compatible aliases for tests and existing imports.
@@ -3075,3 +3085,170 @@ def match(
     except SpotifyApiError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=4) from exc
+
+
+# ---------------------------------------------------------------------------
+# cache subcommands
+# ---------------------------------------------------------------------------
+
+@cache_app.command("stats")
+def cache_stats(
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show cover image cache stats: item count, disk bytes, oldest/newest entry."""
+    result = run_cover_cache_stats()
+    if json_output:
+        _emit_json(result)
+        return
+    table = Table(title="Cover cache stats")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("item_count", str(result.get("item_count") or 0))
+    total_bytes = _to_int(result.get("total_bytes"))
+    table.add_row("total_bytes", f"{total_bytes:,}")
+    table.add_row("total_mb", f"{total_bytes / 1_048_576:.2f}")
+    table.add_row("oldest_entry_mtime", str(result.get("oldest_entry_mtime") or "—"))
+    table.add_row("newest_entry_mtime", str(result.get("newest_entry_mtime") or "—"))
+    table.add_row("cache_dir", str(result.get("cache_dir") or ""))
+    console.print(table)
+
+
+@cache_app.command("prune")
+def cache_prune(
+    days: int = typer.Option(30, "--days", min=1, help="Delete entries older than N days"),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Delete cover cache entries older than N days."""
+    try:
+        result = run_cover_cache_prune(days=days)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    freed = _to_int(result.get("freed_bytes"))
+    table = Table(title="Cache prune complete")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("days", str(result.get("days")))
+    table.add_row("deleted_count", str(result.get("deleted_count") or 0))
+    table.add_row("freed_bytes", f"{freed:,}")
+    table.add_row("freed_mb", f"{freed / 1_048_576:.2f}")
+    table.add_row("error_count", str(result.get("error_count") or 0))
+    console.print(table)
+    for err in result.get("errors") or []:
+        console.print(f"[yellow]error:[/yellow] {err}")
+
+
+@cache_app.command("warm")
+def cache_warm(
+    limit: int | None = typer.Option(
+        None, "--limit", min=1, help="Max missing covers to fetch (default: all)"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Pre-fetch missing cover images for active collection releases."""
+    try:
+        with console.status("Warming cover cache..."):
+            result = run_cover_cache_warm(limit=limit)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    table = Table(title="Cache warm complete")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("already_cached", str(result.get("already_cached") or 0))
+    table.add_row("no_url", str(result.get("no_url") or 0))
+    table.add_row("fetched", str(result.get("fetched") or 0))
+    table.add_row("fetch_errors", str(result.get("fetch_errors") or 0))
+    table.add_row("limit", str(result.get("limit") or "all"))
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# share subcommands
+# ---------------------------------------------------------------------------
+
+@share_app.command("collection")
+def share_collection(
+    output: str = typer.Option(..., "--output", "-o", help="Output file path"),
+    export_format: str = typer.Option(
+        "csv",
+        "--format",
+        help="Export format: csv or markdown",
+    ),
+    limit: int = typer.Option(
+        20, "--limit", min=1, help="Max rows for top genre/style/artist lists"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Export collection analytics (genres, styles, artists, years) to CSV or Markdown."""
+    try:
+        result = run_export_analytics(
+            output_path=output,
+            export_format=export_format,
+            limit=limit,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+    except OSError as exc:
+        console.print(f"[red]Failed to write export: {exc}[/red]")
+        raise typer.Exit(code=4) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    table = Table(title="Analytics export complete")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("output_path", str(result.get("output_path") or ""))
+    table.add_row("format", str(result.get("export_format") or ""))
+    table.add_row("release_count_active", str(result.get("release_count_active") or 0))
+    console.print(table)
+
+
+@share_app.command("value")
+def share_value(
+    output: str = typer.Option(..., "--output", "-o", help="Output file path"),
+    export_format: str = typer.Option(
+        "markdown",
+        "--format",
+        help="Export format: markdown",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Export market value summary as a shareable Markdown document."""
+    try:
+        result = run_export_value(
+            output_path=output,
+            export_format=export_format,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+    except OSError as exc:
+        console.print(f"[red]Failed to write export: {exc}[/red]")
+        raise typer.Exit(code=4) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    table = Table(title="Value export complete")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("output_path", str(result.get("output_path") or ""))
+    table.add_row("format", str(result.get("export_format") or ""))
+    table.add_row("active_release_count", str(result.get("active_release_count") or 0))
+    table.add_row("priced_release_count", str(result.get("priced_release_count") or 0))
+    console.print(table)
