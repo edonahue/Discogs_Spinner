@@ -1,27 +1,26 @@
-"""Filesystem path helpers for XDG-compatible app locations."""
+"""Filesystem path helpers — cross-platform via platformdirs."""
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
+
+from platformdirs import PlatformDirs
+
+_dirs = PlatformDirs(appname="discogs_player", appauthor="discogs_spinner")
 
 APP_NAME = "discogs_player"
 
 
-def _xdg_or_default(env_var: str, default: Path) -> Path:
-    return Path(os.environ.get(env_var, default))
-
-
 def config_dir() -> Path:
-    return _xdg_or_default("XDG_CONFIG_HOME", Path.home() / ".config") / APP_NAME
+    return Path(_dirs.user_config_dir)
 
 
 def data_dir() -> Path:
-    return _xdg_or_default("XDG_DATA_HOME", Path.home() / ".local" / "share") / APP_NAME
+    return Path(_dirs.user_data_dir)
 
 
 def cache_dir() -> Path:
-    return _xdg_or_default("XDG_CACHE_HOME", Path.home() / ".cache") / APP_NAME
+    return Path(_dirs.user_cache_dir)
 
 
 def cover_cache_dir() -> Path:

@@ -54,6 +54,11 @@ hidden = [
     "discogs_player.services",
     "discogs_player.use_cases",
     "discogs_player.integrations",
+    # platformdirs — lazy imports missed by PyInstaller
+    "platformdirs",
+    "platformdirs.windows",
+    "platformdirs.macos",
+    "platformdirs.unix",
     # stdlib extras sometimes missed
     "email.mime.text",
     "email.mime.multipart",
