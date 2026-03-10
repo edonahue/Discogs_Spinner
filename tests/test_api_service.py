@@ -11,6 +11,107 @@ from discogs_player_api.app import create_app
 from discogs_player_api.routers import catalog, matching, status, sync
 from discogs_player_api.routers import value as value_router
 
+# ---------------------------------------------------------------------------
+# Recent releases
+# ---------------------------------------------------------------------------
+
+
+def test_api_recent_releases_returns_envelope(monkeypatch):
+    stub = {"ok": True, "releases": [], "count": 0, "days": 7, "limit": 25}
+    monkeypatch.setattr(catalog, "run_recent_releases", lambda **_: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/releases/recent")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"] == stub
+
+
+def test_api_recent_releases_forwards_params(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def _fake(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"ok": True, "releases": [], "count": 0, "days": kwargs.get("days"), "limit": kwargs.get("limit")}
+
+    monkeypatch.setattr(catalog, "run_recent_releases", _fake)
+
+    client = TestClient(create_app())
+    client.get("/api/v1/releases/recent?days=14&limit=10")
+    assert captured["days"] == 14
+    assert captured["limit"] == 10
+
+
+# ---------------------------------------------------------------------------
+# Analytics
+# ---------------------------------------------------------------------------
+
+
+def test_api_analytics_returns_envelope(monkeypatch):
+    stub = {
+        "release_count_active": 50,
+        "mapped_count": 40,
+        "unmatched_count": 10,
+        "top_limit": 10,
+        "by_release_year": [],
+        "acquisition_timeline": [],
+        "top_genres": [],
+        "top_styles": [],
+        "top_artists": [],
+    }
+    monkeypatch.setattr(status, "run_collection_analytics", lambda **_: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/analytics")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"] == stub
+
+
+# ---------------------------------------------------------------------------
+# Tracklist
+# ---------------------------------------------------------------------------
+
+
+def test_api_tracklist_happy_path(monkeypatch):
+    stub = {
+        "discogs_release_id": 42,
+        "title": "OK Computer",
+        "artist": "Radiohead",
+        "has_cached_tracklist": True,
+        "has_tracklist": True,
+        "tracks": [{"position": "1", "title": "Airbag", "duration": "4:44", "type_": "track"}],
+        "track_count": 1,
+        "audio_track_count": 1,
+        "tracklist_last_refreshed_at": "2026-01-01T00:00:00Z",
+    }
+    monkeypatch.setattr(catalog, "run_release_tracklist_show", lambda rid, **_: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/releases/42/tracklist")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"]["has_cached_tracklist"] is True
+    assert len(body["data"]["tracks"]) == 1
+
+
+def test_api_tracklist_not_found_returns_400(monkeypatch):
+    def _raise(rid: int, **_: object) -> dict[str, object]:
+        _ = rid
+        raise ValueError("Release not found: 999")
+
+    monkeypatch.setattr(catalog, "run_release_tracklist_show", _raise)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/releases/999/tracklist")
+    assert response.status_code == 400
+    body = response.json()
+    assert body["ok"] is False
+    assert body["error"]["code"] == "invalid_request"
+
 
 def test_api_status_uses_envelope(monkeypatch):
     payload = {

@@ -31,6 +31,12 @@ export function Nav() {
       <NavLink to="/health" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
         Health
       </NavLink>
+      <NavLink to="/recent" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
+        Recent
+      </NavLink>
+      <NavLink to="/analytics" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
+        Analytics
+      </NavLink>
     </nav>
   );
 }

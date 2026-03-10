@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from discogs_player.capabilities import get_capabilities
+from discogs_player.use_cases.collection_analytics import run_collection_analytics
 from discogs_player.use_cases.status_report import get_status_report
 from discogs_player_api.runtime import run_use_case
 
@@ -14,6 +15,13 @@ router = APIRouter(tags=["status"])
 @router.get("/status")
 def api_status() -> dict[str, object]:
     return run_use_case(get_status_report)
+
+
+@router.get("/analytics")
+def api_analytics(
+    limit: int = Query(default=10, ge=1),
+) -> dict[str, object]:
+    return run_use_case(lambda: run_collection_analytics(limit=limit))
 
 
 @router.get("/capabilities")

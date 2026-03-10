@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { getJson } from "./api";
 import { Nav } from "./components/Nav";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CollectionPage } from "./pages/CollectionPage";
 import { HealthPage } from "./pages/HealthPage";
 import { HomePage } from "./pages/HomePage";
+import { RecentPage } from "./pages/RecentPage";
 import { SetupPage } from "./pages/SetupPage";
 import { ValuePage } from "./pages/ValuePage";
 import { WantlistPage } from "./pages/WantlistPage";
@@ -49,6 +51,8 @@ function AppRoutes() {
         <Route path="/wantlist" element={<WantlistPage />} />
         <Route path="/value" element={<ValuePage />} />
         <Route path="/health" element={<HealthPage />} />
+        <Route path="/recent" element={<RecentPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

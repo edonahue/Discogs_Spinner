@@ -6,8 +6,10 @@ from fastapi import APIRouter, Query
 
 from discogs_player.use_cases.get_release import run_get_release
 from discogs_player.use_cases.get_wantlist_entry import run_get_wantlist_entry
+from discogs_player.use_cases.list_recent import run_recent_releases
 from discogs_player.use_cases.list_releases import run_list_releases
 from discogs_player.use_cases.list_wantlist import run_list_wantlist
+from discogs_player.use_cases.tracklist_show import run_release_tracklist_show
 from discogs_player_api.runtime import run_use_case
 
 router = APIRouter(tags=["catalog"])
@@ -36,11 +38,28 @@ def api_list_releases(
     )
 
 
+@router.get("/releases/recent")
+def api_recent_releases(
+    days: int = Query(default=7, ge=1),
+    limit: int = Query(default=25, ge=1),
+) -> dict[str, object]:
+    return run_use_case(lambda: run_recent_releases(days=days, limit=limit))
+
+
 @router.get("/releases/{discogs_release_id}")
 def api_get_release(
     discogs_release_id: int,
 ) -> dict[str, object]:
     return run_use_case(lambda: run_get_release(discogs_release_id))
+
+
+@router.get("/releases/{discogs_release_id}/tracklist")
+def api_get_tracklist(
+    discogs_release_id: int,
+) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_release_tracklist_show(discogs_release_id, refresh=False)
+    )
 
 
 @router.get("/wantlist")

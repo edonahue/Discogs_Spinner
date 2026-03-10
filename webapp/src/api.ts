@@ -175,3 +175,74 @@ export function fetchValueQueue(params?: {
 export function fetchCollectionHealth(): Promise<ApiEnvelope<CollectionHealth>> {
   return getJson<CollectionHealth>("/value/health");
 }
+
+export interface RecentReleasesPayload {
+  ok: boolean;
+  releases: Release[];
+  count: number;
+  days: number;
+  limit: number | null;
+}
+
+export function fetchRecentReleases(params?: {
+  days?: number;
+  limit?: number;
+}): Promise<ApiEnvelope<RecentReleasesPayload>> {
+  const qs = new URLSearchParams();
+  if (params?.days != null) qs.set("days", String(params.days));
+  if (params?.limit != null) qs.set("limit", String(params.limit));
+  const q = qs.toString() ? `?${qs.toString()}` : "";
+  return getJson<RecentReleasesPayload>(`/releases/recent${q}`);
+}
+
+export interface AnalyticsYearRow {
+  year: number;
+  count: number;
+}
+export interface AnalyticsGenreRow { genre: string; count: number; }
+export interface AnalyticsStyleRow { style: string; count: number; }
+export interface AnalyticsArtistRow { artist: string; count: number; }
+
+export interface CollectionAnalytics {
+  release_count_active: number;
+  mapped_count: number;
+  unmatched_count: number;
+  top_limit: number;
+  by_release_year: AnalyticsYearRow[];
+  acquisition_timeline: AnalyticsYearRow[];
+  top_genres: AnalyticsGenreRow[];
+  top_styles: AnalyticsStyleRow[];
+  top_artists: AnalyticsArtistRow[];
+}
+
+export function fetchAnalytics(params?: {
+  limit?: number;
+}): Promise<ApiEnvelope<CollectionAnalytics>> {
+  const qs = params?.limit != null ? `?limit=${params.limit}` : "";
+  return getJson<CollectionAnalytics>(`/analytics${qs}`);
+}
+
+export interface Track {
+  position: string;
+  title: string;
+  duration: string;
+  type_: string;
+}
+
+export interface TracklistPayload {
+  discogs_release_id: number;
+  title: string;
+  artist: string;
+  has_cached_tracklist: boolean;
+  has_tracklist: boolean;
+  tracks: Track[];
+  track_count: number;
+  audio_track_count: number;
+  tracklist_last_refreshed_at: string | null;
+}
+
+export function fetchTracklist(
+  releaseId: number,
+): Promise<ApiEnvelope<TracklistPayload>> {
+  return getJson<TracklistPayload>(`/releases/${releaseId}/tracklist`);
+}

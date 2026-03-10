@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchReleases, Release } from "../api";
+import { TracklistModal } from "../components/TracklistModal";
 
 const PAGE_SIZE = 25;
 
@@ -42,6 +43,7 @@ export function CollectionPage() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query), 300);
@@ -161,7 +163,15 @@ export function CollectionPage() {
 
       <ul style={{ listStyle: "none", padding: 0 }}>
         {sorted.map((r) => (
-          <li key={r.discogs_release_id} style={{ padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
+          <li
+            key={r.discogs_release_id}
+            onClick={() => setSelectedRelease(r)}
+            style={{
+              padding: "0.5rem 0",
+              borderBottom: "1px solid #eee",
+              cursor: "pointer",
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span>
                 <strong>{r.artist}</strong> — {r.title}
@@ -183,6 +193,15 @@ export function CollectionPage() {
           </li>
         ))}
       </ul>
+
+      {selectedRelease !== null ? (
+        <TracklistModal
+          releaseId={selectedRelease.discogs_release_id}
+          releaseTitle={selectedRelease.title}
+          releaseArtist={selectedRelease.artist}
+          onClose={() => setSelectedRelease(null)}
+        />
+      ) : null}
 
       {releases.length === limit ? (
         <button
