@@ -93,3 +93,4 @@ dist/installers/
 .claude/
 .cache/
 .python-version
+webapp/test-results/
