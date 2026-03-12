@@ -10,7 +10,7 @@ from typing import Any
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 
 from discogs_player.ui.utils.formatting import (
     format_community_stats,
@@ -126,6 +126,7 @@ class WantlistDetail(Gtk.Box):
         )
         self._artist_album_label.set_xalign(0.0)
         self._artist_album_label.set_wrap(True)
+        self._artist_album_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._artist_album_label.set_use_markup(True)
         self._artist_album_label.add_css_class("ipod-artist-album-title")
         self.append(self._artist_album_label)
@@ -190,18 +191,21 @@ class WantlistDetail(Gtk.Box):
         self._market_value_label = Gtk.Label(label="Market: n/a")
         self._market_value_label.set_xalign(0.0)
         self._market_value_label.set_wrap(True)
+        self._market_value_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._market_value_label.add_css_class("ipod-detail-data")
         self.append(self._market_value_label)
 
         self._market_metrics_label = Gtk.Label(label="Metrics: n/a")
         self._market_metrics_label.set_xalign(0.0)
         self._market_metrics_label.set_wrap(True)
+        self._market_metrics_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._market_metrics_label.add_css_class("ipod-detail-data")
         self.append(self._market_metrics_label)
 
         self._community_stats_label = Gtk.Label(label="Stats: n/a")
         self._community_stats_label.set_xalign(0.0)
         self._community_stats_label.set_wrap(True)
+        self._community_stats_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._community_stats_label.add_css_class("ipod-detail-data")
         self.append(self._community_stats_label)
 
@@ -213,6 +217,7 @@ class WantlistDetail(Gtk.Box):
         self._notes = Gtk.Label(label="")
         self._notes.set_xalign(0.0)
         self._notes.set_wrap(True)
+        self._notes.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._notes.set_selectable(True)
         self._notes.add_css_class("dim-label")
         self.append(self._notes)
@@ -242,12 +247,14 @@ class WantlistDetail(Gtk.Box):
         self._tracklist_body = Gtk.Label(label="No item selected.")
         self._tracklist_body.set_xalign(0.0)
         self._tracklist_body.set_wrap(True)
+        self._tracklist_body.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._tracklist_body.set_selectable(True)
         self.append(self._tracklist_body)
 
         self._mapping_label = Gtk.Label(label="Mapping: none")
         self._mapping_label.set_xalign(0.0)
         self._mapping_label.set_wrap(True)
+        self._mapping_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.append(self._mapping_label)
 
         self._spotify_mapping_link_button = Gtk.LinkButton.new(
@@ -262,11 +269,13 @@ class WantlistDetail(Gtk.Box):
         self._candidate_label = Gtk.Label(label="Candidate: none")
         self._candidate_label.set_xalign(0.0)
         self._candidate_label.set_wrap(True)
+        self._candidate_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.append(self._candidate_label)
 
         self._spotify_hint_label = Gtk.Label(label="")
         self._spotify_hint_label.set_xalign(0.0)
         self._spotify_hint_label.set_wrap(True)
+        self._spotify_hint_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._spotify_hint_label.add_css_class("dim-label")
         self.append(self._spotify_hint_label)
 
@@ -310,6 +319,7 @@ class WantlistDetail(Gtk.Box):
         self._result_label = Gtk.Label(label="Status: idle")
         self._result_label.set_xalign(0.0)
         self._result_label.set_wrap(True)
+        self._result_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.append(self._result_label)
 
         self.set_actions_enabled(False)

@@ -148,7 +148,7 @@ def test_main_window_resize_fallbacks_are_present():
         "self._filters_scroll = Gtk.ScrolledWindow()",
         "self._filters_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER)",
         "content.set_shrink_start_child(True)",
-        "content.set_shrink_end_child(True)",
+        "content.set_shrink_end_child(False)",
         "self._sidebar_scroll = Gtk.ScrolledWindow()",
         "self._sidebar_scroll.set_min_content_width(320)",
         "self._sidebar_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)",

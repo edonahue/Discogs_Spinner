@@ -1015,7 +1015,7 @@ class MainWindow(Gtk.ApplicationWindow):
         wantlist_content.set_resize_start_child(True)
         wantlist_content.set_shrink_start_child(True)
         wantlist_content.set_resize_end_child(True)
-        wantlist_content.set_shrink_end_child(True)
+        wantlist_content.set_shrink_end_child(False)
         wantlist_content.set_wide_handle(True)
         wantlist_content.connect("notify::width", self._on_content_width_change)
         self._wantlist_content = wantlist_content
@@ -1181,7 +1181,7 @@ class MainWindow(Gtk.ApplicationWindow):
         content.set_resize_start_child(True)
         content.set_shrink_start_child(True)
         content.set_resize_end_child(True)
-        content.set_shrink_end_child(True)
+        content.set_shrink_end_child(False)
         content.set_wide_handle(True)
         content.connect("notify::width", self._on_content_width_change)
         self._browse_content = content
@@ -2299,8 +2299,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     self._focus_release_id(
                         self._visible_release_ids[0], allow_expand_limit=False
                     )
-                return
-            if mode == "carousel":
+            elif mode == "carousel":
                 self._carousel_mode.set_active(True)
                 self._text_mode.set_active(False)
                 self._gallery_mode.set_active(False)
@@ -2309,8 +2308,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     self._focus_release_id(
                         self._visible_release_ids[0], allow_expand_limit=False
                     )
-                return
-            if mode == "gallery":
+            elif mode == "gallery":
                 self._gallery_mode.set_active(True)
                 self._carousel_mode.set_active(False)
                 self._text_mode.set_active(False)
@@ -2336,8 +2334,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     self._focus_wantlist_id(
                         self._visible_wantlist_ids[0], allow_expand_limit=False
                     )
-                return
-            if mode == "carousel":
+            elif mode == "carousel":
                 self._wantlist_carousel_mode.set_active(True)
                 self._wantlist_text_mode.set_active(False)
                 self._wantlist_gallery_mode.set_active(False)
@@ -2346,8 +2343,7 @@ class MainWindow(Gtk.ApplicationWindow):
                     self._focus_wantlist_id(
                         self._visible_wantlist_ids[0], allow_expand_limit=False
                     )
-                return
-            if mode == "gallery":
+            elif mode == "gallery":
                 self._wantlist_gallery_mode.set_active(True)
                 self._wantlist_carousel_mode.set_active(False)
                 self._wantlist_text_mode.set_active(False)

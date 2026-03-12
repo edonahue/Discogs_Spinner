@@ -8,7 +8,7 @@ from collections.abc import Callable
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 
 
 from discogs_player.ui.utils.formatting import (
@@ -123,6 +123,7 @@ class AlbumDetail(Gtk.Box):
         self._artist_album_label = Gtk.Label(label="Select a release to view details.")
         self._artist_album_label.set_xalign(0.0)
         self._artist_album_label.set_wrap(True)
+        self._artist_album_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._artist_album_label.set_use_markup(True)
         self._artist_album_label.add_css_class("ipod-artist-album-title")
         self.append(self._artist_album_label)
@@ -175,18 +176,21 @@ class AlbumDetail(Gtk.Box):
         self._market_value_label = Gtk.Label(label="Market: n/a")
         self._market_value_label.set_xalign(0.0)
         self._market_value_label.set_wrap(True)
+        self._market_value_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._market_value_label.add_css_class("ipod-detail-data")
         self.append(self._market_value_label)
 
         self._market_metrics_label = Gtk.Label(label="Metrics: n/a")
         self._market_metrics_label.set_xalign(0.0)
         self._market_metrics_label.set_wrap(True)
+        self._market_metrics_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._market_metrics_label.add_css_class("ipod-detail-data")
         self.append(self._market_metrics_label)
 
         self._community_stats_label = Gtk.Label(label="Stats: n/a")
         self._community_stats_label.set_xalign(0.0)
         self._community_stats_label.set_wrap(True)
+        self._community_stats_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._community_stats_label.add_css_class("ipod-detail-data")
         self.append(self._community_stats_label)
 
@@ -226,18 +230,21 @@ class AlbumDetail(Gtk.Box):
         self._tracklist_meta = Gtk.Label(label="Tracklist cache: n/a")
         self._tracklist_meta.set_xalign(0.0)
         self._tracklist_meta.set_wrap(True)
+        self._tracklist_meta.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._tracklist_meta.add_css_class("dim-label")
         self.append(self._tracklist_meta)
 
         self._tracklist_body = Gtk.Label(label="No release selected.")
         self._tracklist_body.set_xalign(0.0)
         self._tracklist_body.set_wrap(True)
+        self._tracklist_body.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._tracklist_body.set_selectable(True)
         self.append(self._tracklist_body)
 
         self._mapping_label = Gtk.Label(label="Mapping: none")
         self._mapping_label.set_xalign(0.0)
         self._mapping_label.set_wrap(True)
+        self._mapping_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.append(self._mapping_label)
 
         self._spotify_mapping_link_button = Gtk.LinkButton.new(
@@ -252,11 +259,13 @@ class AlbumDetail(Gtk.Box):
         self._candidate_label = Gtk.Label(label="Candidate: none")
         self._candidate_label.set_xalign(0.0)
         self._candidate_label.set_wrap(True)
+        self._candidate_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.append(self._candidate_label)
 
         self._spotify_hint_label = Gtk.Label(label="")
         self._spotify_hint_label.set_xalign(0.0)
         self._spotify_hint_label.set_wrap(True)
+        self._spotify_hint_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._spotify_hint_label.add_css_class("dim-label")
         self.append(self._spotify_hint_label)
 
@@ -331,12 +340,14 @@ class AlbumDetail(Gtk.Box):
         self._audit_label = Gtk.Label(label="Audit: not run.")
         self._audit_label.set_xalign(0.0)
         self._audit_label.set_wrap(True)
+        self._audit_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._audit_label.add_css_class("dim-label")
         self.append(self._audit_label)
 
         self._result_label = Gtk.Label(label="Status: idle")
         self._result_label.set_xalign(0.0)
         self._result_label.set_wrap(True)
+        self._result_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.append(self._result_label)
 
         self.set_actions_enabled(False)
@@ -424,6 +435,7 @@ class AlbumDetail(Gtk.Box):
         value_label = Gtk.Label(label="n/a")
         value_label.set_xalign(0.0)
         value_label.set_wrap(True)
+        value_label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self._discogs_grid.attach(value_label, 1, row, 1, 1)
         return value_label
 
