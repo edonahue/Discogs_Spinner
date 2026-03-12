@@ -72,7 +72,9 @@ from discogs_player.use_cases.wantlist_tracklist_show import run_wantlist_trackl
 from discogs_player.use_cases.wantlist_value_refresh import (
     run_refresh_wantlist_market_value,
 )
+from discogs_player.use_cases.collection_health import run_collection_health
 from discogs_player.use_cases.value_dashboard import run_market_value_dashboard
+from discogs_player.use_cases.value_refresh_queue import run_value_refresh_queue
 from discogs_player.use_cases.value_missing import run_market_value_missing
 from discogs_player.use_cases.value_refresh import run_refresh_market_values
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
@@ -113,7 +115,9 @@ from discogs_player.ui.widgets.device_picker import DevicePicker
 from discogs_player.ui.widgets.filters import FilterBar
 from discogs_player.ui.widgets.spin_wheel import SpinWheel
 from discogs_player.ui.widgets.text_menu import ReleaseTextMenu
+from discogs_player.ui.widgets.health_score import HealthScoreWidget
 from discogs_player.ui.widgets.value_dashboard import ValueDashboard
+from discogs_player.ui.widgets.value_queue import ValueQueueWidget
 from discogs_player.ui.widgets.wantlist_detail import WantlistDetail
 from discogs_player.ui.widgets.wantlist_filters import WantlistFilterBar
 
@@ -1366,6 +1370,38 @@ class MainWindow(Gtk.ApplicationWindow):
         self._main_stack.add_titled(
             self._value_dashboard_scroll, "value", "Market Value"
         )
+
+        self._value_queue_widget = ValueQueueWidget(
+            on_refresh=self._handle_value_queue_refresh,
+            on_release_selected=self._handle_value_queue_release_selected,
+        )
+        self._value_queue_widget.add_css_class("ipod-panel")
+        self._value_queue_scroll = Gtk.ScrolledWindow()
+        self._value_queue_scroll.set_hexpand(True)
+        self._value_queue_scroll.set_vexpand(True)
+        self._value_queue_scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        self._value_queue_scroll.set_child(self._value_queue_widget)
+        self._main_stack.add_titled(
+            self._value_queue_scroll, "queue", "Value Queue"
+        )
+
+        self._health_score_widget = HealthScoreWidget(
+            on_refresh=self._handle_health_score_refresh,
+        )
+        self._health_score_widget.add_css_class("ipod-panel")
+        self._health_score_scroll = Gtk.ScrolledWindow()
+        self._health_score_scroll.set_hexpand(True)
+        self._health_score_scroll.set_vexpand(True)
+        self._health_score_scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        self._health_score_scroll.set_child(self._health_score_widget)
+        self._main_stack.add_titled(
+            self._health_score_scroll, "health", "Health Score"
+        )
+
         self._main_stack.set_visible_child_name("browse")
 
         initial_status = "Ready."
@@ -1459,6 +1495,49 @@ class MainWindow(Gtk.ApplicationWindow):
             self._set_status(
                 f"Release {discogs_release_id} could not be focused from dashboard."
             )
+
+    def _handle_value_queue_refresh(self) -> None:
+        self._refresh_value_queue()
+
+    def _handle_value_queue_release_selected(self, discogs_release_id: int) -> None:
+        self._main_stack.set_visible_child_name("browse")
+        if self._focus_release_id(discogs_release_id):
+            self._set_status(
+                f"Focused release {discogs_release_id} from Value Queue."
+            )
+        else:
+            self._set_status(
+                f"Release {discogs_release_id} could not be focused."
+            )
+
+    def _refresh_value_queue(self) -> None:
+        self._value_queue_widget.set_busy()
+        try:
+            report = run_value_refresh_queue()
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._value_queue_widget.set_error(message)
+            self._set_status(f"Value queue unavailable: {message}")
+            return
+        self._value_queue_widget.set_queue(dict(report))
+        total = report.get("total_candidates", 0)
+        self._set_status(f"Value queue refreshed ({total} candidate{'s' if total != 1 else ''}).")
+
+    def _handle_health_score_refresh(self) -> None:
+        self._refresh_health_score()
+
+    def _refresh_health_score(self) -> None:
+        self._health_score_widget.set_busy()
+        try:
+            report = run_collection_health()
+        except Exception as exc:
+            message = self._friendly_error_message(exc)
+            self._health_score_widget.set_error(message)
+            self._set_status(f"Health score unavailable: {message}")
+            return
+        self._health_score_widget.set_health(dict(report))
+        score = report.get("score", 0)
+        self._set_status(f"Collection health score: {score}/100.")
 
     def _load_value_ops_controls_from_settings(self) -> tuple[int, int]:
         stored_stale_days = get_int_setting(
@@ -2474,6 +2553,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.refresh_wantlist()
         elif active_view == "value":
             self._set_status("Switched to Market Value view")
+        elif active_view == "queue":
+            self._set_status("Switched to Value Queue view")
+        elif active_view == "health":
+            self._set_status("Switched to Health Score view")
 
         # Reapply responsive split sizing when tabs change so hidden paned widgets
         # don't keep stale allocations from previous visibility states.
