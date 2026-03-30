@@ -42,4 +42,4 @@ docker build \
     .
 
 echo ""
-echo "PASS: Debian clean install — dplayer --version and dplayer-api --help both succeeded."
+echo "PASS: Debian clean install validated wheelhouse, CLI/API entrypoints, and GUI smoke mode."

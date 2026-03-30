@@ -980,13 +980,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self._main_stack_switcher.set_stack(self._main_stack)
         view_row.append(self._main_stack_switcher)
 
-        self._setup_banner = Adw.Banner()
-        self._setup_banner.set_title(
-            "Discogs not connected \u2014 connect your account to browse and spin your collection"
-        )
-        self._setup_banner.set_button_label("Set Up \u2192")
-        self._setup_banner.connect("button-clicked", lambda _: self._open_setup_wizard())
-        self._setup_banner.set_revealed(False)
+        self._setup_banner = self._build_setup_banner()
+        self._set_setup_banner_revealed(False)
         root.append(self._setup_banner)
         root.append(self._main_stack)
 
@@ -2104,9 +2099,79 @@ class MainWindow(Gtk.ApplicationWindow):
         self._active_setup_wizard = None
         return False
 
+    def _build_setup_banner(self) -> Gtk.Widget:
+        """Build the setup CTA, falling back when older libadwaita lacks Adw.Banner."""
+        banner_cls = getattr(Adw, "Banner", None)
+        banner_text = (
+            "Discogs not connected \u2014 connect your account to browse and spin your collection"
+        )
+        if banner_cls is not None:
+            banner = banner_cls()
+            banner.set_title(banner_text)
+            banner.set_button_label("Set Up \u2192")
+            banner.connect("button-clicked", lambda _: self._open_setup_wizard())
+            return banner
+
+        revealer = Gtk.Revealer()
+        revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
+
+        banner_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        banner_box.set_margin_top(8)
+        banner_box.set_margin_bottom(8)
+        banner_box.set_margin_start(8)
+        banner_box.set_margin_end(8)
+        banner_box.add_css_class("ipod-panel")
+
+        banner_label = Gtk.Label(label=banner_text)
+        banner_label.set_hexpand(True)
+        banner_label.set_wrap(True)
+        banner_label.set_xalign(0.0)
+        banner_box.append(banner_label)
+
+        banner_button = Gtk.Button(label="Set Up \u2192")
+        banner_button.connect("clicked", lambda _: self._open_setup_wizard())
+        banner_box.append(banner_button)
+
+        revealer.set_child(banner_box)
+        return revealer
+
+    def _set_setup_banner_revealed(self, revealed: bool) -> None:
+        if hasattr(self._setup_banner, "set_revealed"):
+            self._setup_banner.set_revealed(revealed)
+        else:
+            self._setup_banner.set_reveal_child(revealed)
+
+    def run_smoke_checks(self) -> dict[str, object]:
+        """Exercise compatibility-sensitive GTK surfaces without mutating app state."""
+        report: dict[str, object] = {}
+
+        self._set_setup_banner_revealed(True)
+        self._set_setup_banner_revealed(False)
+        report["setup_banner_toggle_ok"] = True
+
+        wizard = SetupWizard(self)
+        wizard.present()
+        report["setup_wizard_ok"] = True
+        wizard.close()
+
+        prefs = PreferencesWindow(self)
+        prefs.present()
+        report["preferences_window_ok"] = True
+        prefs.close()
+
+        self._main_stack.set_visible_child_name("wantlist")
+        if self._main_stack.get_visible_child_name() != "wantlist":
+            raise RuntimeError("Failed to switch smoke test view to wantlist.")
+        self._main_stack.set_visible_child_name("browse")
+        if self._main_stack.get_visible_child_name() != "browse":
+            raise RuntimeError("Failed to switch smoke test view back to browse.")
+        report["view_switch_ok"] = True
+
+        return report
+
     def _update_setup_state(self, *, token_missing: bool) -> None:
         """Show or hide FTUX surfaces based on whether the Discogs token is set."""
-        self._setup_banner.set_revealed(token_missing)
+        self._set_setup_banner_revealed(token_missing)
         if hasattr(self, "_browse_ftux_box"):
             self._browse_ftux_box.set_visible(token_missing)
 
@@ -4746,6 +4811,7 @@ class DiscogsPlayerApp(Adw.Application):
         self._did_activate = True
 
         report: dict[str, object]
+        smoke_report: dict[str, object] = {}
         titlebar_present = False
         try:
             window = MainWindow(
@@ -4753,6 +4819,8 @@ class DiscogsPlayerApp(Adw.Application):
             )
             window.present()
             titlebar_present = bool(window.get_titlebar() is not None)
+            if self._smoke_test:
+                smoke_report = window.run_smoke_checks()
         except Exception as exc:
             self.exit_code = 1
             report = {
@@ -4775,6 +4843,7 @@ class DiscogsPlayerApp(Adw.Application):
                 "error": str(exc),
                 "traceback": traceback.format_exc(limit=4),
             }
+        report.update(smoke_report)
         report["titlebar_present"] = titlebar_present
 
         if self._smoke_test:

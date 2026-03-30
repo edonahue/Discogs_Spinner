@@ -31,10 +31,14 @@ Status: Active
 
 - [ ] Integrate local API lifecycle into desktop shell
 - [ ] Add cross-platform smoke tests for shell startup and API connectivity
-- [ ] Produce portable bundles for Windows/macOS/Debian
+- [x] Produce portable bundles for Windows/macOS/Debian
+- [x] Add Linux real-build validation for Tauri sidecar + bundle packaging
+- [x] Add native macOS and Windows installer bundle validation to CI
 
 ## Phase 3: Release hardening
 
 - [ ] Installer/signing/notarization pipeline
+- [x] Separate static sidecar-contract validation from real Tauri bundle-build validation
+- [x] Require native per-OS artifact validation before upload in installer CI
 - [ ] Documentation and support matrix by OS/profile
 - [ ] RC validation matrix and launch checklist

@@ -17,21 +17,27 @@ Windows and macOS receive the Tauri web-UI wrapper instead.
 
 | Component | Status |
 |-----------|--------|
-| `tauri.conf.json` | Complete — bundle enabled, sidecar registered |
+| `src-tauri/tauri.conf.json` | Complete — bundle enabled, sidecar registered |
 | `src-tauri/` | Scaffolded — Cargo.toml, main.rs, lib.rs, capabilities |
 | Sidecar build | `scripts/build_sidecar.sh` — PyInstaller, per-platform |
-| GTK4 .deb build | `scripts/build_deb.sh` — fpm-based |
+| GTK4 .deb build | `scripts/build_deb.sh` — fpm-based, build wheelhouse with Python 3.10 |
 | CI workflow | `.github/workflows/installer_build.yml` |
 | Icons | In place — generated with `cargo tauri icon` |
 | Code signing | **Deferred** — ship unsigned first (see Phase E in plan) |
 
 ## Prerequisites before `cargo tauri build`
 
-1. **Sidecar binary** must be present in `src-tauri/binaries/` (built by `build_sidecar.sh`).
-2. **React dist** must be present in `../webapp/dist` (run `npm run build` in `webapp/`).
-3. **Icons** must be present in `src-tauri/icons/` — generate with:
+1. **Sidecar binary** must be present in `binaries/` (built by `build_sidecar.sh`).
+   Validate with:
    ```
-   cargo tauri icon ../assets/icons/discogs-player.svg
+   python3 ../../scripts/validate_tauri_sidecar_contract.py \
+     --target-triple x86_64-unknown-linux-gnu \
+     --require-file --check-executable
+   ```
+2. **React dist** must be present in `../../webapp/dist` (run `npm run build` in `webapp/`).
+3. **Icons** must be present in `../icons/` — generate with:
+   ```
+   cargo tauri icon ../../assets/icons/discogs-player.svg
    ```
    (requires Tauri CLI v2: `cargo install tauri-cli --version "^2" --locked`)
 
@@ -45,12 +51,56 @@ Windows and macOS receive the Tauri web-UI wrapper instead.
 cd webapp && npm run build && cd ..
 
 # 3. Generate icons
-cd desktop_shell
-cargo tauri icon ../assets/icons/discogs-player.svg
+cd desktop_shell/src-tauri
+cargo tauri icon ../../assets/icons/discogs-player.svg
 
 # 4. Build installers
 cargo tauri build --bundles deb,appimage
+
+# 5. Validate Linux bundle contents
+bash ../scripts/validate_tauri_linux_bundle.sh \
+  --target-triple x86_64-unknown-linux-gnu
 ```
+
+## Real bundle validation
+
+For a real Linux installer build gate on a host with Rust and the Linux Tauri
+system libraries installed:
+
+```bash
+bash ./scripts/validate_tauri_linux_real_build.sh \
+  --target-triple x86_64-unknown-linux-gnu
+```
+
+For a containerized validation path that does not rely on host Rust setup:
+
+```bash
+docker build \
+  -f packaging/test/Dockerfile.tauri-linux-build \
+  -t dplayer-tauri-linux-build:local \
+  .
+```
+
+That Docker build performs the actual Linux sidecar build, web build, `cargo
+tauri build --bundles deb,appimage`, and bundle-content validation inside an
+isolated Debian Bookworm environment.
+
+For native CI validation on the other installer targets:
+
+```bash
+bash ./scripts/validate_tauri_macos_bundle.sh \
+  --target-triple aarch64-apple-darwin
+```
+
+```powershell
+./scripts/validate_tauri_windows_bundle.ps1 `
+  -TargetTriple x86_64-pc-windows-msvc
+```
+
+The macOS validator mounts the built `.dmg` and checks the `.app` bundle for
+the packaged sidecar. The Windows validator inspects the built `.msi` and NSIS
+installer with `7z` on the native GitHub runner and verifies that the bundled
+`dplayer-api.exe` sidecar is present.
 
 ## First-run token flow
 

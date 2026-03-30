@@ -2,11 +2,11 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Discogs Spinner",
   "version": "0.2.0",
-  "identifier": "com.discogs-spinner.app",
+  "identifier": "com.discogs-spinner.desktop",
   "build": {
     "beforeDevCommand": "cd ../webapp && npm run dev",
     "beforeBuildCommand": "cd ../webapp && npm run build",
-    "frontendDist": "../webapp/dist",
+    "frontendDist": "../../webapp/dist",
     "devUrl": "http://localhost:5173"
   },
   "app": {
@@ -26,13 +26,12 @@
   "bundle": {
     "active": true,
     "targets": ["deb", "appimage", "msi", "nsis", "dmg"],
-    "identifier": "com.discogs-spinner.app",
     "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
+      "../icons/32x32.png",
+      "../icons/128x128.png",
+      "../icons/128x128@2x.png",
+      "../icons/icon.icns",
+      "../icons/icon.ico"
     ],
     "externalBin": ["binaries/dplayer-api"],
     "category": "Music",

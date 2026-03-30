@@ -1,13 +1,13 @@
 #!/bin/bash
 # postinst — run after dpkg installs the discogs-spinner .deb.
 #
-# Creates a virtualenv at /opt/discogs-spinner/venv and installs the
-# discogs_player package into it (GTK4 GUI profile).
+# Creates a virtualenv at /opt/discogs-spinner/venv and installs the bundled
+# discogs_player wheelhouse into it (GTK4 GUI + local API profile).
 set -euo pipefail
 
 INSTALL_PREFIX="/opt/discogs-spinner"
 VENV_PATH="${INSTALL_PREFIX}/venv"
-PACKAGE_NAME="discogs-spinner"
+WHEEL_DIR="${INSTALL_PREFIX}/wheels"
 
 case "$1" in
     configure)
@@ -18,16 +18,24 @@ case "$1" in
             python3 -m venv --system-site-packages "$VENV_PATH"
         fi
 
-        # Install/upgrade the package from PyPI.
-        # The wheel was installed by fpm into INSTALL_PREFIX; use --find-links
-        # if a local wheel is present, otherwise fall back to PyPI.
-        if ls "${INSTALL_PREFIX}/wheels"/discogs_player-*.whl >/dev/null 2>&1; then
-            "${VENV_PATH}/bin/pip" install --quiet --upgrade \
-                --find-links "${INSTALL_PREFIX}/wheels" \
-                discogs-spinner
-        else
-            "${VENV_PATH}/bin/pip" install --quiet --upgrade discogs-spinner
+        shopt -s nullglob
+        app_wheels=("${WHEEL_DIR}"/discogs_player-*.whl)
+        shopt -u nullglob
+
+        if [[ ${#app_wheels[@]} -eq 0 ]]; then
+            echo "ERROR: No bundled discogs_player wheel found in ${WHEEL_DIR}." >&2
+            exit 1
         fi
+
+        app_version="$(basename "${app_wheels[0]}")"
+        app_version="${app_version#discogs_player-}"
+        app_version="${app_version%%-*}"
+
+        PIP_DISABLE_PIP_VERSION_CHECK=1 \
+            "${VENV_PATH}/bin/pip" install --quiet --upgrade \
+            --no-index \
+            --find-links "$WHEEL_DIR" \
+            "discogs_player[web]==${app_version}"
 
         # Update desktop database so the launcher is indexed.
         if command -v update-desktop-database >/dev/null 2>&1; then

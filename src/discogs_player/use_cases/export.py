@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import io
 from pathlib import Path
+from typing import cast
 
 from discogs_player.use_cases.collection_analytics import run_collection_analytics
 from discogs_player.use_cases.value_status import run_market_value_status
@@ -21,6 +22,49 @@ def _normalize_format(raw: str) -> str:
     return "markdown" if fmt == "md" else fmt
 
 
+def _as_rows(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+
+    rows: list[dict[str, object]] = []
+    for item in value:
+        if isinstance(item, dict):
+            rows.append(cast(dict[str, object], item))
+    return rows
+
+
+def _to_int(value: object, *, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if text:
+            try:
+                return int(text)
+            except ValueError:
+                return default
+    return default
+
+
+def _to_float(value: object, *, default: float = 0.0) -> float:
+    if isinstance(value, bool):
+        return float(int(value))
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if text:
+            try:
+                return float(text)
+            except ValueError:
+                return default
+    return default
+
+
 # ---------------------------------------------------------------------------
 # Collection analytics export
 # ---------------------------------------------------------------------------
@@ -31,28 +75,28 @@ def _analytics_to_csv(report: dict[str, object]) -> str:
 
     writer.writerow(["section", "key", "count"])
 
-    for row in report.get("by_release_year") or []:  # type: ignore[union-attr]
+    for row in _as_rows(report.get("by_release_year")):
         writer.writerow(["release_year", str(row.get("year") or ""), str(row.get("count") or 0)])
 
-    for row in report.get("top_genres") or []:  # type: ignore[union-attr]
+    for row in _as_rows(report.get("top_genres")):
         writer.writerow(["genre", str(row.get("genre") or ""), str(row.get("count") or 0)])
 
-    for row in report.get("top_styles") or []:  # type: ignore[union-attr]
+    for row in _as_rows(report.get("top_styles")):
         writer.writerow(["style", str(row.get("style") or ""), str(row.get("count") or 0)])
 
-    for row in report.get("top_artists") or []:  # type: ignore[union-attr]
+    for row in _as_rows(report.get("top_artists")):
         writer.writerow(["artist", str(row.get("artist") or ""), str(row.get("count") or 0)])
 
-    for row in report.get("acquisition_timeline") or []:  # type: ignore[union-attr]
+    for row in _as_rows(report.get("acquisition_timeline")):
         writer.writerow(["acquisition_year", str(row.get("year") or ""), str(row.get("count") or 0)])
 
     return buf.getvalue()
 
 
 def _analytics_to_markdown(report: dict[str, object]) -> str:
-    active = int(report.get("release_count_active") or 0)
-    mapped = int(report.get("mapped_count") or 0)
-    unmatched = int(report.get("unmatched_count") or 0)
+    active = _to_int(report.get("release_count_active"))
+    mapped = _to_int(report.get("mapped_count"))
+    unmatched = _to_int(report.get("unmatched_count"))
     mapping_rate = (mapped / active * 100.0) if active > 0 else 0.0
 
     lines: list[str] = [
@@ -60,8 +104,8 @@ def _analytics_to_markdown(report: dict[str, object]) -> str:
         "",
         "## Summary",
         "",
-        f"| Field | Value |",
-        f"|-------|-------|",
+        "| Field | Value |",
+        "|-------|-------|",
         f"| Active releases | {active} |",
         f"| Mapped (Spotify) | {mapped} |",
         f"| Unmatched | {unmatched} |",
@@ -76,11 +120,11 @@ def _analytics_to_markdown(report: dict[str, object]) -> str:
         out.append("")
         return out
 
-    lines.extend(_section_table("Top Genres", list(report.get("top_genres") or []), "genre", "Genre"))  # type: ignore[arg-type]
-    lines.extend(_section_table("Top Styles", list(report.get("top_styles") or []), "style", "Style"))  # type: ignore[arg-type]
-    lines.extend(_section_table("Top Artists", list(report.get("top_artists") or []), "artist", "Artist"))  # type: ignore[arg-type]
-    lines.extend(_section_table("By Release Year", list(report.get("by_release_year") or []), "year", "Year"))  # type: ignore[arg-type]
-    lines.extend(_section_table("Acquisition Timeline", list(report.get("acquisition_timeline") or []), "year", "Year"))  # type: ignore[arg-type]
+    lines.extend(_section_table("Top Genres", _as_rows(report.get("top_genres")), "genre", "Genre"))
+    lines.extend(_section_table("Top Styles", _as_rows(report.get("top_styles")), "style", "Style"))
+    lines.extend(_section_table("Top Artists", _as_rows(report.get("top_artists")), "artist", "Artist"))
+    lines.extend(_section_table("By Release Year", _as_rows(report.get("by_release_year")), "year", "Year"))
+    lines.extend(_section_table("Acquisition Timeline", _as_rows(report.get("acquisition_timeline")), "year", "Year"))
 
     return "\n".join(lines) + "\n"
 
@@ -114,7 +158,7 @@ def run_export_analytics(
         "ok": True,
         "export_format": normalized_format,
         "output_path": str(output),
-        "release_count_active": int(report.get("release_count_active") or 0),
+        "release_count_active": _to_int(report.get("release_count_active")),
     }
 
 
@@ -123,12 +167,12 @@ def run_export_analytics(
 # ---------------------------------------------------------------------------
 
 def _value_to_markdown(summary: dict[str, object]) -> str:
-    active = int(summary.get("active_release_count") or 0)
-    priced = int(summary.get("priced_release_count") or 0)
-    unpriced = int(summary.get("unpriced_release_count") or 0)
-    total_low = float(summary.get("total_lowest") or 0.0)
-    total_med = float(summary.get("total_median") or 0.0)
-    total_high = float(summary.get("total_highest") or 0.0)
+    active = _to_int(summary.get("active_release_count"))
+    priced = _to_int(summary.get("priced_release_count"))
+    unpriced = _to_int(summary.get("unpriced_release_count"))
+    total_low = _to_float(summary.get("total_lowest"))
+    total_med = _to_float(summary.get("total_median"))
+    total_high = _to_float(summary.get("total_highest"))
     coverage = (priced / active * 100.0) if active > 0 else 0.0
     updated = str(summary.get("market_value_last_updated") or "unknown")
 
@@ -156,8 +200,8 @@ def _value_to_markdown(summary: dict[str, object]) -> str:
         "",
     ]
 
-    currency_counts = summary.get("currency_counts")
-    if isinstance(currency_counts, list) and currency_counts:
+    currency_counts = _as_rows(summary.get("currency_counts"))
+    if currency_counts:
         lines.extend([
             "## Currency Mix",
             "",
@@ -165,8 +209,7 @@ def _value_to_markdown(summary: dict[str, object]) -> str:
             "|----------|-------|",
         ])
         for row in currency_counts:
-            if isinstance(row, dict):
-                lines.append(f"| {row.get('currency') or 'Unknown'} | {row.get('count') or 0} |")
+            lines.append(f"| {row.get('currency') or 'Unknown'} | {row.get('count') or 0} |")
         lines.append("")
 
     return "\n".join(lines) + "\n"
@@ -197,6 +240,6 @@ def run_export_value(
         "ok": True,
         "export_format": normalized_format,
         "output_path": str(output),
-        "active_release_count": int(summary.get("active_release_count") or 0),
-        "priced_release_count": int(summary.get("priced_release_count") or 0),
+        "active_release_count": _to_int(summary.get("active_release_count")),
+        "priced_release_count": _to_int(summary.get("priced_release_count")),
     }

@@ -1,6 +1,11 @@
 FROM ubuntu:22.04
 ARG DEB_PATH
 COPY ${DEB_PATH} /tmp/dplayer.deb
-RUN apt-get update -q && apt-get install -y -q /tmp/dplayer.deb
-RUN dplayer --version
-RUN dplayer-api --help
+RUN apt-get update -q && apt-get install -y -q /tmp/dplayer.deb xvfb xauth
+RUN test -x /opt/discogs-spinner/venv/bin/python
+RUN ls /opt/discogs-spinner/wheels/discogs_player-*.whl >/dev/null 2>&1
+RUN dplayer --help >/dev/null
+RUN command -v dplayer-api >/dev/null 2>&1
+RUN /opt/discogs-spinner/venv/bin/python -c "import discogs_player; import discogs_player.ui_main; import discogs_player.api_main; import discogs_player_api.app; import fastapi; import uvicorn"
+RUN mkdir -p /tmp/dplayer-runtime && chmod 700 /tmp/dplayer-runtime
+RUN XDG_RUNTIME_DIR=/tmp/dplayer-runtime GSK_RENDERER=cairo LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a dplayer-gui --smoke-test --limit 1

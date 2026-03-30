@@ -74,14 +74,18 @@ class SetupWizard(Adw.Window):
         self._stack.add_named(self._step2, "step2")
         self._stack.add_named(self._step3, "step3")
 
-        toolbar = Adw.ToolbarView()
         header = Adw.HeaderBar()
         header.set_show_end_title_buttons(False)
         header.set_show_start_title_buttons(False)
-        toolbar.add_top_bar(header)
-        toolbar.set_content(self._stack)
-
-        self.set_content(toolbar)
+        toolbar_cls = getattr(Adw, "ToolbarView", None)
+        if toolbar_cls is not None:
+            toolbar = toolbar_cls()
+            toolbar.add_top_bar(header)
+            toolbar.set_content(self._stack)
+            self.set_content(toolbar)
+        else:
+            self.set_titlebar(header)
+            self.set_content(self._stack)
 
     # ------------------------------------------------------------------ Step 1
 

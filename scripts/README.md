@@ -7,7 +7,12 @@ Utility scripts for building, releasing, testing, and operating Discogs Spinner.
 | Script | Purpose |
 |--------|---------|
 | `build_sidecar.sh` | PyInstaller bundle of `dplayer-api` for Tauri sidecar (per-platform) |
-| `build_deb.sh` | fpm-based Debian `.deb` package for GTK4 desktop app |
+| `validate_tauri_sidecar_contract.py` | Verifies Tauri config, target triple naming, and sidecar binary presence stay in sync |
+| `validate_tauri_linux_real_build.sh` | Runs the real Linux Tauri sidecar + webapp + bundle build flow end to end |
+| `validate_tauri_linux_bundle.sh` | Verifies Linux Tauri `.deb` and `.AppImage` bundles include the expected sidecar |
+| `validate_tauri_macos_bundle.sh` | Verifies macOS Tauri `.dmg` bundles include the expected sidecar inside the app bundle |
+| `validate_tauri_windows_bundle.ps1` | Verifies Windows Tauri `.msi` and NSIS `.exe` bundles include the expected sidecar |
+| `build_deb.sh` | fpm-based Debian `.deb` package for GTK4 desktop app (build with Python 3.10) |
 | `build_artifacts.sh` | Aggregates all release artifacts after platform builds |
 
 ## Screenshots & media

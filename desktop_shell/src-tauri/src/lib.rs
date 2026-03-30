@@ -49,9 +49,7 @@ fn spawn_sidecar(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     // Forward relevant env vars so the sidecar can locate the DB and token.
     // XDG vars and DISCOGS_TOKEN are inherited from the parent process
     // automatically; this explicit pass-through makes the intent visible.
-    let sidecar_cmd = sidecar_cmd
-        .env_clear(false) // keep all parent env vars
-        .env(
+    let sidecar_cmd = sidecar_cmd.env(
             "DISCOGS_API_HOST",
             std::env::var("DISCOGS_API_HOST").unwrap_or_default(),
         );

@@ -10,6 +10,7 @@
 #
 # Usage:
 #   ./scripts/build_deb.sh [--version <semver>]
+#   PYTHON_BIN=/usr/bin/python3.10 ./scripts/build_deb.sh
 #
 # Output:
 #   dist/installers/discogs-spinner_<version>_amd64.deb
@@ -17,6 +18,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+PYTHON_BIN="${PYTHON_BIN:-}"
 
 # ---------------------------------------------------------------------------
 # Parse arguments
@@ -38,12 +40,47 @@ done
 
 # Auto-detect version from pyproject.toml if not provided.
 if [[ -z "$PACKAGE_VERSION" ]]; then
-    PACKAGE_VERSION="$(python3 -c \
-        "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])" \
-        2>/dev/null || echo "0.0.0")"
+    PACKAGE_VERSION="$(
+        awk -F'"' '
+            $0 == "[project]" { in_project = 1; next }
+            /^\[/ && $0 != "[project]" { in_project = 0 }
+            in_project && $1 ~ /^version = / { print $2; exit }
+        ' pyproject.toml
+    )"
+    if [[ -z "$PACKAGE_VERSION" ]]; then
+        PACKAGE_VERSION="0.0.0"
+    fi
 fi
 
 echo "Building .deb for Discogs Spinner v${PACKAGE_VERSION}"
+
+# ---------------------------------------------------------------------------
+# Resolve Python build interpreter
+# ---------------------------------------------------------------------------
+if [[ -n "$PYTHON_BIN" ]]; then
+    if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+        echo "ERROR: Python executable not found: ${PYTHON_BIN}" >&2
+        exit 1
+    fi
+else
+    for candidate in python3.10 python3; do
+        if command -v "$candidate" >/dev/null 2>&1 \
+            && "$candidate" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 10) else 1)' >/dev/null 2>&1; then
+            PYTHON_BIN="$candidate"
+            break
+        fi
+    done
+fi
+
+if [[ -z "$PYTHON_BIN" ]] || ! "$PYTHON_BIN" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 10) else 1)' >/dev/null 2>&1; then
+    echo "ERROR: build_deb.sh must build the wheelhouse with Python 3.10 to match the Debian runtime." >&2
+    echo "Set PYTHON_BIN to a Python 3.10 interpreter, for example:" >&2
+    echo "  PYTHON_BIN=/usr/bin/python3.10 ./scripts/build_deb.sh" >&2
+    exit 1
+fi
+
+PYTHON_VERSION="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')"
+echo "Using build interpreter: ${PYTHON_BIN} (${PYTHON_VERSION})"
 
 # ---------------------------------------------------------------------------
 # Verify fpm is available
@@ -62,6 +99,7 @@ STAGING_DIR="${ROOT_DIR}/build/deb_staging"
 OUTPUT_DIR="${ROOT_DIR}/dist/installers"
 INSTALL_PREFIX="/opt/discogs-spinner"
 VENV_PATH="${INSTALL_PREFIX}/venv"
+WHEEL_DIR="${STAGING_DIR}${INSTALL_PREFIX}/wheels"
 DESKTOP_FILE="${ROOT_DIR}/packaging/deb/dplayer-gui.desktop"
 POSTINST_SCRIPT="${ROOT_DIR}/packaging/deb/postinst"
 ICON_SOURCE="${ROOT_DIR}/assets/icons/discogs-player.svg"
@@ -73,9 +111,27 @@ rm -rf "${STAGING_DIR:?}"/*
 # Build staging tree
 # ---------------------------------------------------------------------------
 
-# /usr/bin launcher (calls into the venv Python)
+# Bundle an offline wheelhouse for postinst, including the web profile so the
+# installed dplayer-api entrypoint works without network access.
+mkdir -p "$WHEEL_DIR"
+"$PYTHON_BIN" -m pip wheel --wheel-dir "$WHEEL_DIR" '.[web]'
+
+# /usr/bin launchers (call into the venv Python)
 BIN_DIR="${STAGING_DIR}/usr/bin"
 mkdir -p "$BIN_DIR"
+
+cat >"${BIN_DIR}/dplayer" <<'SH'
+#!/bin/bash
+exec /opt/discogs-spinner/venv/bin/python -m discogs_player.main "$@"
+SH
+chmod 0755 "${BIN_DIR}/dplayer"
+
+cat >"${BIN_DIR}/dplayer-api" <<'SH'
+#!/bin/bash
+exec /opt/discogs-spinner/venv/bin/python -m discogs_player.api_main "$@"
+SH
+chmod 0755 "${BIN_DIR}/dplayer-api"
+
 cat >"${BIN_DIR}/dplayer-gui" <<'SH'
 #!/bin/bash
 exec /opt/discogs-spinner/venv/bin/python -m discogs_player.ui_main "$@"

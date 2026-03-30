@@ -28,6 +28,8 @@ This checklist is optimized for the staged rollout order agreed in strategic pla
 ### Build and Artifact
 
 - [ ] `./scripts/build_artifacts.sh all` produces windows artifacts.
+- [ ] Windows Tauri installer build passes in CI with real artifact generation (`build-tauri`, not just sidecar contract checks).
+- [ ] Windows Tauri bundle validation passes and confirms the packaged `dplayer-api.exe` sidecar is present in both `.msi` and NSIS installers.
 - [ ] Artifact names and checksums recorded in release notes.
 - [ ] Install path tested on a clean Windows environment.
 
@@ -48,6 +50,8 @@ This checklist is optimized for the staged rollout order agreed in strategic pla
 ### Build and Artifact
 
 - [ ] Debian artifact installs on supported distro baseline.
+- [ ] Linux Tauri real bundle build passes (`bash ./scripts/validate_tauri_linux_real_build.sh --target-triple x86_64-unknown-linux-gnu` locally or equivalent CI run).
+- [ ] Linux Tauri `.deb` and `.AppImage` bundle validation passes and confirms the packaged `dplayer-api` sidecar is present.
 - [ ] GUI dependencies and CLI dependencies documented clearly.
 - [ ] Launcher integration (if provided) works after install.
 
@@ -62,6 +66,8 @@ This checklist is optimized for the staged rollout order agreed in strategic pla
 ### Build and Artifact
 
 - [ ] macOS artifact produced and startup tested on clean machine.
+- [ ] macOS Tauri installer build passes in CI with real artifact generation (`build-tauri`, not just sidecar contract checks).
+- [ ] macOS Tauri bundle validation passes and confirms the packaged `dplayer-api` sidecar is present inside the `.app` bundle shipped in the `.dmg`.
 - [ ] Gatekeeper behavior documented for current signing/notarization state.
 - [ ] Future signing/notarization TODOs captured if release is unsigned.
 

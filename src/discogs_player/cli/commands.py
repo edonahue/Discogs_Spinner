@@ -3139,7 +3139,7 @@ def cache_prune(
     table.add_row("freed_mb", f"{freed / 1_048_576:.2f}")
     table.add_row("error_count", str(result.get("error_count") or 0))
     console.print(table)
-    for err in result.get("errors") or []:
+    for err in _as_object_list(result.get("errors")):
         console.print(f"[yellow]error:[/yellow] {err}")
 
 

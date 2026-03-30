@@ -60,6 +60,15 @@ jobs:
         shell: bash
         run: ./scripts/build_sidecar.sh --target-triple "${{ matrix.target_triple }}"
 
+      - name: Validate sidecar contract
+        shell: bash
+        run: |
+          args=(scripts/validate_tauri_sidecar_contract.py --target-triple "${{ matrix.target_triple }}" --require-file)
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            args+=(--check-executable)
+          fi
+          python3 "${args[@]}"
+
       - name: Smoke-test sidecar startup (Linux only)
         if: matrix.os == 'ubuntu-22.04'
         run: |
@@ -161,18 +170,48 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x desktop_shell/src-tauri/binaries/dplayer-api-${{ matrix.target_triple }}
 
+      - name: Validate downloaded sidecar contract
+        shell: bash
+        run: |
+          args=(scripts/validate_tauri_sidecar_contract.py --target-triple "${{ matrix.target_triple }}" --require-file)
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            args+=(--check-executable)
+          fi
+          python3 "${args[@]}"
+
       # -- Tauri build --
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2" --locked
 
       - name: Build Tauri installers
-        working-directory: desktop_shell
+        working-directory: desktop_shell/src-tauri
         env:
           TAURI_SIGNING_PRIVATE_KEY: ""
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           cargo tauri build --target ${{ matrix.target_triple }} \
             --bundles ${{ matrix.tauri_targets }}
+
+      - name: Validate Linux Tauri bundles
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash ./scripts/validate_tauri_linux_bundle.sh \
+            --target-triple "${{ matrix.target_triple }}"
+
+      - name: Validate macOS Tauri bundle
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          bash ./scripts/validate_tauri_macos_bundle.sh \
+            --target-triple "${{ matrix.target_triple }}"
+
+      - name: Validate Windows Tauri bundles
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/validate_tauri_windows_bundle.ps1 `
+            -TargetTriple "${{ matrix.target_triple }}"
 
       # -- Collect installer artifacts --
       - name: Upload Tauri installers (Linux)
@@ -214,10 +253,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.12
+      - name: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Install Ruby + fpm
         run: |

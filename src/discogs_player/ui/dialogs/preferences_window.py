@@ -32,7 +32,7 @@ class PreferencesWindow(Adw.PreferencesWindow):
         self.set_default_size(560, 480)
 
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="prefs")
-        self.connect("close-request", lambda _: self._executor.shutdown(wait=False) or False)
+        self.connect("close-request", self._on_close_request)
 
         services_page = Adw.PreferencesPage(
             title="Services",
@@ -49,13 +49,33 @@ class PreferencesWindow(Adw.PreferencesWindow):
         group = Adw.PreferencesGroup(title="Discogs")
         group.set_description("Connect your Discogs account to import your collection.")
 
-        # Token entry row
-        self._token_row = Adw.PasswordEntryRow(title="Personal Access Token")
         existing_token = get_discogs_token()
-        if existing_token:
-            self._token_row.set_text(existing_token)
-        self._token_row.connect("apply", self._on_token_apply)
-        group.add(self._token_row)
+        token_row_cls = getattr(Adw, "PasswordEntryRow", None)
+        if token_row_cls is not None:
+            self._token_row = token_row_cls(title="Personal Access Token")
+            if existing_token:
+                self._token_row.set_text(existing_token)
+            self._token_row.connect("apply", self._on_token_apply)
+            group.add(self._token_row)
+        else:
+            token_row = Adw.ActionRow(title="Personal Access Token")
+            token_row.set_subtitle("Paste your Discogs personal access token and save it.")
+            self._token_row = Gtk.PasswordEntry()
+            self._token_row.set_show_peek_icon(True)
+            self._token_row.set_hexpand(True)
+            if existing_token:
+                self._token_row.set_text(existing_token)
+            self._token_row.connect("activate", self._on_token_apply)
+
+            save_button = Gtk.Button(label="Save")
+            save_button.add_css_class("suggested-action")
+            save_button.set_valign(Gtk.Align.CENTER)
+            save_button.connect("clicked", self._on_token_apply)
+
+            token_row.add_suffix(self._token_row)
+            token_row.add_suffix(save_button)
+            token_row.set_activatable_widget(save_button)
+            group.add(token_row)
 
         # Link to token page
         link_row = Adw.ActionRow(
@@ -87,7 +107,7 @@ class PreferencesWindow(Adw.PreferencesWindow):
             self._discogs_status_row.set_subtitle("Not configured")
             self._discogs_status_row.set_icon_name("dialog-warning-symbolic")
 
-    def _on_token_apply(self, _row: Adw.PasswordEntryRow) -> None:
+    def _on_token_apply(self, _row: object) -> None:
         token = self._token_row.get_text().strip()
         if not token:
             return
@@ -127,6 +147,10 @@ class PreferencesWindow(Adw.PreferencesWindow):
 
         self._refresh_spotify_status()
         return group
+
+    def _on_close_request(self, _window: Adw.PreferencesWindow) -> bool:
+        self._executor.shutdown(wait=False)
+        return False
 
     def _refresh_spotify_status(self) -> None:
         caps = get_capabilities()
