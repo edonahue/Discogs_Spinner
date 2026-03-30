@@ -84,4 +84,4 @@ The old tarball build remains available only as the manual workflow `.github/wor
 
 1. Watch install/auth/playback issues from first public users.
 2. Record installer friction in the backlog and release checklist follow-up.
-3. Schedule the slow Windows MSI smoke workflow once it is available on the default branch.
+3. Review the latest `Windows MSI Smoke` run alongside `Installer Build` for Windows installer confidence, and rerun it if Windows packaging changes land.

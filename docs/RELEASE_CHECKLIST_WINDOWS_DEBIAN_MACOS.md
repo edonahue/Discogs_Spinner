@@ -5,6 +5,12 @@ Owner: Engineering
 
 This checklist is optimized for a public installer release centered on native installs and first-run success across all three operating systems.
 
+## Current Stable Baseline (`v0.2.0`)
+
+- `Installer Build` is green for the published stable tag and release assets.
+- `Windows MSI Smoke` has passed on `main` and is available as the slower Windows confidence lane.
+- Remaining non-blocking launch polish: Windows signing, macOS signing/notarization, and first-user feedback triage.
+
 ## Global Pre-Release Gate
 
 - [ ] Working tree is clean and branch is tagged for release.
@@ -76,6 +82,7 @@ This checklist is optimized for a public installer release centered on native in
 ## Publish Gate
 
 - [ ] GitHub Release created with per-OS asset list and checksums.
+- [ ] README `Download Now` section and OS quickstarts point to the live stable release path.
 - [ ] Install docs linked prominently from release notes.
 - [ ] Issue templates for install/auth/playback are available.
 - [ ] Post-release validation issue opened to track first-user feedback.
@@ -83,5 +90,6 @@ This checklist is optimized for a public installer release centered on native in
 ## Post-Release Follow-Up (Within 72 Hours)
 
 - [ ] Triage install/auth/playback bug reports.
+- [ ] Review friend-trial feedback for download confusion, OS warning confusion, and first-run setup friction.
 - [ ] Record top friction points in roadmap/backlog docs.
 - [ ] Record any installer friction that should move into the slow Windows MSI smoke lane or signing/notarization backlog.

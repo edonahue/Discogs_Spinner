@@ -77,7 +77,7 @@ subscription. Runs on your machine.
 ## Download Now
 
 - [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-- Windows: choose the `.msi` or `-setup.exe`, run it, and finish the in-app setup wizard.
+- Windows: choose `Discogs Spinner_*_x64-setup.exe` for the normal guided install, or the `.msi` for deployment tooling.
 - macOS: open the `.dmg`, drag **Discogs Spinner** into `/Applications`, then launch it once and clear Gatekeeper quarantine if prompted.
 - Debian/Ubuntu: choose the GTK `.deb` for the native desktop build, or the `.AppImage` for a portable install.
 
@@ -86,6 +86,12 @@ Quick install notes:
 - Windows may show a SmartScreen warning until code signing is added.
 - macOS builds are currently unsigned and may require a one-time Gatekeeper approval step.
 - Debian/Ubuntu users can choose either the GTK `.deb` or the Linux Tauri `.deb`, depending on whether they want the native GTK app or the Tauri desktop build.
+
+Sending this to a friend?
+
+- Use the [Friend Trial Guide](docs/friend_trial.md) for the shortest install/setup checklist.
+- Ask them to report install, setup, or playback friction with OS, installer used, exact warning text, and a screenshot if possible.
+- GitHub issue templates: [install](https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml), [auth/setup](https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml), [playback](https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml)
 
 Need the terminal-first path instead?
 
@@ -131,6 +137,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 - [macOS Quickstart](docs/quickstart_macos.md)
 - [Web App Quickstart](docs/quickstart_web.md)
 - [Token Setup (Discogs + Spotify)](docs/token_setup.md)
+- [Friend Trial Guide](docs/friend_trial.md)
 
 ---
 

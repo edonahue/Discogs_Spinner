@@ -14,6 +14,7 @@ def test_public_release_runbook_contains_installer_release_steps():
     source = _read("docs/PUBLIC_RELEASE_RUNBOOK.md")
     for marker in (
         "Installer Build",
+        "Windows MSI Smoke",
         ".github/workflows/installer_build.yml",
         "git tag -a v0.2.0",
         "git push origin v0.2.0",
@@ -40,5 +41,6 @@ def test_readme_links_release_runbook_and_release_notes():
     for marker in (
         "docs/PUBLIC_RELEASE_RUNBOOK.md",
         "docs/releases/v0.2.0.md",
+        "docs/friend_trial.md",
     ):
         assert marker in source
