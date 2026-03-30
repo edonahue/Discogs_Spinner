@@ -90,18 +90,46 @@ def test_validate_tauri_windows_bundle_script_checks_msi_and_nsis_contents():
         "Get-Command 7z",
         'Join-Path ${env:ProgramFiles} "7-Zip\\7z.exe"',
         'Write-Host "INFO: Using 7z at $sevenZipPath"',
+        'Write-Host "INFO: START MSI metadata check"',
         'Write-Host "INFO: Inspecting WiX metadata for $($Archive.FullName)"',
         'Write-Host "INFO: WiX metadata lines containing sidecar references:"',
+        '$matchesToLog = @($matches | Select-Object -First 2)',
+        'Write-Host "INFO: Additional WiX sidecar matches omitted:',
         'Write-WixInventory -Path $wixRoot',
+        'Write-Host "INFO: END MSI metadata check"',
+        'Write-Host "INFO: START NSIS extraction check"',
         'Expected WiX metadata under $wixRoot.',
         'in WiX metadata.',
+        'Write-Host "INFO: Inspecting $Kind archive $($Archive.FullName)"',
         'Write-Host "INFO: Extracting NSIS archive from $($Archive.FullName) to $extractRoot"',
         '$output = & $sevenZipPath x -y "-o$extractRoot" $Archive.FullName 2>&1',
         'Write-Host "INFO: Extracted $Kind paths containing dplayer-api:"',
+        'Write-Host "INFO: $Kind sidecar verification succeeded."',
+        'Write-Host "INFO: END NSIS extraction check"',
         'Write-ExtractedInventory -Label $Kind -Path $extractRoot',
         'Remove-TempDirectories',
         'after extraction.',
         'PASS: Windows Tauri bundles include $packagedSidecarName.',
+    ):
+        assert marker in source
+
+
+def test_validate_tauri_windows_msi_smoke_script_uses_bounded_install_and_log_dump():
+    source = _read("scripts/validate_tauri_windows_msi_smoke.ps1")
+    param_index = source.index("param(")
+    strict_mode_index = source.index("Set-StrictMode -Version Latest")
+    assert param_index < strict_mode_index
+
+    for marker in (
+        '[int]$TimeoutSeconds = 600',
+        '$artifactsRoot = Join-Path $rootDir "build\\windows-msi-smoke"',
+        '$installRoot = Join-Path $artifactsRoot "install-root"',
+        '$msiLog = Join-Path $artifactsRoot "msiexec.log"',
+        'Start-Process -FilePath "msiexec.exe"',
+        'Wait-Process -Id $installProcess.Id -Timeout $TimeoutSeconds',
+        'Stop-Process -Id $installProcess.Id -Force',
+        'Get-Content -Path $msiLog -Tail 200',
+        'PASS: Windows MSI smoke install includes $packagedSidecarName.',
     ):
         assert marker in source
 
@@ -153,6 +181,25 @@ def test_installer_workflow_runs_sidecar_and_platform_bundle_validators():
         'bash ./scripts/validate_tauri_linux_bundle.sh \\',
         'bash ./scripts/validate_tauri_macos_bundle.sh \\',
         './scripts/validate_tauri_windows_bundle.ps1 `',
+    ):
+        assert marker in source
+
+
+def test_windows_msi_smoke_workflow_runs_manual_and_scheduled_windows_install_smoke():
+    source = _read(".github/workflows/windows_msi_smoke.yml")
+    for marker in (
+        'name: Windows MSI Smoke',
+        'workflow_dispatch:',
+        'cron: "17 5 * * *"',
+        'runs-on: windows-2022',
+        'timeout-minutes: 30',
+        'run: ./scripts/build_sidecar.sh --target-triple "x86_64-pc-windows-msvc"',
+        'python3 scripts/validate_tauri_sidecar_contract.py \\',
+        'cargo tauri build --target x86_64-pc-windows-msvc --bundles msi',
+        'timeout-minutes: 15',
+        './scripts/validate_tauri_windows_msi_smoke.ps1 `',
+        'name: windows-msi-smoke-logs',
+        'build/windows-msi-smoke/**',
     ):
         assert marker in source
 

@@ -188,9 +188,13 @@ function Test-WixMetadataContainsSidecar {
 
     if ($matches) {
         Write-Host "INFO: WiX metadata lines containing sidecar references:"
-        foreach ($match in $matches) {
+        $matchesToLog = @($matches | Select-Object -First 2)
+        foreach ($match in $matchesToLog) {
             $relativePath = [System.IO.Path]::GetRelativePath($wixRoot, $match.Path)
             Write-Host "  - ${relativePath}:$($match.LineNumber): $($match.Line.Trim())"
+        }
+        if ($matches.Count -gt $matchesToLog.Count) {
+            Write-Host "INFO: Additional WiX sidecar matches omitted: $($matches.Count - $matchesToLog.Count)"
         }
         return
     }
@@ -238,6 +242,7 @@ function Test-ExtractedArchiveContainsSidecar {
             $relativePath = [System.IO.Path]::GetRelativePath($extractRoot, $match.FullName)
             Write-Host "  - $relativePath"
         }
+        Write-Host "INFO: $Kind sidecar verification succeeded."
         return
     }
 
@@ -246,8 +251,12 @@ function Test-ExtractedArchiveContainsSidecar {
 }
 
 try {
+    Write-Host "INFO: START MSI metadata check"
     Test-WixMetadataContainsSidecar -Archive $msiFile
+    Write-Host "INFO: END MSI metadata check"
+    Write-Host "INFO: START NSIS extraction check"
     Test-ExtractedArchiveContainsSidecar -Archive $nsisFile -Kind "NSIS" -ExpandArchive ${function:Expand-NsisArchive}
+    Write-Host "INFO: END NSIS extraction check"
 }
 finally {
     Remove-TempDirectories
