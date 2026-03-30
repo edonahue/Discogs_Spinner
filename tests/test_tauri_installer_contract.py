@@ -26,6 +26,16 @@ def test_validate_tauri_sidecar_contract_script_enforces_expected_naming():
         assert marker in source
 
 
+def test_build_sidecar_script_uses_platform_specific_add_data_separator():
+    source = _read("scripts/build_sidecar.sh")
+    for marker in (
+        'ADD_DATA_SEPARATOR=":"',
+        'ADD_DATA_SEPARATOR=";"',
+        '--add-data "${ROOT_DIR}/src/discogs_player/data${ADD_DATA_SEPARATOR}discogs_player/data"',
+    ):
+        assert marker in source
+
+
 def test_validate_tauri_linux_bundle_script_checks_deb_and_appimage_contents():
     source = _read("scripts/validate_tauri_linux_bundle.sh")
     for marker in (
@@ -103,6 +113,7 @@ def test_tauri_linux_build_dockerfile_runs_real_validation_script():
 def test_installer_workflow_runs_sidecar_and_platform_bundle_validators():
     source = _read(".github/workflows/installer_build.yml")
     for marker in (
+        "macos-15-intel",
         "Validate sidecar contract",
         "Validate downloaded sidecar contract",
         "Validate Linux Tauri bundles",

@@ -83,9 +83,11 @@ echo "Building dplayer-api sidecar for target triple: ${TARGET_TRIPLE}"
 # Determine binary name (Windows gets .exe suffix)
 # ---------------------------------------------------------------------------
 BINARY_NAME="dplayer-api-${TARGET_TRIPLE}"
+ADD_DATA_SEPARATOR=":"
 case "$TARGET_TRIPLE" in
     *-windows-*)
         BINARY_NAME="${BINARY_NAME}.exe"
+        ADD_DATA_SEPARATOR=";"
         ;;
 esac
 
@@ -135,7 +137,7 @@ echo "Running PyInstaller..."
     --hidden-import anyio.from_thread \
     --hidden-import discogs_player \
     --hidden-import discogs_player_api \
-    --add-data "${ROOT_DIR}/src/discogs_player/data:discogs_player/data" \
+    --add-data "${ROOT_DIR}/src/discogs_player/data${ADD_DATA_SEPARATOR}discogs_player/data" \
     --exclude-module gi \
     --exclude-module tkinter \
     --exclude-module PyQt5 \
