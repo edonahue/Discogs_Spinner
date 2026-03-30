@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Git tag / version label (e.g. v0.2.0)"
+        description: "Git tag / version label (e.g. v0.2.0). Use a stable v* tag to repair an existing release."
         required: false
         default: "dev"
 
@@ -312,7 +312,7 @@ jobs:
   # ---------------------------------------------------------------------------
   publish-release:
     name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
     needs:
       - build-tauri
       - build-gtk4-deb
@@ -324,44 +324,160 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve release metadata
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            release_tag="${{ github.event.inputs.tag }}"
+          else
+            release_tag="${GITHUB_REF_NAME}"
+          fi
+          if [[ -z "$release_tag" ]]; then
+            echo "ERROR: release tag is empty." >&2
+            exit 1
+          fi
+          if [[ ! "$release_tag" =~ ^v[0-9] ]]; then
+            echo "ERROR: release tag must start with v for publish-release. Got: $release_tag" >&2
+            exit 1
+          fi
+
+          release_version="${release_tag#v}"
+          release_notes="docs/releases/${release_tag}.md"
+          raw_dir="dist/release/raw"
+          publish_dir="dist/release/publish"
+
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
+          echo "RELEASE_NOTES_PATH=$release_notes" >> "$GITHUB_ENV"
+          echo "RELEASE_RAW_DIR=$raw_dir" >> "$GITHUB_ENV"
+          echo "RELEASE_PUBLISH_DIR=$publish_dir" >> "$GITHUB_ENV"
+
+          echo "INFO: release_tag=$release_tag"
+          echo "INFO: release_version=$release_version"
+          echo "INFO: release_notes=$release_notes"
+
       - name: Download all installer artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: installer-*
-          merge-multiple: true
-          path: dist/release/
+          merge-multiple: false
+          path: dist/release/raw
+
+      - name: Stage publish assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          mkdir -p "$RELEASE_PUBLISH_DIR"
+
+          copy_single_asset() {
+            local source_path="$1"
+            local target_name="$2"
+            cp "$source_path" "$RELEASE_PUBLISH_DIR/$target_name"
+            echo "INFO: staged $source_path -> $RELEASE_PUBLISH_DIR/$target_name"
+          }
+
+          copy_asset_group() {
+            local target_name="$1"
+            shift
+            local matches=("$@")
+            if [[ ${#matches[@]} -ne 1 ]]; then
+              echo "ERROR: expected exactly one match for $target_name, found ${#matches[@]}." >&2
+              printf '  %s\n' "${matches[@]}" >&2 || true
+              exit 1
+            fi
+            copy_single_asset "${matches[0]}" "$target_name"
+          }
+
+          gtk_debs=("$RELEASE_RAW_DIR"/installer-gtk4-deb/*.deb)
+          linux_debs=("$RELEASE_RAW_DIR"/installer-linux-*/*.deb)
+          appimages=("$RELEASE_RAW_DIR"/installer-linux-*/*.AppImage)
+          dmgs=("$RELEASE_RAW_DIR"/installer-macos-*/*.dmg)
+          msis=("$RELEASE_RAW_DIR"/installer-windows-*/*.msi)
+          exes=("$RELEASE_RAW_DIR"/installer-windows-*/*.exe)
+
+          copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
+          copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
+
+          for appimage in "${appimages[@]}"; do
+            copy_single_asset "$appimage" "$(basename "$appimage")"
+          done
+          for dmg in "${dmgs[@]}"; do
+            copy_single_asset "$dmg" "$(basename "$dmg")"
+          done
+          for msi in "${msis[@]}"; do
+            copy_single_asset "$msi" "$(basename "$msi")"
+          done
+          for exe in "${exes[@]}"; do
+            copy_single_asset "$exe" "$(basename "$exe")"
+          done
 
       - name: Validate release asset inventory
         shell: bash
         run: |
           echo "Published asset candidates:"
-          ls -1 dist/release | sort
-          ls dist/release/*.deb >/dev/null
-          ls dist/release/*.dmg >/dev/null
-          ls dist/release/*.msi >/dev/null
-          ls dist/release/*.exe >/dev/null
-          ls dist/release/*.AppImage >/dev/null
+          ls -1 "$RELEASE_PUBLISH_DIR" | sort
+          test -f "$RELEASE_PUBLISH_DIR/discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb"
+          test -f "$RELEASE_PUBLISH_DIR/discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb"
+          ls "$RELEASE_PUBLISH_DIR"/*.dmg >/dev/null
+          ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null
+          ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null
+          ls "$RELEASE_PUBLISH_DIR"/*.AppImage >/dev/null
 
       - name: Generate SHA256 checksums
+        shell: bash
         run: |
-          cd dist/release
-          sha256sum * > CHECKSUMS-INSTALLERS.txt || true
+          cd "$RELEASE_PUBLISH_DIR"
+          sha256sum * > CHECKSUMS-INSTALLERS.txt
           cat CHECKSUMS-INSTALLERS.txt
 
       - name: Validate release notes file
+        shell: bash
         run: |
-          test -f "docs/releases/${GITHUB_REF_NAME}.md"
+          test -f "$RELEASE_NOTES_PATH"
 
-      - name: Publish installers to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Discogs Spinner ${{ github.ref_name }}
-          body_path: docs/releases/${{ github.ref_name }}.md
-          files: |
-            dist/release/*.deb
-            dist/release/*.AppImage
-            dist/release/*.dmg
-            dist/release/*.msi
-            dist/release/*.exe
-            dist/release/CHECKSUMS-INSTALLERS.txt
+      - name: Create or update GitHub Release metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" \
+              --title "Discogs Spinner $RELEASE_TAG" \
+              --notes-file "$RELEASE_NOTES_PATH"
+          else
+            gh release create "$RELEASE_TAG" \
+              --title "Discogs Spinner $RELEASE_TAG" \
+              --notes-file "$RELEASE_NOTES_PATH"
+          fi
+
+      - name: Upload installers to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          publish_files=("$RELEASE_PUBLISH_DIR"/*)
+          if [[ ${#publish_files[@]} -eq 0 ]]; then
+            echo "ERROR: no staged publish files found." >&2
+            exit 1
+          fi
+          gh release upload "$RELEASE_TAG" "${publish_files[@]}" --clobber
+
+      - name: Verify published release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          asset_names="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
+          echo "Published release assets:"
+          printf '%s\n' "$asset_names"
+
+          grep -Fx "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"
+          grep -Fx "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"
+          grep -F ".AppImage" <<<"$asset_names"
+          grep -F ".dmg" <<<"$asset_names"
+          grep -F ".msi" <<<"$asset_names"
+          grep -F ".exe" <<<"$asset_names"
+          grep -Fx "CHECKSUMS-INSTALLERS.txt" <<<"$asset_names"
