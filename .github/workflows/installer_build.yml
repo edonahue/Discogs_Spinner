@@ -188,9 +188,7 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ""
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
-        run: |
-          cargo tauri build --target ${{ matrix.target_triple }} \
-            --bundles ${{ matrix.tauri_targets }}
+        run: cargo tauri build --target ${{ matrix.target_triple }} --bundles ${{ matrix.tauri_targets }}
 
       - name: Validate Linux Tauri bundles
         if: runner.os == 'Linux'
