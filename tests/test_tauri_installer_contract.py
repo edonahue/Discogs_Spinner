@@ -126,6 +126,10 @@ def test_installer_workflow_runs_sidecar_and_platform_bundle_validators():
     source = _read(".github/workflows/installer_build.yml")
     for marker in (
         "macos-15-intel",
+        "Log workflow ref and commit",
+        "github.sha=${{ github.sha }}",
+        "github.ref=${{ github.ref }}",
+        "git rev-parse HEAD",
         "Validate sidecar contract",
         "Validate downloaded sidecar contract",
         "Validate Linux Tauri bundles",

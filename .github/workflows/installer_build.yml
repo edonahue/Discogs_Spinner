@@ -122,6 +122,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Log workflow ref and commit
+        shell: bash
+        run: |
+          echo "github.sha=${{ github.sha }}"
+          echo "github.ref=${{ github.ref }}"
+          git rev-parse HEAD
+
       # -- Linux system deps for GTK (needed for Tauri WebKitGTK on Linux) --
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
