@@ -31,7 +31,9 @@ def test_build_sidecar_script_uses_platform_specific_add_data_separator():
     for marker in (
         'ADD_DATA_SEPARATOR=":"',
         'ADD_DATA_SEPARATOR=";"',
-        '--add-data "${ROOT_DIR}/src/discogs_player/data${ADD_DATA_SEPARATOR}discogs_player/data"',
+        'SOURCE_DATA_DIR="${ROOT_DIR}/src/discogs_player/data"',
+        'SOURCE_DATA_DIR="$(cygpath -w "${SOURCE_DATA_DIR}")"',
+        '--add-data "${SOURCE_DATA_DIR}${ADD_DATA_SEPARATOR}discogs_player/data"',
     ):
         assert marker in source
 
