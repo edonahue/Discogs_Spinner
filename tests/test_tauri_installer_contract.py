@@ -121,14 +121,24 @@ def test_validate_tauri_windows_msi_smoke_script_uses_bounded_install_and_log_du
     assert param_index < strict_mode_index
 
     for marker in (
+        'function Write-MsiLogTail',
+        'function Write-ProcessSnapshot',
+        'function Get-InstallRoots',
+        'function Write-DirectorySample',
         '[int]$TimeoutSeconds = 600',
         '$artifactsRoot = Join-Path $rootDir "build\\windows-msi-smoke"',
         '$installRoot = Join-Path $artifactsRoot "install-root"',
         '$msiLog = Join-Path $artifactsRoot "msiexec.log"',
+        '$installRoots = @(Get-InstallRoots -FallbackRoot $installRoot)',
         'Start-Process -FilePath "msiexec.exe"',
+        '"/norestart"',
+        '"REBOOT=ReallySuppress"',
+        '"MSIFASTINSTALL=7"',
         'Wait-Process -Id $installProcess.Id -Timeout $TimeoutSeconds',
+        'Write-ProcessSnapshot',
         'Stop-Process -Id $installProcess.Id -Force',
-        'Get-Content -Path $msiLog -Tail 200',
+        'Write-MsiLogTail -Path $msiLog',
+        'Write-DirectorySample -Path $root',
         'PASS: Windows MSI smoke install includes $packagedSidecarName.',
     ):
         assert marker in source
