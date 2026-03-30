@@ -95,6 +95,27 @@ function Write-DirectorySample {
         }
 }
 
+function Wait-ForMsiLog {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [int]$TimeoutSeconds = 15
+    )
+
+    for ($i = 0; $i -lt $TimeoutSeconds; $i++) {
+        if (Test-Path $Path) {
+            $logItem = Get-Item -Path $Path
+            Write-Host "INFO: MSI log appeared after $($i + 1) seconds ($($logItem.Length) bytes)"
+            return $true
+        }
+        Start-Sleep -Seconds 1
+    }
+
+    Write-Host "INFO: MSI log did not appear within ${TimeoutSeconds}s"
+    return $false
+}
+
 $rootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $bundleRoot = Join-Path $rootDir "desktop_shell\src-tauri\target\$TargetTriple\release\bundle"
 $msiDir = Join-Path $bundleRoot "msi"
@@ -130,9 +151,29 @@ foreach ($path in $installRoots) {
     Write-Host "  - $path"
 }
 
+$quotedMsiPath = "`"$($msiFile.FullName)`""
+$quotedMsiLog = "`"$msiLog`""
+$msiArgs = @(
+    "/i",
+    $quotedMsiPath,
+    "/qn",
+    "/norestart",
+    "REBOOT=ReallySuppress",
+    "MSIFASTINSTALL=7",
+    "/L*V",
+    $quotedMsiLog
+)
+
+Write-Host "INFO: msiexec argument list:"
+foreach ($arg in $msiArgs) {
+    Write-Host "  - $arg"
+}
+
 $installProcess = Start-Process -FilePath "msiexec.exe" `
-    -ArgumentList @("/i", $msiFile.FullName, "/qn", "/norestart", "REBOOT=ReallySuppress", "MSIFASTINSTALL=7", "/L*V", $msiLog) `
+    -ArgumentList $msiArgs `
     -PassThru
+
+[void](Wait-ForMsiLog -Path $msiLog -TimeoutSeconds 15)
 
 try {
     Wait-Process -Id $installProcess.Id -Timeout $TimeoutSeconds -ErrorAction Stop
