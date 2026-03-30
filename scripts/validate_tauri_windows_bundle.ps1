@@ -11,18 +11,48 @@ $bundleRoot = Join-Path $rootDir "desktop_shell\src-tauri\target\$TargetTriple\r
 $sourceSidecarName = "dplayer-api-$TargetTriple.exe"
 $packagedSidecarName = "dplayer-api.exe"
 
-$msiFile = Get-ChildItem -Path (Join-Path $bundleRoot "msi\*.msi") -ErrorAction SilentlyContinue |
-    Sort-Object LastWriteTime -Descending |
-    Select-Object -First 1
-if (-not $msiFile) {
-    throw "No Windows .msi bundle found under $bundleRoot\msi."
+function Write-DirectoryInventory {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Label,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Filter
+    )
+
+    Write-Host "INFO: $Label path: $Path"
+    $items = Get-ChildItem -Path (Join-Path $Path $Filter) -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending
+    if (-not $items) {
+        Write-Host "INFO: $Label path has no matches for $Filter."
+        return @()
+    }
+
+    Write-Host "INFO: $Label matches:"
+    foreach ($item in $items) {
+        Write-Host "  - $($item.Name)"
+    }
+
+    return @($items)
 }
 
-$nsisFile = Get-ChildItem -Path (Join-Path $bundleRoot "nsis\*.exe") -ErrorAction SilentlyContinue |
-    Sort-Object LastWriteTime -Descending |
-    Select-Object -First 1
+Write-Host "INFO: Windows bundle root: $bundleRoot"
+$msiDir = Join-Path $bundleRoot "msi"
+$nsisDir = Join-Path $bundleRoot "nsis"
+$msiCandidates = Write-DirectoryInventory -Label "MSI bundle directory" -Path $msiDir -Filter "*.msi"
+$nsisCandidates = Write-DirectoryInventory -Label "NSIS bundle directory" -Path $nsisDir -Filter "*.exe"
+
+$msiFile = $msiCandidates | Select-Object -First 1
+if (-not $msiFile) {
+    throw "No Windows .msi bundle found under $msiDir."
+}
+
+$nsisFile = $nsisCandidates | Select-Object -First 1
 if (-not $nsisFile) {
-    throw "No Windows NSIS .exe bundle found under $bundleRoot\nsis."
+    throw "No Windows NSIS .exe bundle found under $nsisDir."
 }
 
 $sevenZip = Get-Command 7z -ErrorAction SilentlyContinue
@@ -38,6 +68,7 @@ else {
         throw "7z is required to inspect Windows installer contents on the GitHub runner."
     }
 }
+Write-Host "INFO: Using 7z at $sevenZipPath"
 
 function Test-ArchiveContainsSidecar {
     param(
@@ -45,13 +76,26 @@ function Test-ArchiveContainsSidecar {
         [System.IO.FileInfo]$Archive
     )
 
+    Write-Host "INFO: Inspecting archive $($Archive.FullName)"
     $listing = & $sevenZipPath l $Archive.FullName 2>&1
     if ($LASTEXITCODE -ne 0) {
+        Write-Host "INFO: 7z output:"
+        $listing | ForEach-Object { Write-Host $_ }
         throw "Failed to inspect archive contents for $($Archive.FullName)."
+    }
+
+    $sidecarMatches = @($listing | Where-Object { $_ -match "dplayer-api" })
+    if ($sidecarMatches) {
+        Write-Host "INFO: Archive entries containing dplayer-api:"
+        $sidecarMatches | ForEach-Object { Write-Host $_ }
+    }
+    else {
+        Write-Host "INFO: No archive entries containing dplayer-api were found."
     }
 
     foreach ($candidate in @($packagedSidecarName, $sourceSidecarName)) {
         if ($listing -match [Regex]::Escape($candidate)) {
+            Write-Host "INFO: Matched sidecar candidate $candidate in $($Archive.Name)."
             return
         }
     }

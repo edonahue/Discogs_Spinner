@@ -70,13 +70,19 @@ def test_validate_tauri_macos_bundle_script_checks_dmg_and_app_contents():
 def test_validate_tauri_windows_bundle_script_checks_msi_and_nsis_contents():
     source = _read("scripts/validate_tauri_windows_bundle.ps1")
     for marker in (
+        'function Write-DirectoryInventory',
+        'Write-Host "INFO: Windows bundle root: $bundleRoot"',
         '$bundleRoot = Join-Path $rootDir "desktop_shell\\src-tauri\\target\\$TargetTriple\\release\\bundle"',
         '$sourceSidecarName = "dplayer-api-$TargetTriple.exe"',
         '$packagedSidecarName = "dplayer-api.exe"',
-        'Get-ChildItem -Path (Join-Path $bundleRoot "msi\\*.msi")',
-        'Get-ChildItem -Path (Join-Path $bundleRoot "nsis\\*.exe")',
+        '$msiCandidates = Write-DirectoryInventory -Label "MSI bundle directory" -Path $msiDir -Filter "*.msi"',
+        '$nsisCandidates = Write-DirectoryInventory -Label "NSIS bundle directory" -Path $nsisDir -Filter "*.exe"',
         "Get-Command 7z",
         'Join-Path ${env:ProgramFiles} "7-Zip\\7z.exe"',
+        'Write-Host "INFO: Using 7z at $sevenZipPath"',
+        'Write-Host "INFO: Inspecting archive $($Archive.FullName)"',
+        'Write-Host "INFO: Archive entries containing dplayer-api:"',
+        'Write-Host "INFO: Matched sidecar candidate $candidate in $($Archive.Name)."',
         '$listing = & $sevenZipPath l $Archive.FullName 2>&1',
         'PASS: Windows Tauri bundles include $packagedSidecarName.',
     ):
