@@ -367,7 +367,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
 
           mkdir -p "$RELEASE_PUBLISH_DIR"
 
@@ -390,12 +389,12 @@ jobs:
             copy_single_asset "${matches[0]}" "$target_name"
           }
 
-          gtk_debs=("$RELEASE_RAW_DIR"/installer-gtk4-deb/*.deb)
-          linux_debs=("$RELEASE_RAW_DIR"/installer-linux-*/*.deb)
-          appimages=("$RELEASE_RAW_DIR"/installer-linux-*/*.AppImage)
-          dmgs=("$RELEASE_RAW_DIR"/installer-macos-*/*.dmg)
-          msis=("$RELEASE_RAW_DIR"/installer-windows-*/*.msi)
-          exes=("$RELEASE_RAW_DIR"/installer-windows-*/*.exe)
+          mapfile -d '' -t gtk_debs < <(find "$RELEASE_RAW_DIR"/installer-gtk4-deb -type f -name '*.deb' -print0 | sort -z)
+          mapfile -d '' -t linux_debs < <(find "$RELEASE_RAW_DIR"/installer-linux-* -type f -name '*.deb' -print0 | sort -z)
+          mapfile -d '' -t appimages < <(find "$RELEASE_RAW_DIR"/installer-linux-* -type f -name '*.AppImage' -print0 | sort -z)
+          mapfile -d '' -t dmgs < <(find "$RELEASE_RAW_DIR"/installer-macos-* -type f -name '*.dmg' -print0 | sort -z)
+          mapfile -d '' -t msis < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.msi' -print0 | sort -z)
+          mapfile -d '' -t exes < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.exe' -print0 | sort -z)
 
           copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
           copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
