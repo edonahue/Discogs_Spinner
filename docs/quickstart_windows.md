@@ -12,7 +12,7 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 ## 2) Install the native app
 
-Download the latest Windows release from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases).
+Download the latest Windows release from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest).
 
 Choose either installer:
 
