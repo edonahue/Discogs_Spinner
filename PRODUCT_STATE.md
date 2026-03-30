@@ -46,6 +46,22 @@ The current scope has expanded beyond the original MVP and now includes:
 - Multiple GUI browse modes (carousel, text menu, gallery)
 - Import/export and mapping bootstrap tooling
 
+## 1.0 Release Target (Recommended)
+
+Recommended interpretation of `v1.0.0` when the product is ready for it:
+
+- reliable local-first collector app
+- stable CLI plus native installers as the first-class surfaces
+- predictable first-run setup and sync on Windows, macOS, and Linux
+- optional Spotify integration, but not a hard 1.0 dependency
+
+This implies:
+
+- web/API parity is not a `1.0` blocker
+- installer trust and supportability are now more important than adding new feature breadth
+- signing/notarization and clean-machine FTUX are 1.0 release gates, not post-1.0 polish
+- if these gates are not closed, continue shipping `0.x` releases rather than forcing a `1.0` increment
+
 ## Current Capability Snapshot
 
 ### Core Platform
@@ -166,6 +182,12 @@ Overall position vs original plan:
 - Timing infrastructure is in place (`dplayer-gui --timing`) but no live-collection latency measurements have been recorded yet.
 - Actual query/sort/widget-population timings for typical collection sizes (200–2000 releases) are unknown until a pilot run.
 - **Action**: Capture one timing run during pilot validation and record numbers in `STABILIZATION_EXECUTION_2026Q1.md`.
+
+6. 1.0 release trust gap
+
+- `v0.2.0` proved installer buildability and cross-platform release execution, but the current public release still depends on unsigned Windows/macOS flows.
+- The repo now needs a narrower 1.0 contract, a support matrix, signing/notarization closure, and clean-machine FTUX evidence before it should claim `1.0`.
+- **Action**: Track against `docs/RELEASE_TARGET_v1.0.md` and `docs/SUPPORT_MATRIX.md`.
 
 ## Dated Roadmap
 

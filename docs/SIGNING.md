@@ -1,7 +1,7 @@
 # Code Signing Checklist
 
 This document covers signing for macOS, Windows, and Debian distributions of Discogs Spinner.
-Signing is optional for the pilot cohort; activate it when certs are in hand.
+Signing was optional for the pilot / `v0.2.0` release line. For the recommended `v1.0.0` bar, Windows signing and macOS signing/notarization should be treated as release requirements.
 
 ---
 
@@ -67,10 +67,12 @@ xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
 
 ## Windows
 
-### Option A: Unsigned (current — fine for pilot)
+### Option A: Unsigned (current `v0.2.0` posture)
 
 The NSIS installer produced by `cargo tauri build` works without a cert. Users will see a
 SmartScreen "Unknown publisher" warning. They click **More info → Run anyway** to proceed.
+
+This is acceptable for the current stable line, but should not be the default experience for `v1.0.0`.
 
 ### Option B: EV Code Signing Certificate (future)
 
@@ -128,7 +130,7 @@ Users add it:
 sudo gpg --dearmor -o /usr/share/keyrings/discogs-spinner.gpg < discogs-spinner-pubkey.asc
 ```
 
-### Unsigned `.deb` for pilot
+### Unsigned `.deb` for current release line
 
 An unsigned `.deb` installs fine via:
 
@@ -136,7 +138,7 @@ An unsigned `.deb` installs fine via:
 sudo dpkg -i discogs-spinner_0.2.0_amd64.deb
 ```
 
-No blocker for the pilot cohort.
+No blocker for the current public release line.
 
 ---
 

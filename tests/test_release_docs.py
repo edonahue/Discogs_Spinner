@@ -24,6 +24,30 @@ def test_public_release_runbook_contains_installer_release_steps():
         assert marker in source
 
 
+def test_support_matrix_and_v1_release_target_define_first_class_surfaces():
+    support_matrix = _read("docs/SUPPORT_MATRIX.md")
+    release_target = _read("docs/RELEASE_TARGET_v1.0.md")
+
+    for marker in (
+        "CLI (`dplayer`)",
+        "Native installers",
+        "Windows 10/11 x64",
+        "macOS 13+",
+        "Debian 12+ / Ubuntu equivalent",
+        "Web app / local API",
+    ):
+        assert marker in support_matrix
+
+    for marker in (
+        "reliable local-first collector app",
+        "stable CLI plus native installers",
+        "web/API parity is not a `1.0` blocker",
+        "Windows and macOS installers are signed",
+        "1.0.0-rc1",
+    ):
+        assert marker in release_target
+
+
 def test_release_notes_template_references_quickstarts_and_diagnostics():
     source = _read("docs/RELEASE_NOTES_TEMPLATE.md")
     for marker in (
@@ -42,5 +66,7 @@ def test_readme_links_release_runbook_and_release_notes():
         "docs/PUBLIC_RELEASE_RUNBOOK.md",
         "docs/releases/v0.2.0.md",
         "docs/friend_trial.md",
+        "docs/SUPPORT_MATRIX.md",
+        "docs/RELEASE_TARGET_v1.0.md",
     ):
         assert marker in source

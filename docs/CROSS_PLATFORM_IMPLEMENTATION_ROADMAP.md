@@ -37,8 +37,8 @@ Status: Active
 
 ## Phase 3: Release hardening
 
-- [ ] Installer/signing/notarization pipeline
+- [ ] Installer/signing/notarization pipeline (`v1.0.0` gate)
 - [x] Separate static sidecar-contract validation from real Tauri bundle-build validation
 - [x] Require native per-OS artifact validation before upload in installer CI
-- [ ] Documentation and support matrix by OS/profile
-- [ ] RC validation matrix and launch checklist
+- [ ] Documentation and support matrix by OS/profile (`v1.0.0` gate)
+- [ ] RC validation matrix and launch checklist (`v1.0.0` gate)
