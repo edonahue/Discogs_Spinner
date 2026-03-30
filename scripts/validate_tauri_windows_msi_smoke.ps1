@@ -95,6 +95,26 @@ function Write-DirectorySample {
         }
 }
 
+function Get-InstalledSidecarMatches {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Roots,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$Candidates
+    )
+
+    return @(
+        foreach ($root in $Roots) {
+            if (-not (Test-Path $root)) {
+                continue
+            }
+            Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $Candidates -contains $_.Name }
+        }
+    ) | Sort-Object FullName -Unique
+}
+
 function Wait-ForMsiLog {
     param(
         [Parameter(Mandatory = $true)]
@@ -114,6 +134,46 @@ function Wait-ForMsiLog {
 
     Write-Host "INFO: MSI log did not appear within ${TimeoutSeconds}s"
     return $false
+}
+
+function Get-MsiLogStatus {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (-not (Test-Path $Path)) {
+        return [pscustomobject]@{
+            Exists = $false
+            Success = $false
+            Failed = $false
+            Summary = "log-missing"
+        }
+    }
+
+    $content = Get-Content -Path $Path -Raw -ErrorAction SilentlyContinue
+    if (-not $content) {
+        return [pscustomobject]@{
+            Exists = $true
+            Success = $false
+            Failed = $false
+            Summary = "log-empty"
+        }
+    }
+
+    $hasProductSuccess = $content.Contains("Product: Discogs Spinner -- Installation completed successfully.")
+    $hasStatusZero = $content.Contains("Installation success or error status: 0.")
+    $hasInstallReturn = $content -match 'Action ended .*INSTALL\. Return value 1\.'
+    $hasFailure = $content.Contains("Installation failed.") -or
+        ($content -match 'Return value 3') -or
+        ($content -match 'MainEngineThread is returning [1-9]')
+
+    return [pscustomobject]@{
+        Exists = $true
+        Success = ($hasProductSuccess -and $hasStatusZero -and $hasInstallReturn)
+        Failed = $hasFailure
+        Summary = "successMarkers=$hasProductSuccess/$hasStatusZero/$hasInstallReturn failureMarkers=$hasFailure"
+    }
 }
 
 $rootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -175,33 +235,85 @@ $installProcess = Start-Process -FilePath "msiexec.exe" `
 
 [void](Wait-ForMsiLog -Path $msiLog -TimeoutSeconds 15)
 
-try {
-    Wait-Process -Id $installProcess.Id -Timeout $TimeoutSeconds -ErrorAction Stop
+$msiLogReportedSuccess = $false
+$sidecarReported = $false
+$completionMode = $null
+$sidecarMatches = @()
+$installProcessExited = $false
+$msiLogStatus = Get-MsiLogStatus -Path $msiLog
+
+for ($elapsed = 0; $elapsed -lt $TimeoutSeconds; $elapsed++) {
+    $liveProcess = Get-Process -Id $installProcess.Id -ErrorAction SilentlyContinue
+    $installProcessExited = $null -eq $liveProcess
+
+    if ($installProcessExited) {
+        $installProcess.Refresh()
+    }
+
+    $msiLogStatus = Get-MsiLogStatus -Path $msiLog
+    if ($msiLogStatus.Success -and -not $msiLogReportedSuccess) {
+        Write-Host "INFO: MSI success markers observed in log: $($msiLogStatus.Summary)"
+        $msiLogReportedSuccess = $true
+    }
+    if ($msiLogStatus.Failed) {
+        Write-ProcessSnapshot
+        Write-Host "INFO: MSI log reported failure markers: $($msiLogStatus.Summary)"
+        Write-MsiLogTail -Path $msiLog
+        throw "MSI log reported installation failure."
+    }
+
+    $sidecarMatches = @(Get-InstalledSidecarMatches -Roots $installRoots -Candidates $sidecarCandidates)
+    if ($sidecarMatches -and -not $sidecarReported) {
+        Write-Host "INFO: Installed sidecar observed during smoke check."
+        $sidecarReported = $true
+    }
+
+    if ($msiLogStatus.Success -and $sidecarMatches) {
+        if ($installProcessExited) {
+            if ($installProcess.ExitCode -ne 0) {
+                Write-ProcessSnapshot
+                Write-Host "INFO: MSI log shows success but process exited with code $($installProcess.ExitCode); dumping log."
+                Write-MsiLogTail -Path $msiLog
+                throw "MSI install process exited with code $($installProcess.ExitCode) despite success markers."
+            }
+            $completionMode = "process-exit+log+sidecar"
+        }
+        else {
+            $completionMode = "log+sidecar"
+        }
+        break
+    }
+
+    if ($installProcessExited -and $installProcess.ExitCode -ne 0) {
+        Write-ProcessSnapshot
+        Write-Host "INFO: MSI install failed with exit code $($installProcess.ExitCode); dumping tail of MSI log."
+        Write-MsiLogTail -Path $msiLog
+        throw "MSI install failed with exit code $($installProcess.ExitCode)."
+    }
+
+    Start-Sleep -Seconds 1
 }
-catch {
+
+if (-not $completionMode) {
     Write-ProcessSnapshot
-    Stop-Process -Id $installProcess.Id -Force -ErrorAction SilentlyContinue
-    Write-Host "INFO: MSI install timed out; dumping tail of MSI log if present."
+    if (Get-Process -Id $installProcess.Id -ErrorAction SilentlyContinue) {
+        Stop-Process -Id $installProcess.Id -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($msiLogStatus.Success) {
+        Write-Host "INFO: MSI log shows successful install, but no installed sidecar was found before timeout."
+        foreach ($root in $installRoots) {
+            Write-DirectorySample -Path $root
+        }
+        Write-MsiLogTail -Path $msiLog
+        throw "MSI install completed successfully, but installed tree does not contain $packagedSidecarName or $sourceSidecarName."
+    }
+
+    Write-Host "INFO: MSI install timed out before success markers were observed; dumping tail of MSI log if present."
     Write-MsiLogTail -Path $msiLog
     throw "MSI install timed out after ${TimeoutSeconds} seconds."
 }
 
-if ($installProcess.ExitCode -ne 0) {
-    Write-ProcessSnapshot
-    Write-Host "INFO: MSI install failed with exit code $($installProcess.ExitCode); dumping tail of MSI log."
-    Write-MsiLogTail -Path $msiLog
-    throw "MSI install failed with exit code $($installProcess.ExitCode)."
-}
-
-$sidecarMatches = @(
-    foreach ($root in $installRoots) {
-        if (-not (Test-Path $root)) {
-            continue
-        }
-        Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { $sidecarCandidates -contains $_.Name }
-    }
-) | Sort-Object FullName -Unique
 if (-not $sidecarMatches) {
     Write-Host "INFO: No installed sidecar match found. Installed file sample:"
     foreach ($root in $installRoots) {
@@ -223,4 +335,5 @@ foreach ($match in $sidecarMatches) {
     }
 }
 
+Write-Host "INFO: MSI smoke completion mode: $completionMode"
 Write-Host "PASS: Windows MSI smoke install includes $packagedSidecarName."
