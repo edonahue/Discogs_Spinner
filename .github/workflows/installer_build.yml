@@ -334,11 +334,16 @@ jobs:
           sha256sum * > CHECKSUMS-INSTALLERS.txt || true
           cat CHECKSUMS-INSTALLERS.txt
 
+      - name: Validate release notes file
+        run: |
+          test -f "docs/releases/${GITHUB_REF_NAME}.md"
+
       - name: Publish installers to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
+          name: Discogs Spinner ${{ github.ref_name }}
+          body_path: docs/releases/${{ github.ref_name }}.md
           files: |
             dist/release/*.deb
             dist/release/*.AppImage

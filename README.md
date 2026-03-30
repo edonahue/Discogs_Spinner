@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml/badge.svg"></a>
-  <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/pilot_validation_windows_macos.yml"><img alt="Pilot Validation" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/pilot_validation_windows_macos.yml/badge.svg"></a>
+  <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/installer_build.yml"><img alt="Installer Build" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/installer_build.yml/badge.svg"></a>
   <a href="https://github.com/edonahue/Discogs_Spinner/releases"><img alt="Release" src="https://img.shields.io/github/v/release/edonahue/Discogs_Spinner?include_prereleases"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-2f5d8a">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
@@ -15,7 +15,7 @@
   <img src="docs/media/gif/product-demo.gif" alt="Discogs Spinner product demo" width="100%">
 </p>
 
-Discogs-first CLI and desktop app for vinyl collectors. Browse your collection, spin a random pick, and track market value — all stored locally, no subscription required.
+Discogs-first collector app for vinyl fans who want native installers on Linux, Windows, and macOS. Browse your collection, spin a random pick, and track market value locally, with no subscription required.
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
 
@@ -45,11 +45,11 @@ subscription. Runs on your machine.
 
 ## Three Ways to Use
 
-| Mode | Command | Best for |
-|------|---------|----------|
+| Mode | Launch | Best for |
+|------|--------|----------|
+| **Native app** | Installed desktop app | Windows, macOS, Linux desktop users |
 | **CLI** | `dplayer` | Terminal users, SSH, scripting |
-| **Desktop GUI** | `dplayer-gui` | Linux desktop; [Windows 11 via WSL2](docs/quickstart_wsl2.md) |
-| **Web App** | `dplayer-api` then open browser | [Windows / macOS / Linux](docs/quickstart_web.md) |
+| **Web App** | `dplayer-api` then open browser | Browser-first setups on any OS |
 
 ---
 
@@ -74,7 +74,13 @@ subscription. Runs on your machine.
 
 ---
 
-## Quick Start
+## Install Fast
+
+- Windows: download the latest `.msi` or `-setup.exe` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases), run it, and finish the in-app setup wizard.
+- macOS: download the latest `.dmg` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases), drag **Discogs Spinner** into `/Applications`, then launch it once and clear Gatekeeper quarantine if prompted.
+- Debian/Ubuntu: install the GTK `.deb` or use the `.AppImage` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases).
+
+Need the terminal-first path instead?
 
 ```bash
 python3 -m venv .venv
@@ -105,10 +111,11 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 ## OS Quickstarts
 
 > **New here?**
-> - Easiest cross-platform start: [Web App Quickstart](docs/quickstart_web.md) (Windows / macOS / Linux — no GTK required)
+> - Easiest native install: [Windows Quickstart](docs/quickstart_windows.md), [macOS Quickstart](docs/quickstart_macos.md), or [Debian Quickstart](docs/quickstart_debian.md)
+> - Easiest browser-based start: [Web App Quickstart](docs/quickstart_web.md) (Windows / macOS / Linux)
 > - Linux desktop: [Debian Quickstart](docs/quickstart_debian.md)
 > - Windows native installer: [Windows Quickstart](docs/quickstart_windows.md)
-> - Windows GUI without WSL2: [Web App Quickstart](docs/quickstart_web.md)
+> - macOS native installer: [macOS Quickstart](docs/quickstart_macos.md)
 
 - [Not sure where to start? → START HERE](docs/START_HERE.md)
 - [Windows Quickstart](docs/quickstart_windows.md)
@@ -135,8 +142,8 @@ Technical references:
 - [Product State](PRODUCT_STATE.md)
 - [Cross-Platform Implementation Roadmap](docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md)
 - [Stabilization Execution Tracker](docs/STABILIZATION_EXECUTION_2026Q1.md)
-- [RC Release Runbook](docs/RC_RELEASE_RUNBOOK.md)
-- [Release Notes (v0.2.0-rc5)](docs/releases/v0.2.0-rc5.md)
+- [Public Release Runbook](docs/PUBLIC_RELEASE_RUNBOOK.md)
+- [Release Notes (v0.2.0)](docs/releases/v0.2.0.md)
 
 </details>
 

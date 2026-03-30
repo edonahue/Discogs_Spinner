@@ -12,9 +12,7 @@ def test_tagged_release_workflow_builds_and_publishes_tag_assets():
     ).read_text(encoding="utf-8")
 
     for marker in (
-        "name: Tagged Release",
-        "tags:",
-        '- "v*"',
+        "name: Legacy Tarball Release",
         "workflow_dispatch:",
         "build-release-artifacts:",
         "publish-release:",
@@ -25,5 +23,6 @@ def test_tagged_release_workflow_builds_and_publishes_tag_assets():
         "CHECKSUMS-${{ matrix.os }}.txt",
         "softprops/action-gh-release@v2",
         "github.event.inputs.tag",
+        "legacy tarballs",
     ):
         assert marker in source

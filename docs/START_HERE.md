@@ -21,12 +21,13 @@ Three quick questions will point you at the right setup guide.
 | The full GTK desktop GUI via WSL2 | [WSL2 Quickstart](quickstart_wsl2.md) (~15 min) |
 | Just the CLI (`dplayer` in PowerShell) | [Windows Quickstart](quickstart_windows.md) (~5 min) |
 
-### Question 3 — macOS: CLI or web?
+### Question 3 — macOS: what kind of setup do you want?
 
 | I want… | Go to |
 |---------|-------|
+| A native macOS installer | [macOS Quickstart](quickstart_macos.md) (~5 min) |
 | The easiest possible start (browser-based UI) | [Web App Quickstart](quickstart_web.md) (~10 min) |
-| CLI only (`dplayer` in Terminal) | [macOS Quickstart](quickstart_macos.md) (~5 min) |
+| CLI only (`dplayer` in Terminal) | [macOS Quickstart](quickstart_macos.md) (~10 min, source install) |
 
 ---
 
@@ -38,7 +39,8 @@ Three quick questions will point you at the right setup guide.
 | Windows | Native installer | Any | [Windows Quickstart](quickstart_windows.md) | ~5 min |
 | Windows | Desktop GUI | Comfortable with WSL2 | [WSL2 Quickstart](quickstart_wsl2.md) | ~15 min |
 | Linux | Desktop GUI + CLI | Any | [Debian Quickstart](quickstart_debian.md) | ~10 min |
-| macOS | CLI | Any | [macOS Quickstart](quickstart_macos.md) | ~5 min |
+| macOS | Native installer | Any | [macOS Quickstart](quickstart_macos.md) | ~5 min |
+| macOS | CLI | Comfortable with Terminal | [macOS Quickstart](quickstart_macos.md) | ~10 min |
 
 ---
 
@@ -60,9 +62,9 @@ Proving it works: `dplayer status` shows collection count and last sync date.
 `dplayer-gui` opens a GTK4 window on your Windows desktop via WSLg.
 Proving it works: the window appears and displays your collection after `dplayer sync`.
 
-### macOS CLI (~5 min)
-`dplayer` responds in Terminal with your collection.
-Proving it works: `dplayer status` shows collection count and last sync date.
+### macOS native installer (~5 min)
+`Discogs Spinner.app` opens from `/Applications` and the setup flow accepts your token.
+Proving it works: the app syncs and loads your collection without errors.
 
 ---
 

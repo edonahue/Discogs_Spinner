@@ -1,6 +1,6 @@
 # Windows Tauri FTUX Validation Checklist
 
-Run this checklist once on a clean Windows machine before approving the Windows pilot release.
+Run this checklist once on a clean Windows machine before approving the Windows public installer release.
 
 ## Pre-conditions
 

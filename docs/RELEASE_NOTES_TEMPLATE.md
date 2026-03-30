@@ -1,18 +1,17 @@
 # Release Notes Template
 
-Use this template for RC and stable GitHub releases.
+Use this template for installer-first GitHub releases.
 
 Suggested title format:
 
-- `discogs_player vX.Y.Z-rcN`
 - `discogs_player vX.Y.Z`
 
 ---
 
 ## Summary
 
-- Release type: `<rc|stable>`
-- Tag: `<vX.Y.Z-rcN>`
+- Release type: `<stable|prerelease>`
+- Tag: `<vX.Y.Z>`
 - Date: `<YYYY-MM-DD>`
 - Scope: `<short release summary>`
 
@@ -25,10 +24,12 @@ Suggested title format:
 ## Packaging And Distribution
 
 - Artifacts included:
-  - `discogs_player-core-<os>-<arch>.tar.gz`
-  - `discogs_player-plus-<os>-<arch>.tar.gz`
-- Checksum manifest: `CHECKSUMS.ALL.txt`
-- Build workflow: `Tagged Release`
+  - Windows: `.msi` and NSIS `.exe`
+  - macOS: `.dmg`
+  - Linux: Tauri `.deb` and `.AppImage`
+  - Linux desktop: GTK `.deb`
+- Checksum manifest: `CHECKSUMS-INSTALLERS.txt`
+- Build workflow: `Installer Build`
 
 ## Install And Setup
 
@@ -43,6 +44,7 @@ Suggested title format:
 - `pytest -q`: `<pass/fail + counts>`
 - GUI smoke: `<pass/fail>`
 - Gallery UX smoke: `<pass/fail>`
+- Installer workflow: `<run id + pass/fail>`
 
 ## Known Limitations
 
@@ -78,4 +80,4 @@ Issue templates:
 
 For release execution steps, use:
 
-- `docs/RC_RELEASE_RUNBOOK.md`
+- `docs/PUBLIC_RELEASE_RUNBOOK.md`

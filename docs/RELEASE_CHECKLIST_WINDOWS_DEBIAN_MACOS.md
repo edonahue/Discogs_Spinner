@@ -1,18 +1,14 @@
-# Release Checklist: Windows -> Debian -> macOS
+# Public Release Checklist: Windows, Debian, macOS
 
 Date created: 2026-02-26  
 Owner: Engineering
 
-This checklist is optimized for the staged rollout order agreed in strategic planning:
-
-1. Windows
-2. Debian Linux
-3. macOS
+This checklist is optimized for a public installer release centered on native installs and first-run success across all three operating systems.
 
 ## Global Pre-Release Gate
 
-- [ ] Working tree is clean and branch is tagged for release candidate.
-- [ ] `docs/RC_RELEASE_RUNBOOK.md` reviewed for current RC workflow steps.
+- [ ] Working tree is clean and branch is tagged for release.
+- [ ] `docs/PUBLIC_RELEASE_RUNBOOK.md` reviewed for the current installer-release steps.
 - [ ] `docs/RELEASE_NOTES_TEMPLATE.md` copied and filled for this release.
 - [ ] `venv/bin/ruff check .` passes.
 - [ ] `venv/bin/python -m mypy src/discogs_player --show-error-codes --hide-error-context` passes.
@@ -40,10 +36,10 @@ This checklist is optimized for the staged rollout order agreed in strategic pla
 - [ ] Optional Spotify flow reaches auth diagnostics and device listing.
 - [ ] `status`, `sync`, `list`, `spin`, `play --open` verified.
 
-### User Acceptance
+### Installer Confidence
 
-- [ ] Technical pilot-user path completes without blocker.
-- [ ] Non-technical pilot-user path completes with guided instructions only.
+- [ ] Clean-machine Windows install path reviewed against `docs/validation/windows_tauri_ftux.md`.
+- [ ] SmartScreen guidance in `docs/quickstart_windows.md` matches the current unsigned/signed posture.
 
 ## Stage 2: Debian Linux
 
@@ -88,4 +84,4 @@ This checklist is optimized for the staged rollout order agreed in strategic pla
 
 - [ ] Triage install/auth/playback bug reports.
 - [ ] Record top friction points in roadmap/backlog docs.
-- [ ] Decide go/no-go for widening audience beyond initial pilot-user cohort.
+- [ ] Record any installer friction that should move into the slow Windows MSI smoke lane or signing/notarization backlog.

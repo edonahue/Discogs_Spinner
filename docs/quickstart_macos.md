@@ -7,60 +7,33 @@ This guide targets first-time users installing `discogs_player` on macOS.
 > **Estimated time:** ~5 minutes
 
 - macOS 13+
-- Homebrew installed
 - Discogs account + personal token ([how to get one](token_setup.md))
 - Optional: Spotify account (for playback/matching features — [how to set up](token_setup.md#spotify-api-credentials))
 
-Install base tools:
+## 2) Install the native app
+
+Download the latest `.dmg` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases).
+
+Open the disk image, drag **Discogs Spinner.app** into `/Applications`, then launch it once.
+
+Current macOS builds are unsigned. If Gatekeeper blocks the first launch, clear quarantine once:
 
 ```bash
-brew update
-brew install python@3.12 git
-```
-
-## 2) Clone and install
-
-```bash
-git clone https://github.com/edonahue/Discogs_Spinner.git
-cd Discogs_Spinner
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-pip install -e .
-```
-
-Optional Spotify features:
-
-```bash
-pip install -e ".[spotify]"
+xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
+open "/Applications/Discogs Spinner.app"
 ```
 
 ## 3) Configure Discogs token
 
-Get your personal access token at [discogs.com/settings/developers](https://www.discogs.com/settings/developers) (Personal Access Tokens → Generate new token).
-
-```bash
-export DISCOGS_TOKEN="your_discogs_personal_token"
-dplayer setup
-```
+On first launch, the app should open into the setup flow. Paste your Discogs personal access token, save it, then start your first sync.
 
 ## 4) First sync and verification
 
-```bash
-dplayer sync
-dplayer status
-dplayer list --limit 10
-```
+- Confirm the setup flow saves your token
+- Start a collection sync from the app
+- Confirm the collection view loads without errors
 
-## 5) Launch the desktop GUI (optional)
-
-> The GTK4 desktop GUI is Linux-only. On macOS, use the CLI (`dplayer`) for all workflows.
-> A native macOS app bundle is planned for a future release (see Gatekeeper section below).
-
-All core features — sync, browse, spin, play, wantlist, analytics — are available via `dplayer` CLI on macOS.
-
-## 6) Optional Spotify onboarding
+## 5) Optional Spotify onboarding
 
 First, create a Spotify app and get your Client ID + Secret at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard). Add `http://127.0.0.1:8765/callback` as a redirect URI. See [token_setup.md](token_setup.md#spotify-api-credentials) for full steps.
 
@@ -73,39 +46,41 @@ dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765
 dplayer devices --json
 ```
 
-Safe first play fallback:
+Safe first play fallback from the CLI:
 
 ```bash
 dplayer play --last-spin --open
 ```
 
-## 7) Notes
+## 6) Terminal / CLI path (advanced)
 
-- Keep this as a CLI-first setup path unless a signed macOS app build is provided.
-- If browser callback fails, use manual callback options from `dplayer auth spotify --help`.
-
-## 8) Gatekeeper and Signing Status
-
-Current release artifacts (`.dmg`) are unsigned. Gatekeeper will block the app on first launch
-with a "developer cannot be verified" warning. Clear the quarantine flag once after install:
+If you want the Python CLI alongside the native macOS app, install it from source:
 
 ```bash
-# Option A — one-line helper (run from repo root):
-bash scripts/macos_open_app.sh "/Applications/Discogs Spinner.app"
-
-# Option B — manual:
-xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
-open "/Applications/Discogs Spinner.app"
+brew update
+brew install python@3.12 git
+git clone https://github.com/edonahue/Discogs_Spinner.git
+cd Discogs_Spinner
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e .
+pip install -e ".[spotify]"
 ```
 
-> This is only required once per install. Signed builds that remove this step are planned when
-> Apple Developer ID is acquired.
+Equivalent CLI-first onboarding:
+
+```bash
+export DISCOGS_TOKEN="your_discogs_personal_token"
+dplayer setup
+dplayer sync
+dplayer status
+dplayer list --limit 10
+```
 
 ## Done? Verify it works
 
-```bash
-dplayer status
-dplayer spin
-```
+- Native app path: the app opens, setup succeeds, and your collection loads
+- CLI path: `dplayer status` shows your collection count and last sync date
 
-If `dplayer status` shows your collection count and last sync date, you're all set.
+If browser callback fails during Spotify auth, use the manual callback options from `dplayer auth spotify --help`.
