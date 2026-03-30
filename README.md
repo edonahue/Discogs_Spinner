@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml/badge.svg"></a>
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/installer_build.yml"><img alt="Installer Build" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/installer_build.yml/badge.svg"></a>
-  <a href="https://github.com/edonahue/Discogs_Spinner/releases"><img alt="Release" src="https://img.shields.io/github/v/release/edonahue/Discogs_Spinner?include_prereleases"></a>
+  <a href="https://github.com/edonahue/Discogs_Spinner/releases/latest"><img alt="Latest Stable Release" src="https://img.shields.io/github/v/release/edonahue/Discogs_Spinner"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-2f5d8a">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
   <img alt="Platforms" src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-blue">
@@ -74,11 +74,18 @@ subscription. Runs on your machine.
 
 ---
 
-## Install Fast
+## Download Now
 
-- Windows: download the latest `.msi` or `-setup.exe` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases), run it, and finish the in-app setup wizard.
-- macOS: download the latest `.dmg` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases), drag **Discogs Spinner** into `/Applications`, then launch it once and clear Gatekeeper quarantine if prompted.
-- Debian/Ubuntu: install the GTK `.deb` or use the `.AppImage` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases).
+- [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- Windows: choose the `.msi` or `-setup.exe`, run it, and finish the in-app setup wizard.
+- macOS: open the `.dmg`, drag **Discogs Spinner** into `/Applications`, then launch it once and clear Gatekeeper quarantine if prompted.
+- Debian/Ubuntu: choose the GTK `.deb` for the native desktop build, or the `.AppImage` for a portable install.
+
+Quick install notes:
+
+- Windows may show a SmartScreen warning until code signing is added.
+- macOS builds are currently unsigned and may require a one-time Gatekeeper approval step.
+- Debian/Ubuntu users can choose either the GTK `.deb` or the Linux Tauri `.deb`, depending on whether they want the native GTK app or the Tauri desktop build.
 
 Need the terminal-first path instead?
 
