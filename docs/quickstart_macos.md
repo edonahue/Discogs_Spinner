@@ -12,7 +12,11 @@ This guide targets first-time users installing `discogs_player` on macOS.
 
 ## 2) Install the native app
 
-Download the latest `.dmg` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest).
+Download the current stable `.dmg` directly:
+
+- Apple Silicon: [Discogs Spinner_0.2.0_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg)
+- Intel: [Discogs Spinner_0.2.0_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Open the disk image, drag **Discogs Spinner.app** into `/Applications`, then launch it once.
 

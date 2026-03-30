@@ -331,6 +331,17 @@ jobs:
           merge-multiple: true
           path: dist/release/
 
+      - name: Validate release asset inventory
+        shell: bash
+        run: |
+          echo "Published asset candidates:"
+          ls -1 dist/release | sort
+          ls dist/release/*.deb >/dev/null
+          ls dist/release/*.dmg >/dev/null
+          ls dist/release/*.msi >/dev/null
+          ls dist/release/*.exe >/dev/null
+          ls dist/release/*.AppImage >/dev/null
+
       - name: Generate SHA256 checksums
         run: |
           cd dist/release

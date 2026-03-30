@@ -14,6 +14,12 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 Download the latest Windows release from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest).
 
+Expected installer names on the release page:
+
+- `Discogs Spinner_*_x64-setup.exe`
+- `Discogs Spinner_*_x64_en-US.msi`
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+
 Choose either installer:
 
 - `Discogs Spinner_*_x64-setup.exe` for the standard guided installer flow

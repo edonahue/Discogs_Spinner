@@ -14,7 +14,13 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 
 ### Option A: GTK desktop `.deb` installer
 
-Download the latest GTK `.deb` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest), then install it:
+Download the current stable GTK `.deb` directly:
+
+- [discogs-spinner_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner_0.2.0_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+
+Then install it:
 
 ```bash
 sudo apt install ./discogs-spinner_*_amd64.deb
@@ -34,8 +40,8 @@ dplayer status
 
 ### Option B: Portable AppImage (no install required)
 
-Download the latest `Discogs_Spinner_*_amd64.AppImage` from the
-[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases/latest), then:
+Download the `Discogs_Spinner_*_amd64.AppImage` from the
+[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases/latest) when it is published for the current release, then:
 
 ```bash
 chmod +x Discogs_Spinner_*_amd64.AppImage

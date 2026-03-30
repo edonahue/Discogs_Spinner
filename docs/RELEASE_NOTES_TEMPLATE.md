@@ -31,6 +31,14 @@ Suggested title format:
 - Checksum manifest: `CHECKSUMS-INSTALLERS.txt`
 - Build workflow: `Installer Build`
 
+## Direct Download Links
+
+- Windows installer(s): `<release asset links or release page fallback>`
+- macOS installer(s): `<direct .dmg links>`
+- Linux desktop installer: `<direct GTK .deb link>`
+- Linux portable installer: `<direct .AppImage link or release page fallback>`
+- Checksums: `<direct CHECKSUMS-INSTALLERS.txt link>`
+
 ## Install And Setup
 
 - Windows quickstart: [docs/quickstart_windows.md](quickstart_windows.md)
