@@ -83,4 +83,6 @@ dplayer list --limit 10
 - Native app path: the app opens, setup succeeds, and your collection loads
 - CLI path: `dplayer status` shows your collection count and last sync date
 
+For a clean-machine installer checklist, use [macOS Installer FTUX Validation](validation/macos_installer_ftux.md).
+
 If browser callback fails during Spotify auth, use the manual callback options from `dplayer auth spotify --help`.

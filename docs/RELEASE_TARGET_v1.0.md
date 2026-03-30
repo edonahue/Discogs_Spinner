@@ -3,6 +3,8 @@
 This document defines what `1.0` means for Discogs Spinner when the product is ready for it.
 It is an aspirational release target, not a commitment that the next tag must be `1.0.0`.
 
+Operational tracking lives in `docs/V1_READINESS_TRACKER.md`.
+
 ## 1.0 Promise
 
 `v1.0.0` should only ship once Discogs Spinner is a **reliable local-first collector app** with:

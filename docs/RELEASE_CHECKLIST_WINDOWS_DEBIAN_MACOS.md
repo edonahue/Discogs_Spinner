@@ -41,6 +41,7 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] First-run setup clearly handles Discogs token setup.
 - [ ] Optional Spotify flow reaches auth diagnostics and device listing.
 - [ ] `status`, `sync`, `list`, `spin`, `play --open` verified.
+- Reference: `docs/validation/windows_tauri_ftux.md`
 
 ### Installer Confidence
 
@@ -62,6 +63,7 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] Discogs-only core profile works end-to-end.
 - [ ] Plus profile install (`.[spotify]`) and auth doctor path validated.
 - [ ] GUI smoke checks pass in target runtime.
+- Reference: `docs/validation/debian_installer_ftux.md`
 
 ## Stage 3: macOS
 
@@ -78,6 +80,7 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] Onboarding flow and setup messaging are understandable for first-time users.
 - [ ] Local data paths and permissions behave as documented.
 - [ ] Optional provider actions fail gracefully when unavailable.
+- Reference: `docs/validation/macos_installer_ftux.md`
 
 ## Publish Gate
 

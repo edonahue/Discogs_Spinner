@@ -149,6 +149,7 @@ Technical references:
 - [Desktop Shell README](desktop_shell/README.md)
 - [Support Matrix](docs/SUPPORT_MATRIX.md)
 - [1.0 Release Target](docs/RELEASE_TARGET_v1.0.md)
+- [1.0 Readiness Tracker](docs/V1_READINESS_TRACKER.md)
 - [Code Signing Guide](docs/SIGNING.md)
 - [Architecture ADRs](docs/adr/001-layered-architecture.md)
 

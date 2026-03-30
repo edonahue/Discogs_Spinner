@@ -27,6 +27,7 @@ def test_public_release_runbook_contains_installer_release_steps():
 def test_support_matrix_and_v1_release_target_define_first_class_surfaces():
     support_matrix = _read("docs/SUPPORT_MATRIX.md")
     release_target = _read("docs/RELEASE_TARGET_v1.0.md")
+    tracker = _read("docs/V1_READINESS_TRACKER.md")
 
     for marker in (
         "CLI (`dplayer`)",
@@ -46,6 +47,15 @@ def test_support_matrix_and_v1_release_target_define_first_class_surfaces():
         "1.0.0-rc1",
     ):
         assert marker in release_target
+
+    for marker in (
+        "Windows signing wired and verified",
+        "macOS signing + notarization wired and verified",
+        "Live timing baseline recorded",
+        "Small friend/beta cohort reviewed",
+        "continue shipping `0.x` releases",
+    ):
+        assert marker in tracker
 
 
 def test_release_notes_template_references_quickstarts_and_diagnostics():
@@ -68,5 +78,6 @@ def test_readme_links_release_runbook_and_release_notes():
         "docs/friend_trial.md",
         "docs/SUPPORT_MATRIX.md",
         "docs/RELEASE_TARGET_v1.0.md",
+        "docs/V1_READINESS_TRACKER.md",
     ):
         assert marker in source

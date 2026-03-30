@@ -119,6 +119,8 @@ dplayer spin
 
 If `dplayer status` shows your collection count and last sync date, you're all set.
 
+For a clean-machine installer checklist, use [Debian Installer FTUX Validation](validation/debian_installer_ftux.md).
+
 ## 6) Troubleshooting
 
 - Run `dplayer setup` for onboarding hints.

@@ -38,6 +38,16 @@ def test_quickstart_docs_exist_and_include_core_onboarding_steps():
             assert marker in source
 
 
+def test_quickstarts_link_clean_machine_validation_checklists():
+    windows = _read("docs/quickstart_windows.md")
+    macos = _read("docs/quickstart_macos.md")
+    debian = _read("docs/quickstart_debian.md")
+
+    assert "validation/windows_tauri_ftux.md" in windows
+    assert "validation/macos_installer_ftux.md" in macos
+    assert "validation/debian_installer_ftux.md" in debian
+
+
 def test_readme_links_os_quickstarts():
     source = _read("README.md")
     for marker in (
