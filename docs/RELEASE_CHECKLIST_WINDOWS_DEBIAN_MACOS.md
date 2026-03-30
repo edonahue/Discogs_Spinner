@@ -14,8 +14,8 @@ This checklist is optimized for a public installer release centered on native in
 ## Global Pre-Release Gate
 
 - [ ] Working tree is clean and branch is tagged for release.
-- [ ] `docs/PUBLIC_RELEASE_RUNBOOK.md` reviewed for the current installer-release steps.
-- [ ] `docs/RELEASE_NOTES_TEMPLATE.md` copied and filled for this release.
+- [ ] [docs/PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md) reviewed for the current installer-release steps.
+- [ ] [docs/RELEASE_NOTES_TEMPLATE.md](RELEASE_NOTES_TEMPLATE.md) copied and filled for this release.
 - [ ] `venv/bin/ruff check .` passes.
 - [ ] `venv/bin/python -m mypy src/discogs_player --show-error-codes --hide-error-context` passes.
 - [ ] `venv/bin/python -m pytest -q` passes.
@@ -41,12 +41,12 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] First-run setup clearly handles Discogs token setup.
 - [ ] Optional Spotify flow reaches auth diagnostics and device listing.
 - [ ] `status`, `sync`, `list`, `spin`, `play --open` verified.
-- Reference: `docs/validation/windows_tauri_ftux.md`
+- Reference: [docs/validation/windows_tauri_ftux.md](validation/windows_tauri_ftux.md)
 
 ### Installer Confidence
 
-- [ ] Clean-machine Windows install path reviewed against `docs/validation/windows_tauri_ftux.md`.
-- [ ] SmartScreen guidance in `docs/quickstart_windows.md` matches the current unsigned/signed posture.
+- [ ] Clean-machine Windows install path reviewed against [docs/validation/windows_tauri_ftux.md](validation/windows_tauri_ftux.md).
+- [ ] SmartScreen guidance in [docs/quickstart_windows.md](quickstart_windows.md) matches the current unsigned/signed posture.
 
 ## Stage 2: Debian Linux
 
@@ -63,7 +63,7 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] Discogs-only core profile works end-to-end.
 - [ ] Plus profile install (`.[spotify]`) and auth doctor path validated.
 - [ ] GUI smoke checks pass in target runtime.
-- Reference: `docs/validation/debian_installer_ftux.md`
+- Reference: [docs/validation/debian_installer_ftux.md](validation/debian_installer_ftux.md)
 
 ## Stage 3: macOS
 
@@ -80,7 +80,7 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] Onboarding flow and setup messaging are understandable for first-time users.
 - [ ] Local data paths and permissions behave as documented.
 - [ ] Optional provider actions fail gracefully when unavailable.
-- Reference: `docs/validation/macos_installer_ftux.md`
+- Reference: [docs/validation/macos_installer_ftux.md](validation/macos_installer_ftux.md)
 
 ## Publish Gate
 

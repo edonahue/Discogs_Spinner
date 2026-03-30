@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -8,6 +9,33 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _read(rel_path: str) -> str:
     return (ROOT / rel_path).read_text(encoding="utf-8")
+
+
+def _assert_local_links_exist(rel_paths: tuple[str, ...]) -> None:
+    markdown_link_re = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+    image_src_re = re.compile(r'<img[^>]+src="([^"]+)"')
+
+    for rel_path in rel_paths:
+        path = ROOT / rel_path
+        source = path.read_text(encoding="utf-8")
+
+        for target in markdown_link_re.findall(source):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            clean = target.split("#", 1)[0]
+            if not clean:
+                continue
+            resolved = (path.parent / clean).resolve()
+            assert resolved.exists(), f"{rel_path} references missing link target {clean}"
+
+        for target in image_src_re.findall(source):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            clean = target.split("#", 1)[0]
+            if not clean:
+                continue
+            resolved = (path.parent / clean).resolve()
+            assert resolved.exists(), f"{rel_path} references missing image asset {clean}"
 
 
 def test_public_release_runbook_contains_installer_release_steps():
@@ -81,3 +109,23 @@ def test_readme_links_release_runbook_and_release_notes():
         "docs/V1_READINESS_TRACKER.md",
     ):
         assert marker in source
+
+
+def test_active_installer_docs_have_resolvable_local_links_and_assets():
+    _assert_local_links_exist(
+        (
+            "README.md",
+            "desktop_shell/README.md",
+            "packaging/README.md",
+            "scripts/README.md",
+            "docs/PUBLIC_RELEASE_RUNBOOK.md",
+            "docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md",
+            "docs/RELEASE_NOTES_TEMPLATE.md",
+            "docs/START_HERE.md",
+            "docs/friend_trial.md",
+            "docs/releases/v0.2.0.md",
+            "docs/quickstart_windows.md",
+            "docs/quickstart_macos.md",
+            "docs/quickstart_debian.md",
+        )
+    )

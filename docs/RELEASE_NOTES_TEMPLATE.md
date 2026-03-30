@@ -33,9 +33,9 @@ Suggested title format:
 
 ## Install And Setup
 
-- Windows quickstart: `docs/quickstart_windows.md`
-- Debian quickstart: `docs/quickstart_debian.md`
-- macOS quickstart: `docs/quickstart_macos.md`
+- Windows quickstart: [docs/quickstart_windows.md](quickstart_windows.md)
+- Debian quickstart: [docs/quickstart_debian.md](quickstart_debian.md)
+- macOS quickstart: [docs/quickstart_macos.md](quickstart_macos.md)
 
 ## Validation Evidence
 
@@ -80,4 +80,4 @@ Issue templates:
 
 For release execution steps, use:
 
-- `docs/PUBLIC_RELEASE_RUNBOOK.md`
+- [docs/PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md)

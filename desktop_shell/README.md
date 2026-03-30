@@ -125,7 +125,12 @@ xattr -dr com.apple.quarantine "Discogs Spinner.app"
 
 ## Reference
 
-- Roadmap: `../docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md`
-- Release checklist: `../docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md`
-- Code signing guide: `../docs/SIGNING.md`
+- Public release runbook: [../docs/PUBLIC_RELEASE_RUNBOOK.md](../docs/PUBLIC_RELEASE_RUNBOOK.md)
+- Stable release notes: [../docs/releases/v0.2.0.md](../docs/releases/v0.2.0.md)
+- Windows quickstart: [../docs/quickstart_windows.md](../docs/quickstart_windows.md)
+- macOS quickstart: [../docs/quickstart_macos.md](../docs/quickstart_macos.md)
+- Debian quickstart: [../docs/quickstart_debian.md](../docs/quickstart_debian.md)
+- Roadmap: [../docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md](../docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md)
+- Release checklist: [../docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md](../docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md)
+- Code signing guide: [../docs/SIGNING.md](../docs/SIGNING.md)
 - ADR-003: API-first local service → web app → Tauri desktop shell

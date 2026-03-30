@@ -26,8 +26,8 @@ This runbook defines the exact process for creating and publishing a public inst
 5. Latest installer evidence is green:
    - `Installer Build` passes on Windows, Ubuntu, `macos-14`, and `macos-15-intel`
    - Debian Docker clean-install validation passes
-6. Release notes exist at `docs/releases/<tag>.md`.
-7. `docs/RELEASE_NOTES_TEMPLATE.md` has been copied and tailored for the release.
+6. Release notes exist at [`docs/releases/<tag>.md`](releases/v0.2.0.md).
+7. [`docs/RELEASE_NOTES_TEMPLATE.md`](RELEASE_NOTES_TEMPLATE.md) has been copied and tailored for the release.
 
 ## Tag Creation
 
@@ -68,13 +68,13 @@ shasum -a 256 CHECKSUMS-INSTALLERS.txt
 
 ## Release Note Requirements
 
-The release body is loaded from `docs/releases/<tag>.md`. Before tagging, confirm that file includes:
+The release body is loaded from [`docs/releases/<tag>.md`](releases/v0.2.0.md). Before tagging, confirm that file includes:
 
 - installer asset summary
-- links to the Windows, Debian, and macOS quickstarts
+- links to the [Windows quickstart](quickstart_windows.md), [Debian quickstart](quickstart_debian.md), and [macOS quickstart](quickstart_macos.md)
 - validation evidence from the current installer workflow
 - known limitations and support/reporting guidance
-- structure aligned with `docs/RELEASE_NOTES_TEMPLATE.md`
+- structure aligned with [`docs/RELEASE_NOTES_TEMPLATE.md`](RELEASE_NOTES_TEMPLATE.md)
 
 ## Legacy Tarballs
 
