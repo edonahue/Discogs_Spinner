@@ -69,6 +69,10 @@ def test_validate_tauri_macos_bundle_script_checks_dmg_and_app_contents():
 
 def test_validate_tauri_windows_bundle_script_checks_msi_and_nsis_contents():
     source = _read("scripts/validate_tauri_windows_bundle.ps1")
+    param_index = source.index("param(")
+    strict_mode_index = source.index("Set-StrictMode -Version Latest")
+    assert param_index < strict_mode_index
+
     for marker in (
         'function Write-DirectoryInventory',
         'Write-Host "INFO: Windows bundle root: $bundleRoot"',
