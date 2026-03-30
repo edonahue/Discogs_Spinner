@@ -8,6 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $rootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $bundleRoot = Join-Path $rootDir "desktop_shell\src-tauri\target\$TargetTriple\release\bundle"
+$wixRoot = Join-Path $rootDir "desktop_shell\src-tauri\target\$TargetTriple\release\wix"
 $sourceSidecarName = "dplayer-api-$TargetTriple.exe"
 $packagedSidecarName = "dplayer-api.exe"
 $sidecarCandidates = @($packagedSidecarName, $sourceSidecarName)
@@ -107,6 +108,32 @@ function Find-SidecarMatches {
     )
 }
 
+function Write-WixInventory {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    Write-Host "INFO: WiX metadata root: $Path"
+    if (-not (Test-Path $Path)) {
+        Write-Host "INFO: WiX metadata root does not exist."
+        return
+    }
+
+    $items = Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
+        Select-Object -First 25
+    if (-not $items) {
+        Write-Host "INFO: WiX metadata root has no files."
+        return
+    }
+
+    Write-Host "INFO: WiX metadata sample:"
+    foreach ($item in $items) {
+        $relativePath = [System.IO.Path]::GetRelativePath($Path, $item.FullName)
+        Write-Host "  - $relativePath"
+    }
+}
+
 Write-Host "INFO: Windows bundle root: $bundleRoot"
 $msiDir = Join-Path $bundleRoot "msi"
 $nsisDir = Join-Path $bundleRoot "nsis"
@@ -138,27 +165,38 @@ else {
 }
 Write-Host "INFO: Using 7z at $sevenZipPath"
 
-function Expand-MsiArchive {
+function Test-WixMetadataContainsSidecar {
     param(
         [Parameter(Mandatory = $true)]
         [System.IO.FileInfo]$Archive
     )
 
-    $extractRoot = New-TempDirectory -Prefix "dplayer-msi"
-    $targetDir = Join-Path $extractRoot "target"
-    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-
-    Write-Host "INFO: Extracting MSI administratively from $($Archive.FullName) to $targetDir"
-    $process = Start-Process -FilePath "msiexec.exe" `
-        -ArgumentList @("/a", $Archive.FullName, "/qn", "TARGETDIR=$targetDir") `
-        -NoNewWindow `
-        -PassThru `
-        -Wait
-    if ($process.ExitCode -ne 0) {
-        throw "Failed to extract MSI contents from $($Archive.FullName) with exit code $($process.ExitCode)."
+    Write-Host "INFO: Inspecting WiX metadata for $($Archive.FullName)"
+    if (-not (Test-Path $wixRoot)) {
+        Write-WixInventory -Path $wixRoot
+        throw "Expected WiX metadata under $wixRoot."
     }
 
-    return $targetDir
+    $matches = @()
+    foreach ($candidate in $sidecarCandidates) {
+        $matches += @(
+            Get-ChildItem -Path $wixRoot -Recurse -File -ErrorAction SilentlyContinue |
+                Select-String -Pattern $candidate -SimpleMatch
+        )
+    }
+    $matches = @($matches | Sort-Object Path, LineNumber -Unique)
+
+    if ($matches) {
+        Write-Host "INFO: WiX metadata lines containing sidecar references:"
+        foreach ($match in $matches) {
+            $relativePath = [System.IO.Path]::GetRelativePath($wixRoot, $match.Path)
+            Write-Host "  - ${relativePath}:$($match.LineNumber): $($match.Line.Trim())"
+        }
+        return
+    }
+
+    Write-WixInventory -Path $wixRoot
+    throw "$($Archive.Name) does not appear to reference $packagedSidecarName or $sourceSidecarName in WiX metadata."
 }
 
 function Expand-NsisArchive {
@@ -208,7 +246,7 @@ function Test-ExtractedArchiveContainsSidecar {
 }
 
 try {
-    Test-ExtractedArchiveContainsSidecar -Archive $msiFile -Kind "MSI" -ExpandArchive ${function:Expand-MsiArchive}
+    Test-WixMetadataContainsSidecar -Archive $msiFile
     Test-ExtractedArchiveContainsSidecar -Archive $nsisFile -Kind "NSIS" -ExpandArchive ${function:Expand-NsisArchive}
 }
 finally {
