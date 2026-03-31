@@ -57,6 +57,20 @@ def test_quickstarts_link_clean_machine_validation_checklists():
     assert "releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt" in debian
 
 
+def test_quickstarts_call_out_recommended_installer_and_first_run_success():
+    windows = _read("docs/quickstart_windows.md")
+    macos = _read("docs/quickstart_macos.md")
+    debian = _read("docs/quickstart_debian.md")
+
+    for source in (windows, macos, debian):
+        assert "What success looks like:" in source
+
+    assert "Recommended installer:" in windows
+    assert "Recommended for most modern Macs:" in macos
+    assert "GTK desktop `.deb` installer (recommended)" in debian
+    assert "start with the GTK `.deb`" in debian
+
+
 def test_readme_links_os_quickstarts():
     source = _read("README.md")
     for marker in (

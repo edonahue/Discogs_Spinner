@@ -15,7 +15,7 @@
   <img src="docs/media/gif/product-demo.gif" alt="Discogs Spinner product demo" width="100%">
 </p>
 
-Discogs-first collector app for vinyl fans who want native installers on Linux, Windows, and macOS. Browse your collection, spin a random pick, and track market value locally, with no subscription required.
+Native Discogs collector app for vinyl fans who want to stop juggling browser tabs. Install on Linux, Windows, or macOS, sync your collection with a personal token, spin a random pick, and see value, wantlist, and playback context in one place.
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
 
@@ -23,11 +23,11 @@ Discogs-first collector app for vinyl fans who want native installers on Linux, 
 
 ## Why Discogs Spinner?
 
-Your Discogs collection lives in a browser tab. You scroll it when you can't decide what to spin,
-squint at market prices in a second tab, and open Spotify in a third. Discogs Spinner pulls all
-of that into one place — a local app that knows your collection, picks records for you, shows you
-what they're worth today, and queues them up in Spotify with one command. No cloud account. No
-subscription. Runs on your machine.
+Your Discogs collection probably lives in a browser tab today. You scroll it when you cannot decide
+what to spin, check market prices in another tab, and bounce into Spotify when you finally make a
+decision. Discogs Spinner turns that into one focused desktop experience: your collection, random
+picks, wantlist context, and market value in one local app. No subscription. No extra cloud
+account. Just your collection on your machine.
 
 ---
 
@@ -76,16 +76,25 @@ subscription. Runs on your machine.
 
 ## Download Now
 
-- [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-- Windows: choose `Discogs Spinner_0.2.0_x64-setup.exe` for the normal guided install, or `Discogs Spinner_0.2.0_x64_en-US.msi` for deployment tooling.
-- macOS: open the `.dmg`, drag **Discogs Spinner** into `/Applications`, then launch it once and clear Gatekeeper quarantine if prompted.
-- Debian/Ubuntu: choose `discogs-spinner-gtk4_0.2.0_amd64.deb` for the native desktop build, `discogs-spinner-tauri_0.2.0_amd64.deb` for the Tauri desktop build, or `Discogs.Spinner_0.2.0_amd64.AppImage` for a portable install.
+- [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- Windows: use the guided installer first: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe). Use [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi) only if you specifically want MSI deployment tooling.
+- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg).
+- Debian/Ubuntu: start with the GTK desktop build: [discogs-spinner-gtk4_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb).
+- Linux portable fallback: [Discogs Spinner_0.2.0_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage).
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb).
+- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt).
+
+What first launch should feel like:
+
+- The app opens into a simple setup wizard if no Discogs token is configured yet.
+- You paste your token once, start your first sync, and wait for the collection view to load.
+- A good first run ends with your collection visible in the app, not a blank screen or a terminal prompt.
 
 Quick install notes:
 
 - Windows may show a SmartScreen warning until code signing is added.
 - macOS builds are currently unsigned and may require a one-time Gatekeeper approval step.
-- Debian/Ubuntu users can choose either the GTK `.deb` or the Linux Tauri `.deb`, depending on whether they want the native GTK app or the Tauri desktop build.
+- Debian/Ubuntu users should start with the GTK `.deb`; the Tauri `.deb` is an alternate desktop build, and the AppImage is the portable fallback.
 
 Sending this to a friend?
 
@@ -125,7 +134,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 
 > **New here?**
 > - Easiest native install: [Windows Quickstart](docs/quickstart_windows.md), [macOS Quickstart](docs/quickstart_macos.md), or [Debian Quickstart](docs/quickstart_debian.md)
-> - Easiest browser-based start: [Web App Quickstart](docs/quickstart_web.md) (Windows / macOS / Linux)
+> - No-install browser fallback: [Web App Quickstart](docs/quickstart_web.md) (Windows / macOS / Linux)
 > - Linux desktop: [Debian Quickstart](docs/quickstart_debian.md)
 > - Windows native installer: [Windows Quickstart](docs/quickstart_windows.md)
 > - macOS native installer: [macOS Quickstart](docs/quickstart_macos.md)

@@ -112,6 +112,20 @@ def test_readme_links_release_runbook_and_release_notes():
         assert marker in source
 
 
+def test_readme_promotes_download_now_and_first_launch_value():
+    source = _read("README.md")
+    for marker in (
+        "## Download Now",
+        "What first launch should feel like:",
+        "Discogs.Spinner_0.2.0_x64-setup.exe",
+        "Discogs.Spinner_0.2.0_aarch64.dmg",
+        "discogs-spinner-gtk4_0.2.0_amd64.deb",
+        "Discogs.Spinner_0.2.0_amd64.AppImage",
+        "docs/friend_trial.md",
+    ):
+        assert marker in source
+
+
 def test_active_installer_docs_have_resolvable_local_links_and_assets():
     _assert_local_links_exist(
         (
@@ -130,6 +144,17 @@ def test_active_installer_docs_have_resolvable_local_links_and_assets():
             "docs/quickstart_debian.md",
         )
     )
+
+
+def test_start_here_and_friend_trial_are_installer_first():
+    start_here = _read("docs/START_HERE.md")
+    friend_trial = _read("docs/friend_trial.md")
+
+    assert "A native Windows installer (Tauri app)" in start_here
+    assert "A no-install browser fallback" in start_here
+    assert "Discogs.Spinner_0.2.0_x64-setup.exe" in friend_trial
+    assert "discogs-spinner-gtk4_0.2.0_amd64.deb" in friend_trial
+    assert "Discogs Spinner_*_x64-setup.exe" not in friend_trial
 
 
 def test_current_release_notes_pin_verified_stable_asset_links():

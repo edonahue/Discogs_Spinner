@@ -14,7 +14,7 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 Download the current stable Windows installer directly:
 
-- Standard installer: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe)
+- Recommended installer: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe)
 - MSI installer: [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi)
 - Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
@@ -24,7 +24,12 @@ Choose either installer:
 - `Discogs Spinner_0.2.0_x64-setup.exe` for the standard guided installer flow
 - `Discogs Spinner_0.2.0_x64_en-US.msi` if you prefer MSI deployment tooling
 
-Run the installer, accept the SmartScreen prompt if Windows warns about an unsigned app, and launch **Discogs Spinner** from the Start menu.
+Run the installer and launch **Discogs Spinner** from the Start menu.
+
+What you may see:
+
+- Windows may show a SmartScreen warning because the app is not signed yet.
+- If that happens, use `More info` -> `Run anyway`.
 
 ## 3) First launch and token setup
 
@@ -34,6 +39,12 @@ On first launch, the app should open directly into the setup flow.
 - Save the token
 - Start your first collection sync from the app
 - Confirm the collection view loads without errors
+
+What success looks like:
+
+- you reach the setup wizard instead of a blank screen
+- your first sync completes
+- the collection view opens with your records visible
 
 ## 4) Optional Spotify onboarding
 

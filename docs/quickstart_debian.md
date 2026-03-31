@@ -12,7 +12,7 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 
 ## 2) Install from GitHub Releases
 
-### Option A: GTK desktop `.deb` installer
+### Option A: GTK desktop `.deb` installer (recommended)
 
 Download the current stable GTK `.deb` directly:
 
@@ -38,6 +38,12 @@ The package also installs the CLI and API launchers:
 dplayer status
 ```
 
+What success looks like:
+
+- the desktop app launches from your app menu
+- the setup flow accepts your Discogs token
+- your first sync ends with the collection and wantlist views loaded
+
 ### Option B: Portable AppImage (no install required)
 
 Download the current stable AppImage directly:
@@ -61,12 +67,13 @@ chmod +x Discogs.Spinner_0.2.0_amd64.AppImage
   ```
 - On first run, if no Discogs token is configured the app opens a Setup screen to guide you through token setup.
 
-### Option C: Tauri `.deb` installer
+### Option C: Tauri `.deb` installer (alternate desktop build)
 
 If you want the Tauri desktop package instead of the GTK build, download:
 
 - [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb)
 - Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 ---
 
@@ -78,6 +85,12 @@ On first launch, the app should open directly into setup if no token is configur
 - Save it
 - Start your first collection sync
 - Confirm the collection and wantlist views load without errors
+
+Recommended path:
+
+- start with the GTK `.deb` if you want the simplest Debian/Ubuntu desktop install
+- use the AppImage if you want a portable no-install path
+- use the Tauri `.deb` only if you specifically want the alternate Tauri desktop build
 
 Equivalent CLI flow:
 

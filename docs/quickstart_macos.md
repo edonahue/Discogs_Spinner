@@ -14,13 +14,16 @@ This guide targets first-time users installing `discogs_player` on macOS.
 
 Download the current stable `.dmg` directly:
 
-- Apple Silicon: [Discogs Spinner_0.2.0_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg)
-- Intel: [Discogs Spinner_0.2.0_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg)
+- Recommended for most modern Macs: [Discogs Spinner_0.2.0_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg)
+- Intel Macs: [Discogs Spinner_0.2.0_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Open the disk image, drag **Discogs Spinner.app** into `/Applications`, then launch it once.
 
-Current macOS builds are unsigned. If Gatekeeper blocks the first launch, clear quarantine once:
+What you may see:
+
+- Current macOS builds are unsigned.
+- If Gatekeeper blocks the first launch, clear quarantine once:
 
 ```bash
 xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
@@ -36,6 +39,12 @@ On first launch, the app should open into the setup flow. Paste your Discogs per
 - Confirm the setup flow saves your token
 - Start a collection sync from the app
 - Confirm the collection view loads without errors
+
+What success looks like:
+
+- the app opens from `/Applications`
+- the setup wizard accepts your Discogs token
+- your first sync ends with the collection view loaded
 
 ## 5) Optional Spotify onboarding
 

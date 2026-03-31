@@ -4,16 +4,20 @@ Use this when you want a friend to try the public installers without asking them
 
 ## What To Download
 
-- Windows: use `Discogs Spinner_*_x64-setup.exe` unless you specifically want the `.msi`
-- macOS: use the `.dmg`
-- Debian/Ubuntu desktop: use the GTK `.deb`
-- Linux portable fallback: use the `.AppImage`
+- Windows: use the guided installer first: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe)
+- Windows fallback for managed installs: [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi)
+- macOS Apple Silicon: [Discogs Spinner_0.2.0_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg)
+- macOS Intel: [Discogs Spinner_0.2.0_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg)
+- Debian/Ubuntu desktop: [discogs-spinner-gtk4_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb)
+- Linux portable fallback: [Discogs Spinner_0.2.0_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage)
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
 
-Start here: [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+If you would rather browse the full release page first, start here: [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 ## What To Try
 
-1. Download and install the app for your OS.
+1. Download the recommended installer for your OS and install the app.
 2. Launch **Discogs Spinner**.
 3. Confirm you either:
    - reach the setup wizard, or
@@ -26,6 +30,7 @@ Please report any of these:
 
 - I was not sure which file to download
 - Windows SmartScreen or macOS Gatekeeper instructions were confusing
+- Linux package choices were confusing
 - The app did not launch after install
 - The setup wizard was confusing or failed
 - The app launched, but collection sync or basic browsing failed
