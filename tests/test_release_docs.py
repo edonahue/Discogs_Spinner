@@ -99,17 +99,22 @@ def test_release_notes_template_references_quickstarts_and_diagnostics():
         assert marker in source
 
 
-def test_readme_links_release_runbook_and_release_notes():
+def test_readme_links_user_facing_docs_not_internal_runbooks():
     source = _read("README.md")
     for marker in (
-        "docs/PUBLIC_RELEASE_RUNBOOK.md",
         "docs/releases/v0.2.0.md",
         "docs/friend_trial.md",
         "docs/SUPPORT_MATRIX.md",
+    ):
+        assert marker in source
+
+    for marker in (
+        "docs/PUBLIC_RELEASE_RUNBOOK.md",
+        "docs/SIGNING.md",
         "docs/RELEASE_TARGET_v1.0.md",
         "docs/V1_READINESS_TRACKER.md",
     ):
-        assert marker in source
+        assert marker not in source
 
 
 def test_readme_promotes_download_now_and_first_launch_value():

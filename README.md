@@ -133,43 +133,31 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 ## OS Quickstarts
 
 > **New here?**
-> - Easiest native install: [Windows Quickstart](docs/quickstart_windows.md), [macOS Quickstart](docs/quickstart_macos.md), or [Debian Quickstart](docs/quickstart_debian.md)
-> - No-install browser fallback: [Web App Quickstart](docs/quickstart_web.md) (Windows / macOS / Linux)
-> - Linux desktop: [Debian Quickstart](docs/quickstart_debian.md)
-> - Windows native installer: [Windows Quickstart](docs/quickstart_windows.md)
-> - macOS native installer: [macOS Quickstart](docs/quickstart_macos.md)
+> Start with the native installer quickstart for your OS. Use the web quickstart only if you want a browser-based fallback instead of the installed app.
 
 - [Not sure where to start? → START HERE](docs/START_HERE.md)
 - [Windows Quickstart](docs/quickstart_windows.md)
-- [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 - [Debian Quickstart](docs/quickstart_debian.md)
 - [macOS Quickstart](docs/quickstart_macos.md)
 - [Web App Quickstart](docs/quickstart_web.md)
 - [Token Setup (Discogs + Spotify)](docs/token_setup.md)
 - [Friend Trial Guide](docs/friend_trial.md)
+- [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 
 ---
 
-## Docs
+## Help & Reference
 
-Technical references:
+- [Release Notes (v0.2.0)](docs/releases/v0.2.0.md)
+- [Support Matrix](docs/SUPPORT_MATRIX.md)
+- [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
+
+<details>
+<summary>Developer Docs</summary>
 
 - [Web App README](webapp/README.md)
 - [Desktop Shell README](desktop_shell/README.md)
-- [Support Matrix](docs/SUPPORT_MATRIX.md)
-- [1.0 Release Target](docs/RELEASE_TARGET_v1.0.md)
-- [1.0 Readiness Tracker](docs/V1_READINESS_TRACKER.md)
-- [Code Signing Guide](docs/SIGNING.md)
 - [Architecture ADRs](docs/adr/001-layered-architecture.md)
-
-<details>
-<summary>Project & release docs</summary>
-
-- [Product State](PRODUCT_STATE.md)
-- [Cross-Platform Implementation Roadmap](docs/CROSS_PLATFORM_IMPLEMENTATION_ROADMAP.md)
-- [Stabilization Execution Tracker](docs/STABILIZATION_EXECUTION_2026Q1.md)
-- [Public Release Runbook](docs/PUBLIC_RELEASE_RUNBOOK.md)
-- [Release Notes (v0.2.0)](docs/releases/v0.2.0.md)
 
 </details>
 
@@ -178,7 +166,6 @@ Technical references:
 ## Contributing & Legal
 
 - [Contributing](CONTRIBUTING.md)
-- [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
 - [LICENSE](LICENSE)
 - [PRIVACY.md](PRIVACY.md)
 - [TERMS.md](TERMS.md)
