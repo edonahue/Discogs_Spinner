@@ -16,7 +16,7 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 
 Download the current stable GTK `.deb` directly:
 
-- [discogs-spinner_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner_0.2.0_amd64.deb)
+- [discogs-spinner-gtk4_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb)
 - Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
@@ -40,12 +40,17 @@ dplayer status
 
 ### Option B: Portable AppImage (no install required)
 
-Download the `Discogs_Spinner_*_amd64.AppImage` from the
-[GitHub Releases page](https://github.com/edonahue/Discogs_Spinner/releases/latest) when it is published for the current release, then:
+Download the current stable AppImage directly:
+
+- [Discogs Spinner_0.2.0_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+
+Then:
 
 ```bash
-chmod +x Discogs_Spinner_*_amd64.AppImage
-./Discogs_Spinner_*_amd64.AppImage
+chmod +x Discogs.Spinner_0.2.0_amd64.AppImage
+./Discogs.Spinner_0.2.0_amd64.AppImage
 ```
 
 - No root required; runs from any directory.
@@ -55,6 +60,13 @@ chmod +x Discogs_Spinner_*_amd64.AppImage
   sudo apt install libfuse2
   ```
 - On first run, if no Discogs token is configured the app opens a Setup screen to guide you through token setup.
+
+### Option C: Tauri `.deb` installer
+
+If you want the Tauri desktop package instead of the GTK build, download:
+
+- [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
 
 ---
 

@@ -12,18 +12,17 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 ## 2) Install the native app
 
-Download the latest Windows release from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest).
+Download the current stable Windows installer directly:
 
-Expected installer names on the release page:
-
-- `Discogs Spinner_*_x64-setup.exe`
-- `Discogs Spinner_*_x64_en-US.msi`
+- Standard installer: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe)
+- MSI installer: [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi)
 - Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Choose either installer:
 
-- `Discogs Spinner_*_x64-setup.exe` for the standard guided installer flow
-- `Discogs Spinner_*_x64_en-US.msi` if you prefer MSI deployment tooling
+- `Discogs Spinner_0.2.0_x64-setup.exe` for the standard guided installer flow
+- `Discogs Spinner_0.2.0_x64_en-US.msi` if you prefer MSI deployment tooling
 
 Run the installer, accept the SmartScreen prompt if Windows warns about an unsigned app, and launch **Discogs Spinner** from the Start menu.
 

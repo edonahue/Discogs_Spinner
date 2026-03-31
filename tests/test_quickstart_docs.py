@@ -46,9 +46,13 @@ def test_quickstarts_link_clean_machine_validation_checklists():
     assert "validation/windows_tauri_ftux.md" in windows
     assert "validation/macos_installer_ftux.md" in macos
     assert "validation/debian_installer_ftux.md" in debian
+    assert "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe" in windows
+    assert "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi" in windows
     assert "releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg" in macos
     assert "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg" in macos
-    assert "releases/download/v0.2.0/discogs-spinner_0.2.0_amd64.deb" in debian
+    assert "releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb" in debian
+    assert "releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb" in debian
+    assert "releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage" in debian
     assert "releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt" in windows
     assert "releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt" in debian
 

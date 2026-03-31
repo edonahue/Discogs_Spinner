@@ -135,7 +135,11 @@ def test_active_installer_docs_have_resolvable_local_links_and_assets():
 def test_current_release_notes_pin_verified_stable_asset_links():
     source = _read("docs/releases/v0.2.0.md")
     for marker in (
-        "releases/download/v0.2.0/discogs-spinner_0.2.0_amd64.deb",
+        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe",
+        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi",
+        "releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb",
+        "releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb",
+        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage",
         "releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg",
         "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg",
         "releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt",

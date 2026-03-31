@@ -77,9 +77,9 @@ subscription. Runs on your machine.
 ## Download Now
 
 - [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-- Windows: choose `Discogs Spinner_*_x64-setup.exe` for the normal guided install, or the `.msi` for deployment tooling.
+- Windows: choose `Discogs Spinner_0.2.0_x64-setup.exe` for the normal guided install, or `Discogs Spinner_0.2.0_x64_en-US.msi` for deployment tooling.
 - macOS: open the `.dmg`, drag **Discogs Spinner** into `/Applications`, then launch it once and clear Gatekeeper quarantine if prompted.
-- Debian/Ubuntu: choose the GTK `.deb` for the native desktop build, or the `.AppImage` for a portable install.
+- Debian/Ubuntu: choose `discogs-spinner-gtk4_0.2.0_amd64.deb` for the native desktop build, `discogs-spinner-tauri_0.2.0_amd64.deb` for the Tauri desktop build, or `Discogs.Spinner_0.2.0_amd64.AppImage` for a portable install.
 
 Quick install notes:
 
