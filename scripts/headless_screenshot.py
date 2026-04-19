@@ -33,10 +33,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SCREENSHOTS_DIR = ROOT / "docs" / "media" / "screenshots"
 GIF_DIR = ROOT / "docs" / "media" / "gif"
 XVFB_DISPLAY = ":99"
+_DISPLAY_CANDIDATE_OFFSETS = tuple(range(0, 8))
 WIN_W, WIN_H = 1440, 900
+SYSTEM_DISPLAY = str(os.environ.get("DISPLAY") or "").strip()
+ACTIVE_DISPLAY = XVFB_DISPLAY
 
 # ── Environment (must happen before any gi / GTK import) ─────────────────────
-os.environ["DISPLAY"] = XVFB_DISPLAY
 os.environ.setdefault("GDK_BACKEND", "x11")
 os.environ.setdefault("GSK_RENDERER", "cairo")
 os.environ.setdefault("LIBGL_ALWAYS_SOFTWARE", "1")
@@ -66,17 +68,48 @@ INITIAL_DELAY_MS = 5000
 
 # ── Xvfb ─────────────────────────────────────────────────────────────────────
 
-def start_xvfb() -> subprocess.Popen:
-    print(f"Starting Xvfb on {XVFB_DISPLAY} ({WIN_W}x{WIN_H})...")
-    proc = subprocess.Popen(
-        ["Xvfb", XVFB_DISPLAY, "-screen", "0", f"{WIN_W}x{WIN_H}x24"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+def _display_name(base_display: str, offset: int) -> str:
+    base_number = int(str(base_display).lstrip(":") or "99")
+    return f":{base_number + int(offset)}"
+
+
+def _set_active_display(display_name: str) -> None:
+    global ACTIVE_DISPLAY
+    ACTIVE_DISPLAY = display_name
+    os.environ["DISPLAY"] = display_name
+
+
+def start_xvfb() -> tuple[subprocess.Popen | None, str]:
+    last_error = "unknown error"
+    for offset in _DISPLAY_CANDIDATE_OFFSETS:
+        display_name = _display_name(XVFB_DISPLAY, offset)
+        print(f"Starting Xvfb on {display_name} ({WIN_W}x{WIN_H})...")
+        proc = subprocess.Popen(
+            ["Xvfb", display_name, "-screen", "0", f"{WIN_W}x{WIN_H}x24"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        time.sleep(1.5)
+        if proc.poll() is None:
+            _set_active_display(display_name)
+            return proc, display_name
+
+        stderr = ""
+        if proc.stderr is not None:
+            stderr = proc.stderr.read().strip()
+        last_error = stderr or f"Xvfb exited with code {proc.returncode}"
+        print(f"  Xvfb unavailable on {display_name}: {last_error}")
+
+    if SYSTEM_DISPLAY:
+        print(f"Falling back to existing display {SYSTEM_DISPLAY}")
+        _set_active_display(SYSTEM_DISPLAY)
+        return None, SYSTEM_DISPLAY
+
+    raise RuntimeError(
+        "Xvfb could not start on any candidate display. "
+        f"Last error: {last_error}"
     )
-    time.sleep(1.5)
-    if proc.poll() is not None:
-        raise RuntimeError("Xvfb failed to start")
-    return proc
 
 
 # ── Screen capture ────────────────────────────────────────────────────────────
@@ -87,7 +120,7 @@ def capture_screen(path: Path) -> None:
     from Xlib import display as xdisplay  # type: ignore[import]
     from PIL import Image
 
-    d = xdisplay.Display(XVFB_DISPLAY)
+    d = xdisplay.Display(ACTIVE_DISPLAY)
     root = d.screen().root
     g = root.get_geometry()
     raw = root.get_image(0, 0, g.width, g.height, X.ZPixmap, 0xFFFFFFFF)
@@ -262,9 +295,10 @@ def main() -> int:
     SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     GIF_DIR.mkdir(parents=True, exist_ok=True)
 
-    xvfb = start_xvfb()
+    xvfb, display_name = start_xvfb()
     rc = 1
     try:
+        print(f"Using Xvfb display {display_name}")
         app = _build_app()
         print("Running GTK4 app headlessly...")
         app.run(["headless-screenshot"])
@@ -275,11 +309,12 @@ def main() -> int:
         traceback.print_exc()
     finally:
         print("\nStopping Xvfb...")
-        xvfb.terminate()
-        try:
-            xvfb.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            xvfb.kill()
+        if xvfb is not None:
+            xvfb.terminate()
+            try:
+                xvfb.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                xvfb.kill()
 
     print("\n=== Output ===")
     for f in sorted(SCREENSHOTS_DIR.glob("0*.png")):

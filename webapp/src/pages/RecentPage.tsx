@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchRecentReleases, Release } from "../api";
 
 const pillStyle: React.CSSProperties = {
-  display: "inline-block",
-  background: "#f0f0f0",
-  borderRadius: "4px",
-  padding: "0 0.4rem",
-  fontSize: "0.75rem",
-  marginRight: "0.25rem",
-  color: "#555",
+  display: "inline-flex",
 };
 
 const DAYS_OPTIONS = [7, 14, 30, 90];
@@ -40,43 +35,55 @@ export function RecentPage() {
   }, [days]);
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "0 2rem 2rem", lineHeight: 1.5 }}>
-      <h2>Recently Added</h2>
+    <main className="app-page">
+      <header className="app-page__header">
+        <div>
+          <h1 className="app-page__title">Recently Added</h1>
+          <p className="app-page__subtitle">
+            Scan recent pickups and jump back into the collection with the selected release focused.
+          </p>
+        </div>
+        <div className="app-inline-actions">
+          <label className="app-stack-label" htmlFor="recent-days">Last</label>
+          <select
+            id="recent-days"
+            className="app-select"
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+          >
+            {DAYS_OPTIONS.map((d) => (
+              <option key={d} value={d}>
+                {d} days
+              </option>
+            ))}
+          </select>
+        </div>
+      </header>
 
-      <div style={{ marginBottom: "1rem" }}>
-        <label style={{ fontSize: "0.9rem", marginRight: "0.5rem" }}>Last:</label>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          style={{ padding: "0.3rem 0.5rem", fontSize: "0.9rem" }}
-        >
-          {DAYS_OPTIONS.map((d) => (
-            <option key={d} value={d}>
-              {d} days
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {loading ? <p>Loading…</p> : null}
+      {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {loading ? <p className="app-message app-message--subtle">Loading recent releases…</p> : null}
       {!loading && !error && releases.length === 0 ? (
-        <p style={{ color: "#888" }}>No releases added in the last {days} days.</p>
+        <p className="app-message app-message--subtle">No releases added in the last {days} days.</p>
       ) : null}
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {releases.map((r) => (
-          <li key={r.discogs_release_id} style={{ padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-            <div>
-              <strong>{r.artist}</strong> — {r.title}
-              {r.year ? (
-                <span style={{ color: "#888", marginLeft: "0.5rem" }}>({r.year})</span>
-              ) : null}
+      <ul className="app-record-list">
+        {releases.map((release) => (
+          <li key={release.discogs_release_id} className="app-surface app-record">
+            <div className="app-record__header">
+              <p className="app-record__title">
+                <strong>{release.artist}</strong> — {release.title}
+                {release.year ? (
+                  <span className="app-record__year"> ({release.year})</span>
+                ) : null}
+              </p>
+              <Link className="app-link-button app-link-button--ghost" to={`/collection?focus=${release.discogs_release_id}`}>
+                View in Collection
+              </Link>
             </div>
-            {r.genres.length > 0 || r.styles.length > 0 ? (
-              <div style={{ marginTop: "0.2rem" }}>
-                {[...r.genres, ...r.styles].slice(0, 3).map((tag) => (
-                  <span key={tag} style={pillStyle}>
+            {release.genres.length > 0 || release.styles.length > 0 ? (
+              <div className="app-tag-list" style={{ marginTop: "0.5rem" }}>
+                {[...release.genres, ...release.styles].slice(0, 3).map((tag) => (
+                  <span key={tag} className="app-tag" style={pillStyle}>
                     {tag}
                   </span>
                 ))}

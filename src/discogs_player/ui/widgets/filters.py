@@ -24,6 +24,7 @@ class FilterBar(Gtk.Box):
         *,
         default_limit: int | None = 0,
         on_refresh: Callable[[], None] | None = None,
+        on_sync: Callable[[], None] | None = None,
     ) -> None:
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.set_hexpand(True)
@@ -32,15 +33,19 @@ class FilterBar(Gtk.Box):
         self.set_margin_start(8)
         self.set_margin_end(8)
         self._on_refresh = on_refresh
+        self._on_sync = on_sync
         self._default_limit = self._normalize_limit(default_limit)
 
         top_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         top_row.set_hexpand(True)
+        self._top_row = top_row
         self.append(top_row)
 
         bottom_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         bottom_row.set_hexpand(True)
+        self._bottom_row = bottom_row
         self.append(bottom_row)
+        self._compact_layout = False
 
         self._search_entry = Gtk.Entry()
         self._search_entry.set_hexpand(True)
@@ -90,16 +95,26 @@ class FilterBar(Gtk.Box):
         recent_button = Gtk.Button(label="Recent")
         recent_button.set_tooltip_text("Show releases added in last 30 days")
         recent_button.connect("clicked", lambda *_: self._apply_recent_filter())
+        self._recent_button = recent_button
         bottom_row.append(recent_button)
 
         clear_button = Gtk.Button(label="Clear")
         clear_button.connect("clicked", lambda *_: self.clear())
+        self._clear_button = clear_button
         bottom_row.append(clear_button)
 
         refresh_button = Gtk.Button(label="Refresh")
         if self._on_refresh is not None:
             refresh_button.connect("clicked", lambda *_: self._on_refresh())
+        self._refresh_button = refresh_button
         bottom_row.append(refresh_button)
+
+        sync_button = Gtk.Button(label="Sync Collection")
+        if self._on_sync is not None:
+            sync_button.connect("clicked", lambda *_: self._on_sync())
+        self._sync_button = sync_button
+        self._sync_button.set_sensitive(self._on_sync is not None)
+        bottom_row.append(sync_button)
 
         for entry in (
             self._search_entry,
@@ -196,3 +211,37 @@ class FilterBar(Gtk.Box):
             "sort": self.sort_mode(),
             "limit": self.limit(),
         }
+
+    def set_compact_layout(self, compact: bool) -> None:
+        compact_layout = bool(compact)
+        if self._compact_layout == compact_layout:
+            return
+        self._compact_layout = compact_layout
+
+        orientation = (
+            Gtk.Orientation.VERTICAL
+            if compact_layout
+            else Gtk.Orientation.HORIZONTAL
+        )
+        spacing = 6 if compact_layout else 8
+        for row in (self._top_row, self._bottom_row):
+            row.set_orientation(orientation)
+            row.set_spacing(spacing)
+
+        fill_widgets = (
+            self._search_entry,
+            self._year_entry,
+            self._genre_entry,
+            self._style_entry,
+            self._sort_dropdown,
+            self._limit_spin,
+            self._recent_button,
+            self._clear_button,
+            self._refresh_button,
+            self._sync_button,
+        )
+        for widget in fill_widgets:
+            widget.set_hexpand(compact_layout)
+
+    def set_sync_enabled(self, enabled: bool) -> None:
+        self._sync_button.set_sensitive(bool(enabled) and self._on_sync is not None)

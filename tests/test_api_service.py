@@ -217,6 +217,27 @@ def test_api_sync_collection_forwards_allow_empty_deactivate(monkeypatch):
     assert response.json()["data"]["synced"] == 5
 
 
+def test_api_sync_wantlist_forwards_allow_empty_deactivate(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def _fake_run_sync_wantlist(*, allow_empty_deactivate: bool, progress_callback=None):
+        _ = progress_callback
+        captured["allow_empty_deactivate"] = allow_empty_deactivate
+        return {"ok": True, "synced": 2}
+
+    monkeypatch.setattr(sync, "run_sync_wantlist", _fake_run_sync_wantlist)
+
+    client = TestClient(create_app())
+    response = client.post(
+        "/api/v1/sync/wantlist",
+        json={"allow_empty_deactivate": True},
+    )
+    assert response.status_code == 200
+    assert captured["allow_empty_deactivate"] is True
+    assert response.json()["ok"] is True
+    assert response.json()["data"]["synced"] == 2
+
+
 def test_api_list_releases_forwards_filter_params(monkeypatch):
     captured: dict[str, object] = {}
 

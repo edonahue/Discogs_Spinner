@@ -49,8 +49,14 @@ def api_recent_releases(
 @router.get("/releases/{discogs_release_id}")
 def api_get_release(
     discogs_release_id: int,
+    with_value: bool = False,
 ) -> dict[str, object]:
-    return run_use_case(lambda: run_get_release(discogs_release_id))
+    return run_use_case(
+        lambda: run_get_release(
+            discogs_release_id,
+            with_value=with_value,
+        )
+    )
 
 
 @router.get("/releases/{discogs_release_id}/tracklist")

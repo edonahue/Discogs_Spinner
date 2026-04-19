@@ -175,8 +175,7 @@ class ValueQueueWidget(Gtk.Box):
         name_text = f"{artist} — {title}" if artist and title else (artist or title or f"Release {release_id}")
         name_label = Gtk.Label(label=name_text)
         name_label.set_xalign(0.0)
-        name_label.set_ellipsize(3)  # PANGO_ELLIPSIZE_END
-        name_label.set_wrap(False)
+        name_label.set_wrap(True)
         info.append(name_label)
 
         meta_parts = [_reason_label(reason)]
@@ -185,14 +184,14 @@ class ValueQueueWidget(Gtk.Box):
         meta_label = Gtk.Label(label=" · ".join(meta_parts))
         meta_label.set_xalign(0.0)
         meta_label.add_css_class("dim-label")
-        meta_label.set_ellipsize(3)
+        meta_label.set_wrap(True)
         info.append(meta_label)
 
         row.append(info)
 
         # View button (right)
         if release_id and self._on_release_selected:
-            view_btn = Gtk.Button(label="View")
+            view_btn = Gtk.Button(label="Open in Browse")
             view_btn.add_css_class("flat")
             rid = release_id
             view_btn.connect("clicked", lambda _b, r=rid: self._on_release_selected(r))  # type: ignore[misc]

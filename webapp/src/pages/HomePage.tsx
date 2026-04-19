@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getJson, syncCollection, syncWantlist } from "../api";
+import { getJson, SyncSummary, syncCollection, syncWantlist } from "../api";
 
 type StatusPayload = {
   release_count_total: number;
@@ -18,6 +18,13 @@ type StatusPayload = {
 
 type SyncState = "idle" | "syncing" | "done" | "error";
 
+function formatSyncSummary(label: "Collection" | "Wantlist", summary: SyncSummary): string {
+  return (
+    `${label} sync complete: fetched ${summary.fetched_count}, `
+    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
+  );
+}
+
 export function HomePage() {
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [error, setError] = useState<string>("");
@@ -27,9 +34,16 @@ export function HomePage() {
   const [wantlistMsg, setWantlistMsg] = useState("");
 
   function loadStatus() {
-    getJson<StatusPayload>("/status")
-      .then((payload) => setStatus(payload.data))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Unknown API error."));
+    return getJson<StatusPayload>("/status")
+      .then((payload) => {
+        setStatus(payload.data);
+        setError("");
+        return payload.data;
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : "Unknown API error.");
+        throw err;
+      });
   }
 
   useEffect(() => {
@@ -44,14 +58,14 @@ export function HomePage() {
     setCollectionSync("syncing");
     setCollectionMsg("");
     syncCollection()
-      .then(() => {
+      .then((payload) => {
+        const summary = payload.data;
+        if (!summary) {
+          throw new Error("Collection sync completed without a summary.");
+        }
         setCollectionSync("done");
-        setCollectionMsg("Collection sync started.");
-        setTimeout(() => {
-          setCollectionSync("idle");
-          setCollectionMsg("");
-          loadStatus();
-        }, 3000);
+        setCollectionMsg(formatSyncSummary("Collection", summary));
+        void loadStatus().catch(() => undefined);
       })
       .catch((err: unknown) => {
         setCollectionSync("error");
@@ -63,14 +77,14 @@ export function HomePage() {
     setWantlistSync("syncing");
     setWantlistMsg("");
     syncWantlist()
-      .then(() => {
+      .then((payload) => {
+        const summary = payload.data;
+        if (!summary) {
+          throw new Error("Wantlist sync completed without a summary.");
+        }
         setWantlistSync("done");
-        setWantlistMsg("Wantlist sync started.");
-        setTimeout(() => {
-          setWantlistSync("idle");
-          setWantlistMsg("");
-          loadStatus();
-        }, 3000);
+        setWantlistMsg(formatSyncSummary("Wantlist", summary));
+        void loadStatus().catch(() => undefined);
       })
       .catch((err: unknown) => {
         setWantlistSync("error");
@@ -79,56 +93,81 @@ export function HomePage() {
   }
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "0 2rem 2rem", lineHeight: 1.5 }}>
-      <h1>Discogs Spinner</h1>
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {!error && !status ? <p>Loading status...</p> : null}
+    <main className="app-page">
+      <header className="app-page__header">
+        <div>
+          <h1 className="app-page__title">Discogs Spinner</h1>
+          <p className="app-page__subtitle">
+            Desktop collection control without browser tab sprawl. This shell now reflows more predictably when the window narrows.
+          </p>
+        </div>
+      </header>
+      {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {!error && !status ? <p className="app-message app-message--subtle">Loading status…</p> : null}
       {status ? (
-        <section>
-          <p>Total releases: {status.release_count_total}</p>
-          <p>Active releases: {status.release_count_active}</p>
-          <p>Mapped releases: {status.mapped_count}</p>
-          <p>Unmatched releases: {status.unmatched_count}</p>
-          {status.last_sync_time
-            ? <p>Last synced: {status.last_sync_time}</p>
-            : <p>Not yet synced.</p>}
-          {status.wantlist_count != null
-            ? <p>Wantlist entries: {status.wantlist_count}</p>
-            : null}
-          {status.spotify_capability ? (
-            <p>
-              Spotify: {status.spotify_capability.action_label}
-              {" ("}
-              {status.spotify_capability.addon_available ? "addon installed" : "addon unavailable"}
-              {")"}
+        <section className="app-stat-grid">
+          <article className="app-surface app-stat-card">
+            <p className="app-stat-card__label">Total releases</p>
+            <p className="app-stat-card__value">{status.release_count_total}</p>
+          </article>
+          <article className="app-surface app-stat-card">
+            <p className="app-stat-card__label">Active releases</p>
+            <p className="app-stat-card__value">{status.release_count_active}</p>
+          </article>
+          <article className="app-surface app-stat-card">
+            <p className="app-stat-card__label">Mapped releases</p>
+            <p className="app-stat-card__value">{status.mapped_count}</p>
+          </article>
+          <article className="app-surface app-stat-card">
+            <p className="app-stat-card__label">Unmatched releases</p>
+            <p className="app-stat-card__value">{status.unmatched_count}</p>
+          </article>
+          <article className="app-surface app-stat-card">
+            <p className="app-stat-card__label">Wantlist entries</p>
+            <p className="app-stat-card__value">{status.wantlist_count ?? 0}</p>
+            <p className="app-stat-card__meta">
+              {status.last_sync_time ? `Last synced ${status.last_sync_time}` : "Not yet synced."}
             </p>
+          </article>
+          {status.spotify_capability ? (
+            <article className="app-surface app-stat-card">
+              <p className="app-stat-card__label">Spotify</p>
+              <p className="app-stat-card__value" style={{ fontSize: "1.2rem" }}>
+                {status.spotify_capability.action_label}
+              </p>
+              <p className="app-stat-card__meta">
+                {status.spotify_capability.addon_available ? "Addon installed" : "Addon unavailable"}
+              </p>
+            </article>
           ) : null}
         </section>
       ) : null}
 
-      <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", marginTop: "1.5rem", flexWrap: "wrap" }}>
+      <div className="app-inline-actions" style={{ marginTop: "1.5rem" }}>
         <button
+          type="button"
+          className="app-button app-button--primary"
           onClick={handleSyncCollection}
           disabled={collectionSync === "syncing"}
-          style={{ padding: "0.4rem 1rem" }}
         >
           {collectionSync === "syncing" ? "Syncing…" : "Sync Collection"}
         </button>
         <button
+          type="button"
+          className="app-button"
           onClick={handleSyncWantlist}
           disabled={wantlistSync === "syncing"}
-          style={{ padding: "0.4rem 1rem" }}
         >
           {wantlistSync === "syncing" ? "Syncing…" : "Sync Wantlist"}
         </button>
       </div>
       {collectionMsg ? (
-        <p style={{ color: collectionSync === "error" ? "crimson" : "#2a7a2a", marginTop: "0.5rem" }}>
+        <p className={`app-message ${collectionSync === "error" ? "app-message--error" : "app-message--success"}`}>
           {collectionMsg}
         </p>
       ) : null}
       {wantlistMsg ? (
-        <p style={{ color: wantlistSync === "error" ? "crimson" : "#2a7a2a", marginTop: "0.5rem" }}>
+        <p className={`app-message ${wantlistSync === "error" ? "app-message--error" : "app-message--success"}`}>
           {wantlistMsg}
         </p>
       ) : null}

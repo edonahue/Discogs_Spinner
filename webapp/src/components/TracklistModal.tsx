@@ -48,56 +48,28 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 100,
-      }}
+      className="app-modal"
     >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: "8px",
-          padding: "1.5rem 2rem",
-          maxWidth: "560px",
-          width: "90%",
-          maxHeight: "80vh",
-          overflow: "auto",
-          fontFamily: "system-ui, sans-serif",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
+      <div className="app-modal__panel">
+        <div className="app-modal__header">
           <div>
             <strong style={{ fontSize: "1.05rem" }}>{releaseArtist}</strong>
-            <div style={{ color: "#555", marginTop: "0.1rem" }}>{releaseTitle}</div>
+            <div className="app-muted" style={{ marginTop: "0.1rem" }}>{releaseTitle}</div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: "1.4rem",
-              cursor: "pointer",
-              color: "#888",
-              lineHeight: 1,
-              padding: "0 0 0 1rem",
-            }}
+            className="app-button app-button--ghost app-modal__close"
             aria-label="Close"
           >
             ×
           </button>
         </div>
 
-        {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-        {loading ? <p>Loading…</p> : null}
+        {error ? <p className="app-message app-message--error">{error}</p> : null}
+        {loading ? <p className="app-message app-message--subtle">Loading…</p> : null}
 
         {!loading && !error && !hasCached ? (
-          <p style={{ color: "#888", fontSize: "0.9rem" }}>
+          <p className="app-message app-message--subtle">
             No tracklist cached — run{" "}
             <code style={{ background: "#f0f0f0", padding: "0 0.3rem", borderRadius: "3px" }}>
               dplayer tracks refresh
@@ -107,32 +79,30 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
         ) : null}
 
         {!loading && !error && hasCached && audioTracks.length === 0 ? (
-          <p style={{ color: "#888", fontSize: "0.9rem" }}>No audio tracks found.</p>
+          <p className="app-message app-message--subtle">No audio tracks found.</p>
         ) : null}
 
         {!loading && !error && audioTracks.length > 0 ? (
-          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.92rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                <th style={{ padding: "0.3rem 0.5rem 0.3rem 0", width: "2.5rem", color: "#888" }}>#</th>
-                <th style={{ padding: "0.3rem 0.75rem" }}>Title</th>
-                <th style={{ padding: "0.3rem 0 0.3rem 0.75rem", textAlign: "right", color: "#888" }}>Duration</th>
-              </tr>
-            </thead>
-            <tbody>
-              {audioTracks.map((t, i) => (
-                <tr key={i} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={{ padding: "0.3rem 0.5rem 0.3rem 0", color: "#aaa" }}>
-                    {t.position || String(i + 1)}
-                  </td>
-                  <td style={{ padding: "0.3rem 0.75rem" }}>{t.title}</td>
-                  <td style={{ padding: "0.3rem 0 0.3rem 0.75rem", textAlign: "right", color: "#888" }}>
-                    {t.duration || "—"}
-                  </td>
+          <div className="app-table-wrap">
+            <table className="app-table app-table--compact responsive-stack">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Title</th>
+                  <th className="is-right">Duration</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {audioTracks.map((track, i) => (
+                  <tr key={i}>
+                    <td data-label="Track">{track.position || String(i + 1)}</td>
+                    <td data-label="Title">{track.title}</td>
+                    <td data-label="Duration" className="is-right">{track.duration || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : null}
       </div>
     </div>

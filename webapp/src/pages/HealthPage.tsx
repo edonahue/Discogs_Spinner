@@ -22,54 +22,60 @@ export function HealthPage() {
   }, []);
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "0 2rem 2rem", lineHeight: 1.5 }}>
-      <h2>Collection Health</h2>
+    <main className="app-page">
+      <header className="app-page__header">
+        <div>
+          <h1 className="app-page__title">Collection Health</h1>
+          <p className="app-page__subtitle">
+            Health remains summary-only, but the page now reflows cleanly at smaller desktop widths instead of forcing clipped table columns.
+          </p>
+        </div>
+      </header>
 
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {loading ? <p>Loading…</p> : null}
+      {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {loading ? <p className="app-message app-message--subtle">Loading collection health…</p> : null}
 
       {!loading && !error && health !== null ? (
         <>
-          <div style={{ marginBottom: "1.5rem" }}>
-            <span style={{
-              display: "inline-block",
-              fontSize: "3rem",
-              fontWeight: 700,
-              color: scoreColor(health.score),
-              lineHeight: 1,
-            }}>
+          <section className="app-surface app-stat-card" style={{ marginBottom: "1rem" }}>
+            <p className="app-stat-card__label">Health score</p>
+            <p className="app-stat-card__value" style={{ color: scoreColor(health.score) }}>
               {health.score}
-            </span>
-            <span style={{ fontSize: "1.5rem", color: "#888", marginLeft: "0.25rem" }}>/100</span>
-            <p style={{ margin: "0.25rem 0 0", color: "#555", fontSize: "0.9rem" }}>
-              {health.total_active} releases
+              <span style={{ fontSize: "1rem", color: "var(--muted)", marginLeft: "0.35rem" }}>/100</span>
             </p>
-          </div>
+            <p className="app-stat-card__meta">{health.total_active} releases</p>
+          </section>
 
-          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.95rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                <th style={{ padding: "0.4rem 0.75rem 0.4rem 0" }}>Label</th>
-                <th style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>Gap</th>
-                <th style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>%</th>
-                <th style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>Deduction</th>
-              </tr>
-            </thead>
-            <tbody>
-              {health.buckets.map((b) => (
-                <tr key={b.name} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "0.4rem 0.75rem 0.4rem 0" }}>{b.label}</td>
-                  <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>{b.gap_count}</td>
-                  <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: "#888" }}>
-                    {b.gap_pct.toFixed(1)}%
-                  </td>
-                  <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: b.deduction > 0 ? "crimson" : "#555" }}>
-                    {b.deduction > 0 ? `-${b.deduction.toFixed(1)}` : "0"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <section className="app-surface app-table-shell">
+            <div className="app-table-wrap">
+              <table className="app-table responsive-stack">
+                <thead>
+                  <tr>
+                    <th>Label</th>
+                    <th className="is-right">Gap</th>
+                    <th className="is-right">Percent</th>
+                    <th className="is-right">Deduction</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {health.buckets.map((bucket) => (
+                    <tr key={bucket.name}>
+                      <td data-label="Label">{bucket.label}</td>
+                      <td data-label="Gap" className="is-right">{bucket.gap_count}</td>
+                      <td data-label="Percent" className="is-right">{bucket.gap_pct.toFixed(1)}%</td>
+                      <td
+                        data-label="Deduction"
+                        className="is-right"
+                        style={{ color: bucket.deduction > 0 ? "var(--danger)" : "var(--muted)" }}
+                      >
+                        {bucket.deduction > 0 ? `-${bucket.deduction.toFixed(1)}` : "0"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </>
       ) : null}
     </main>

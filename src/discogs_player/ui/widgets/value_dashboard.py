@@ -572,6 +572,15 @@ class ValueDashboard(Gtk.Box):
         target_buttons[0].grab_focus()
         return True
 
+    def clear_release_highlight(self) -> None:
+        if self._highlighted_release_id is None:
+            return
+        for button in self._release_row_buttons_by_id.get(
+            int(self._highlighted_release_id), []
+        ):
+            button.remove_css_class("is-highlighted")
+        self._highlighted_release_id = None
+
     def _append_release_rows(
         self,
         *,

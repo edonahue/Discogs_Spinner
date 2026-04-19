@@ -13,10 +13,13 @@ from discogs_player.data.repo import (
     query_market_value_snapshots,
     upsert_market_price,
     upsert_releases,
+    upsert_wantlist_entries,
+    upsert_wantlist_market_price,
 )
 from discogs_player.services.discogs_client import DiscogsApiError
 from discogs_player.services.sync_manager import MissingDiscogsTokenError
 from discogs_player.use_cases import value_refresh
+from discogs_player.use_cases import value_release_detail as value_release_detail_use_case
 from discogs_player.use_cases import value_show as value_show_use_case
 from discogs_player.use_cases.value_missing import run_market_value_missing
 from discogs_player.use_cases.value_missing import write_market_value_missing_csv
@@ -26,6 +29,11 @@ from discogs_player.use_cases.duplicate_variant_detector import (
 from discogs_player.use_cases.value_examples import run_market_value_examples
 from discogs_player.use_cases.value_dashboard import run_market_value_dashboard
 from discogs_player.use_cases.value_refresh import run_refresh_market_values
+from discogs_player.use_cases.value_release_detail import (
+    run_get_value_release_detail,
+    run_refresh_value_release_detail,
+)
+from discogs_player.use_cases.value_search import run_search_value_releases
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.use_cases.value_show import run_market_value_show
 from discogs_player.use_cases.value_status import run_market_value_status
@@ -46,6 +54,70 @@ def _release(release_id: int, *, is_active: int = 1) -> dict[str, object]:
         "last_synced_at": "2026-01-01T00:00:00Z",
         "is_active": is_active,
     }
+
+
+def _wantlist(release_id: int) -> dict[str, object]:
+    return {
+        "discogs_release_id": release_id,
+        "artist": f"Want Artist {release_id}",
+        "title": f"Want Album {release_id}",
+        "year": 2001,
+        "genres": ["Soul"],
+        "styles": ["Funk"],
+        "thumb_url": None,
+        "cover_url": None,
+        "notes": f"Watch release {release_id}",
+        "added_at": "2026-01-01T00:00:00Z",
+        "last_synced_at": "2026-01-01T00:00:00Z",
+        "is_active": 1,
+    }
+
+
+def _seed_stats(
+    conn,
+    *,
+    table: str,
+    release_id: int,
+    num_for_sale: int,
+    lowest_price: float,
+    community_have: int,
+    community_want: int,
+    rating_count: int,
+    rating_average: float,
+) -> None:
+    conn.execute(
+        f"""
+        INSERT INTO {table}(
+            discogs_release_id,
+            num_for_sale,
+            lowest_price,
+            community_have,
+            community_want,
+            rating_count,
+            rating_average,
+            last_updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(discogs_release_id) DO UPDATE SET
+            num_for_sale = excluded.num_for_sale,
+            lowest_price = excluded.lowest_price,
+            community_have = excluded.community_have,
+            community_want = excluded.community_want,
+            rating_count = excluded.rating_count,
+            rating_average = excluded.rating_average,
+            last_updated_at = excluded.last_updated_at
+        """,
+        (
+            release_id,
+            num_for_sale,
+            lowest_price,
+            community_have,
+            community_want,
+            rating_count,
+            rating_average,
+            "2026-02-09T00:00:00+00:00",
+        ),
+    )
+    conn.commit()
 
 
 def test_market_value_status_aggregates_active_collection(isolated_xdg):
@@ -578,6 +650,247 @@ def test_market_value_show_refresh_requires_discogs_token(isolated_xdg, monkeypa
     monkeypatch.delenv("DISCOGS_TOKEN", raising=False)
     with pytest.raises(MissingDiscogsTokenError):
         run_market_value_show(57, refresh=True)
+
+
+def test_value_search_returns_collection_and_wantlist_matches(isolated_xdg):
+    collection = _release(401)
+    collection["artist"] = "Search Artist"
+    collection["title"] = "Shared Album"
+    wantlist = _wantlist(501)
+    wantlist["artist"] = "Search Artist"
+    wantlist["title"] = "Other Album"
+
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [collection])
+        upsert_wantlist_entries(conn, [wantlist])
+        upsert_market_price(
+            conn,
+            discogs_release_id=401,
+            lowest=18.0,
+            median=22.0,
+            highest=28.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
+        upsert_wantlist_market_price(
+            conn,
+            discogs_release_id=501,
+            lowest=30.0,
+            median=33.0,
+            highest=40.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
+    finally:
+        conn.close()
+
+    report = run_search_value_releases("search artist")
+
+    assert report["query_kind"] == "text"
+    assert report["result_count"] == 2
+    assert report["collection_count"] == 1
+    assert report["wantlist_count"] == 1
+    assert {item["source"] for item in report["results"]} == {
+        "collection",
+        "wantlist",
+    }
+
+
+def test_value_search_supports_discogs_release_urls_and_unsynced_ids(isolated_xdg):
+    release = _release(402)
+    wantlist = _wantlist(402)
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [release])
+        upsert_wantlist_entries(conn, [wantlist])
+    finally:
+        conn.close()
+
+    found = run_search_value_releases("https://www.discogs.com/release/402")
+    assert found["query_kind"] == "discogs-url"
+    assert found["result_count"] == 2
+    assert {item["source"] for item in found["results"]} == {
+        "collection",
+        "wantlist",
+    }
+
+    missing = run_search_value_releases("999123")
+    assert missing["query_kind"] == "discogs-id"
+    assert missing["result_count"] == 0
+    assert missing["unresolved_release_id"] == 999123
+    assert missing["unresolved_discogs_url"].endswith("/999123")
+
+
+def test_value_release_detail_returns_source_specific_fields(isolated_xdg):
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(411)])
+        upsert_wantlist_entries(conn, [_wantlist(511)])
+        upsert_market_price(
+            conn,
+            discogs_release_id=411,
+            lowest=10.0,
+            median=12.0,
+            highest=18.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
+        upsert_wantlist_market_price(
+            conn,
+            discogs_release_id=511,
+            lowest=21.0,
+            median=24.0,
+            highest=31.0,
+            currency="USD",
+            last_updated_at="2026-02-08T00:00:00+00:00",
+        )
+        _seed_stats(
+            conn,
+            table="release_stats",
+            release_id=411,
+            num_for_sale=7,
+            lowest_price=9.5,
+            community_have=210,
+            community_want=90,
+            rating_count=42,
+            rating_average=4.4,
+        )
+        _seed_stats(
+            conn,
+            table="wantlist_stats",
+            release_id=511,
+            num_for_sale=3,
+            lowest_price=19.5,
+            community_have=75,
+            community_want=180,
+            rating_count=18,
+            rating_average=4.8,
+        )
+    finally:
+        conn.close()
+
+    collection = run_get_value_release_detail("collection", 411)
+    wantlist = run_get_value_release_detail("wantlist", 511)
+
+    assert collection["source"] == "collection"
+    assert collection["source_label"] == "Collection"
+    assert collection["market_spread"] == 8.0
+    assert collection["num_for_sale"] == 7
+    assert collection["discogs_release_url"].endswith("/411")
+
+    assert wantlist["source"] == "wantlist"
+    assert wantlist["source_label"] == "Wantlist"
+    assert wantlist["notes"] == "Watch release 511"
+    assert wantlist["community_want"] == 180
+    assert wantlist["market_midpoint"] == 26.0
+
+
+def test_value_release_detail_refresh_updates_collection_and_wantlist(
+    isolated_xdg,
+    monkeypatch,
+):
+    conn = get_connection()
+    try:
+        upsert_releases(conn, [_release(421)])
+        upsert_wantlist_entries(conn, [_wantlist(521)])
+        upsert_market_price(
+            conn,
+            discogs_release_id=421,
+            lowest=1.0,
+            median=2.0,
+            highest=3.0,
+            currency="USD",
+            last_updated_at="2026-01-01T00:00:00+00:00",
+        )
+        upsert_wantlist_market_price(
+            conn,
+            discogs_release_id=521,
+            lowest=4.0,
+            median=5.0,
+            highest=6.0,
+            currency="USD",
+            last_updated_at="2026-01-01T00:00:00+00:00",
+        )
+    finally:
+        conn.close()
+
+    monkeypatch.setenv("DISCOGS_TOKEN", "token")
+
+    class _FakeClient:
+        def __init__(self, token: str):
+            self.token = token
+
+        def fetch_market_price_suggestions(self, discogs_release_id: int):
+            if discogs_release_id == 421:
+                return {
+                    "lowest": 10.0,
+                    "median": 12.0,
+                    "highest": 14.0,
+                    "currency": "USD",
+                }
+            return {
+                "lowest": 20.0,
+                "median": 25.0,
+                "highest": 29.0,
+                "currency": "USD",
+            }
+
+        def fetch_release_stats(self, discogs_release_id: int):
+            if discogs_release_id == 421:
+                return {
+                    "num_for_sale": 8,
+                    "lowest_price": 9.5,
+                    "community_have": 150,
+                    "community_want": 75,
+                    "rating_count": 20,
+                    "rating_average": 4.2,
+                }
+            return {
+                "num_for_sale": 2,
+                "lowest_price": 18.5,
+                "community_have": 60,
+                "community_want": 140,
+                "rating_count": 12,
+                "rating_average": 4.7,
+            }
+
+    monkeypatch.setattr(value_release_detail_use_case, "DiscogsClient", _FakeClient)
+
+    refreshed_collection = run_refresh_value_release_detail("collection", 421)
+    refreshed_wantlist = run_refresh_value_release_detail("wantlist", 521)
+
+    assert refreshed_collection["market_median"] == 12.0
+    assert refreshed_collection["num_for_sale"] == 8
+    assert refreshed_wantlist["market_median"] == 25.0
+    assert refreshed_wantlist["community_want"] == 140
+
+    conn = get_connection()
+    try:
+        collection_price = get_market_price(conn, 421)
+        collection_stats = conn.execute(
+            "SELECT num_for_sale, community_have FROM release_stats WHERE discogs_release_id = ?",
+            (421,),
+        ).fetchone()
+        wantlist_price = conn.execute(
+            "SELECT median FROM wantlist_market_prices WHERE discogs_release_id = ?",
+            (521,),
+        ).fetchone()
+        wantlist_stats = conn.execute(
+            "SELECT num_for_sale, community_want FROM wantlist_stats WHERE discogs_release_id = ?",
+            (521,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert collection_price is not None
+    assert collection_price["median"] == 12.0
+    assert collection_stats is not None
+    assert int(collection_stats["num_for_sale"]) == 8
+    assert wantlist_price is not None
+    assert float(wantlist_price["median"]) == 25.0
+    assert wantlist_stats is not None
+    assert int(wantlist_stats["community_want"]) == 140
 
 
 def test_market_value_missing_lists_active_unpriced_releases(isolated_xdg):

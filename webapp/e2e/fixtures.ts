@@ -33,7 +33,69 @@ export const STUB_RELEASES = [
 
 export const STUB_SETUP = envelope({ onboarding_stage: "complete" });
 
+export const STUB_STATUS = envelope({
+  release_count_total: 3,
+  release_count_active: 3,
+  mapped_count: 2,
+  unmatched_count: 1,
+  wantlist_count: 1,
+  last_sync_time: "2026-03-09T00:00:00",
+  market_value_last_updated: "2026-03-09T00:00:00",
+  spotify_capability: {
+    addon_available: false,
+    configured: false,
+    action_label: "Unavailable",
+  },
+});
+
 export const STUB_COLLECTION = envelope(STUB_RELEASES);
+
+export const STUB_COLLECTION_AFTER_SYNC = envelope([
+  ...STUB_RELEASES,
+  {
+    discogs_release_id: 4,
+    title: "Baduizm",
+    artist: "Erykah Badu",
+    year: 1997,
+    genres: ["Hip Hop", "Funk / Soul"],
+    styles: ["Neo Soul"],
+  },
+]);
+
+export const STUB_COLLECTION_SYNC_SUMMARY = envelope({
+  fetched_count: 4,
+  upserted_count: 4,
+  deactivated_count: 0,
+  last_sync_time: "2026-04-18T14:00:00",
+  skipped_empty_deactivate: false,
+  warnings: [],
+});
+
+export const STUB_COLLECTION_DETAIL = envelope({
+  discogs_release_id: 1,
+  title: "Kind of Blue",
+  artist: "Miles Davis",
+  year: 1959,
+  genres: ["Jazz"],
+  styles: ["Modal"],
+  thumb_url: null,
+  cover_url: null,
+  added_at: "2026-01-15T00:00:00",
+  last_synced_at: "2026-03-09T00:00:00",
+  is_active: true,
+  spotify_album_id: "spotify:album:123",
+  market_lowest: 18.0,
+  market_median: 24.99,
+  market_highest: 40.0,
+  market_currency: "USD",
+  market_last_updated_at: "2026-03-09T00:00:00",
+  num_for_sale: 12,
+  lowest_price: 18.0,
+  community_have: 500,
+  community_want: 42,
+  rating_count: 320,
+  rating_average: 4.8,
+});
 
 export const STUB_WANTLIST = envelope([
   {
@@ -45,6 +107,61 @@ export const STUB_WANTLIST = envelope([
     styles: ["Trip Hop"],
   },
 ]);
+
+export const STUB_WANTLIST_AFTER_SYNC = envelope([
+  {
+    discogs_release_id: 10,
+    title: "Dummy",
+    artist: "Portishead",
+    year: 1994,
+    genres: ["Electronic"],
+    styles: ["Trip Hop"],
+  },
+  {
+    discogs_release_id: 11,
+    title: "Black Saint And The Sinner Lady",
+    artist: "Charles Mingus",
+    year: 1963,
+    genres: ["Jazz"],
+    styles: ["Post Bop"],
+  },
+]);
+
+export const STUB_WANTLIST_SYNC_SUMMARY = envelope({
+  fetched_count: 2,
+  upserted_count: 2,
+  deactivated_count: 0,
+  last_sync_time: "2026-04-18T14:05:00",
+  skipped_empty_deactivate: false,
+  warnings: [],
+});
+
+export const STUB_WANTLIST_DETAIL = envelope({
+  discogs_release_id: 10,
+  title: "Dummy",
+  artist: "Portishead",
+  year: 1994,
+  genres: ["Electronic"],
+  styles: ["Trip Hop"],
+  thumb_url: null,
+  cover_url: null,
+  notes: "Prefer an early UK pressing.",
+  added_at: "2026-02-01T00:00:00",
+  last_synced_at: "2026-03-09T00:00:00",
+  is_active: true,
+  spotify_album_id: null,
+  market_lowest: 32.0,
+  market_median: 38.5,
+  market_highest: 51.0,
+  market_currency: "USD",
+  market_last_updated_at: "2026-03-09T00:00:00",
+  num_for_sale: 8,
+  lowest_price: 32.0,
+  community_have: 210,
+  community_want: 87,
+  rating_count: 112,
+  rating_average: 4.5,
+});
 
 export const STUB_VALUE_DASHBOARD = envelope({
   top_releases: [
@@ -67,7 +184,15 @@ export const STUB_VALUE_QUEUE = envelope({
   stale_count: 2,
   stale_days: 90,
   limit: 25,
-  queue: [],
+  queue: [
+    {
+      discogs_release_id: 2,
+      artist: "Stevie Wonder",
+      title: "Innervisions",
+      market_need_reason: "missing",
+      market_median: null,
+    },
+  ],
 });
 
 export const STUB_HEALTH = envelope({

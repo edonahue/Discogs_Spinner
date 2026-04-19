@@ -151,15 +151,13 @@ class WantlistDetail(Gtk.Box):
         self._youtube_link_button.set_tooltip_text("Search YouTube for this release")
         self.append(self._youtube_link_button)
 
-        self._marketplace_button = Gtk.Button(label="View on Discogs Marketplace")
+        self._marketplace_button = Gtk.Button(label="Open Marketplace")
         self._marketplace_button.set_halign(Gtk.Align.START)
         self._marketplace_button.set_sensitive(False)
         self._marketplace_button.connect("clicked", self._on_marketplace_clicked)
         self.append(self._marketplace_button)
 
-        self._view_market_value_button = Gtk.Button(
-            label="View in Market Value Dashboard"
-        )
+        self._view_market_value_button = Gtk.Button(label="See in Value Tab")
         self._view_market_value_button.set_halign(Gtk.Align.START)
         self._view_market_value_button.set_sensitive(False)
         if on_view_market_value is not None:
@@ -385,7 +383,7 @@ class WantlistDetail(Gtk.Box):
     def _set_discogs_link(self, release_id: int | None) -> None:
         if isinstance(release_id, int) and release_id > 0:
             url = f"https://www.discogs.com/release/{release_id}"
-            self._discogs_link_button.set_label(f"View Discogs #{release_id}")
+            self._discogs_link_button.set_label(f"Open Discogs #{release_id}")
             self._discogs_link_button.set_uri(url)
             self._discogs_link_button.set_sensitive(True)
             self._marketplace_button.set_sensitive(True)

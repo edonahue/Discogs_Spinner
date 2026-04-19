@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
-import { fetchReleases, Release } from "../api";
+import { KeyboardEvent, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { fetchReleases, Release, SyncSummary, syncCollection } from "../api";
+import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
 import { TracklistModal } from "../components/TracklistModal";
 
 const PAGE_SIZE = 25;
 
 type SortKey = "artist_asc" | "artist_desc" | "title_asc" | "year_desc" | "year_asc" | "value_desc";
+type SyncState = "idle" | "syncing" | "done" | "error";
 
 function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
   return [...releases].sort((a, b) => {
@@ -20,16 +23,30 @@ function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
 }
 
 const pillStyle: React.CSSProperties = {
-  display: "inline-block",
-  background: "#f0f0f0",
-  borderRadius: "4px",
-  padding: "0 0.4rem",
-  fontSize: "0.75rem",
-  marginRight: "0.25rem",
-  color: "#555",
+  display: "inline-flex",
 };
 
+type TracklistTarget = {
+  discogs_release_id: number;
+  title: string;
+  artist: string;
+};
+
+function parseFocusId(raw: string | null): number | null {
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function formatSyncSummary(summary: SyncSummary): string {
+  return (
+    `Collection sync complete: fetched ${summary.fetched_count}, `
+    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
+  );
+}
+
 export function CollectionPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [releases, setReleases] = useState<Release[]>([]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -43,7 +60,12 @@ export function CollectionPage() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
+  const [syncState, setSyncState] = useState<SyncState>("idle");
+  const [syncMessage, setSyncMessage] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
+  const [pendingFocusValidation, setPendingFocusValidation] = useState(false);
+  const [selectedRelease, setSelectedRelease] = useState<TracklistTarget | null>(null);
+  const focusedReleaseId = parseFocusId(searchParams.get("focus"));
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query), 300);
@@ -66,6 +88,7 @@ export function CollectionPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const shouldValidateFocus = pendingFocusValidation;
     setLoading(true);
     setError("");
     fetchReleases({
@@ -77,16 +100,32 @@ export function CollectionPage() {
       withValue: showValue || undefined,
     })
       .then((payload) => {
-        if (!cancelled) setReleases(payload.data ?? []);
+        if (cancelled) return;
+        const nextReleases = payload.data ?? [];
+        setReleases(nextReleases);
+        if (
+          shouldValidateFocus
+          && focusedReleaseId != null
+          && !nextReleases.some((release) => release.discogs_release_id === focusedReleaseId)
+        ) {
+          clearFocus();
+        }
+        if (shouldValidateFocus) {
+          setPendingFocusValidation(false);
+        }
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load collection.");
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load collection.");
+        if (shouldValidateFocus) {
+          setPendingFocusValidation(false);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, showValue, limit]);
+  }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, showValue, limit, reloadToken]);
 
   function clearFilters() {
     setQuery("");
@@ -100,98 +139,188 @@ export function CollectionPage() {
 
   const sorted = sortReleases(releases, sortKey);
 
+  function openTracklist(target: TracklistTarget) {
+    setSelectedRelease(target);
+  }
+
+  function clearFocus() {
+    const next = new URLSearchParams(searchParams);
+    next.delete("focus");
+    setSearchParams(next, { replace: true });
+  }
+
+  function handleSyncCollection() {
+    setSyncState("syncing");
+    setSyncMessage("");
+    syncCollection()
+      .then((payload) => {
+        const summary = payload.data;
+        if (!summary) {
+          throw new Error("Collection sync completed without a summary.");
+        }
+        setSyncState("done");
+        setSyncMessage(formatSyncSummary(summary));
+        setPendingFocusValidation(true);
+        setReloadToken((value) => value + 1);
+      })
+      .catch((err: unknown) => {
+        setSyncState("error");
+        setSyncMessage(err instanceof Error ? err.message : "Collection sync failed.");
+      });
+  }
+
+  function handleRowKeyDown(event: KeyboardEvent<HTMLLIElement>, release: Release) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openTracklist({
+        discogs_release_id: release.discogs_release_id,
+        title: release.title,
+        artist: release.artist,
+      });
+    }
+  }
+
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "0 2rem 2rem", lineHeight: 1.5 }}>
-      <h2>Collection</h2>
+    <main className="app-page">
+      <header className="app-page__header">
+        <div>
+          <h1 className="app-page__title">Collection</h1>
+          <p className="app-page__subtitle">
+            Browse your synced releases, keep text readable at narrower window widths, and jump back here when another section promises more detail.
+          </p>
+        </div>
+      </header>
 
-      {/* Filter bar */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
-        <input
-          type="search"
-          placeholder="Search…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ padding: "0.4rem 0.75rem", fontSize: "1rem", width: "220px" }}
+      {focusedReleaseId ? (
+        <FocusedReleaseCard
+          releaseId={focusedReleaseId}
+          scope="collection"
+          onClear={clearFocus}
+          onOpenTracklist={(release) =>
+            openTracklist({
+              discogs_release_id: release.discogs_release_id,
+              title: release.title,
+              artist: release.artist,
+            })
+          }
         />
-        <input
-          type="text"
-          placeholder="Year"
-          value={yearFilter}
-          onChange={(e) => setYearFilter(e.target.value)}
-          style={{ padding: "0.4rem 0.75rem", fontSize: "1rem", width: "80px" }}
-        />
-        <input
-          type="text"
-          placeholder="Genre"
-          value={genreFilter}
-          onChange={(e) => setGenreFilter(e.target.value)}
-          style={{ padding: "0.4rem 0.75rem", fontSize: "1rem", width: "120px" }}
-        />
-        <label style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-          <input type="checkbox" checked={unmatchedOnly} onChange={(e) => setUnmatchedOnly(e.target.checked)} />
-          Unmatched only
-        </label>
-        <label style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-          <input type="checkbox" checked={showValue} onChange={(e) => setShowValue(e.target.checked)} />
-          Show value
-        </label>
-        <button onClick={clearFilters} style={{ padding: "0.4rem 0.75rem", fontSize: "0.9rem" }}>
-          Clear
-        </button>
-      </div>
+      ) : null}
 
-      {/* Sort */}
-      <div style={{ marginBottom: "1rem" }}>
-        <label style={{ fontSize: "0.9rem", marginRight: "0.5rem" }}>Sort:</label>
-        <select
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as SortKey)}
-          style={{ padding: "0.3rem 0.5rem", fontSize: "0.9rem" }}
-        >
-          <option value="artist_asc">Artist A→Z</option>
-          <option value="artist_desc">Artist Z→A</option>
-          <option value="title_asc">Title A→Z</option>
-          <option value="year_desc">Year (newest first)</option>
-          <option value="year_asc">Year (oldest first)</option>
-          {showValue && <option value="value_desc">Value (high→low)</option>}
-        </select>
-      </div>
-
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {loading && releases.length === 0 ? <p>Loading…</p> : null}
-      {!loading && !error && releases.length === 0 ? <p>No releases found.</p> : null}
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {sorted.map((r) => (
-          <li
-            key={r.discogs_release_id}
-            onClick={() => setSelectedRelease(r)}
-            style={{
-              padding: "0.5rem 0",
-              borderBottom: "1px solid #eee",
-              cursor: "pointer",
-            }}
+      <section className="app-surface app-toolbar">
+        <div className="app-toolbar__group">
+          <div className="app-toolbar__field">
+            <input
+              className="app-input"
+              type="search"
+              placeholder="Search artist or title"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="app-toolbar__field app-toolbar__field--compact">
+            <input
+              className="app-input"
+              type="text"
+              placeholder="Year"
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+            />
+          </div>
+          <div className="app-toolbar__field">
+            <input
+              className="app-input"
+              type="text"
+              placeholder="Genre"
+              value={genreFilter}
+              onChange={(e) => setGenreFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="app-toolbar__group">
+          <label className="app-checkbox">
+            <input type="checkbox" checked={unmatchedOnly} onChange={(e) => setUnmatchedOnly(e.target.checked)} />
+            Unmatched only
+          </label>
+          <label className="app-checkbox">
+            <input type="checkbox" checked={showValue} onChange={(e) => setShowValue(e.target.checked)} />
+            Show value
+          </label>
+          <div className="app-toolbar__field">
+            <select
+              className="app-select"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+            >
+              <option value="artist_asc">Artist A→Z</option>
+              <option value="artist_desc">Artist Z→A</option>
+              <option value="title_asc">Title A→Z</option>
+              <option value="year_desc">Year (newest first)</option>
+              <option value="year_asc">Year (oldest first)</option>
+              {showValue ? <option value="value_desc">Value (high→low)</option> : null}
+            </select>
+          </div>
+          <button type="button" className="app-button app-button--ghost" onClick={clearFilters}>
+            Clear Filters
+          </button>
+          <button
+            type="button"
+            className="app-button"
+            onClick={handleSyncCollection}
+            disabled={syncState === "syncing"}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span>
-                <strong>{r.artist}</strong> — {r.title}
-                {r.year ? <span style={{ color: "#888", marginLeft: "0.5rem" }}>({r.year})</span> : null}
-              </span>
-              {showValue && r.value?.price_median != null ? (
-                <span style={{ color: "#2a7a2a", fontWeight: 500, marginLeft: "1rem", whiteSpace: "nowrap" }}>
-                  {r.value.price_median.toFixed(2)} {r.value.currency}
-                </span>
-              ) : null}
-            </div>
-            {(r.genres.length > 0 || r.styles.length > 0) ? (
-              <div style={{ marginTop: "0.2rem" }}>
-                {[...r.genres, ...r.styles].slice(0, 3).map((tag) => (
-                  <span key={tag} style={pillStyle}>{tag}</span>
-                ))}
+            {syncState === "syncing" ? "Syncing…" : "Sync Collection"}
+          </button>
+        </div>
+      </section>
+
+      {syncMessage ? (
+        <p className={`app-message ${syncState === "error" ? "app-message--error" : "app-message--success"}`}>
+          {syncMessage}
+        </p>
+      ) : null}
+      {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {loading && releases.length === 0 ? <p className="app-message app-message--subtle">Loading releases…</p> : null}
+      {!loading && !error && releases.length === 0 ? <p className="app-message app-message--subtle">No releases found.</p> : null}
+
+      <ul className="app-record-list">
+        {sorted.map((release) => {
+          const isFocused = focusedReleaseId === release.discogs_release_id;
+          return (
+            <li
+              key={release.discogs_release_id}
+              className={`app-surface app-record app-record--interactive${isFocused ? " app-record--focused" : ""}`}
+              onClick={() =>
+                openTracklist({
+                  discogs_release_id: release.discogs_release_id,
+                  title: release.title,
+                  artist: release.artist,
+                })
+              }
+              onKeyDown={(event) => handleRowKeyDown(event, release)}
+              tabIndex={0}
+              aria-current={isFocused ? "true" : undefined}
+            >
+              <div className="app-record__header">
+                <p className="app-record__title">
+                  <strong>{release.artist}</strong> — {release.title}
+                  {release.year ? <span className="app-record__year"> ({release.year})</span> : null}
+                </p>
+                {showValue && release.value?.price_median != null ? (
+                  <span className="app-record__price">
+                    {release.value.price_median.toFixed(2)} {release.value.currency}
+                  </span>
+                ) : null}
               </div>
-            ) : null}
-          </li>
-        ))}
+              {release.genres.length > 0 || release.styles.length > 0 ? (
+                <div className="app-tag-list" style={{ marginTop: "0.5rem" }}>
+                  {[...release.genres, ...release.styles].slice(0, 3).map((tag) => (
+                    <span key={tag} className="app-tag" style={pillStyle}>{tag}</span>
+                  ))}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
 
       {selectedRelease !== null ? (
@@ -205,8 +334,10 @@ export function CollectionPage() {
 
       {releases.length === limit ? (
         <button
+          type="button"
+          className="app-button"
           onClick={() => setLimit((l) => l + PAGE_SIZE)}
-          style={{ marginTop: "1rem", padding: "0.4rem 1rem" }}
+          style={{ marginTop: "1rem" }}
         >
           Load more
         </button>

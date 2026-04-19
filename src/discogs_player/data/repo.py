@@ -244,32 +244,70 @@ def mark_releases_inactive_missing(conn, active_ids: Sequence[int]) -> int:
     return cursor.rowcount
 
 
-def get_release_by_id(conn, discogs_release_id: int) -> dict[str, Any] | None:
-    row = conn.execute(
-        """
+def get_release_by_id(
+    conn,
+    discogs_release_id: int,
+    *,
+    include_market: bool = False,
+) -> dict[str, Any] | None:
+    select_columns = [
+        "r.discogs_release_id",
+        "r.artist",
+        "r.title",
+        "r.year",
+        "r.genres",
+        "r.styles",
+        "r.thumb_url",
+        "r.cover_url",
+        "r.added_at",
+        "r.last_synced_at",
+        "r.is_active",
+        "m.spotify_album_id",
+    ]
+    if include_market:
+        select_columns.extend(
+            [
+                "mp.lowest AS market_lowest",
+                "mp.median AS market_median",
+                "mp.highest AS market_highest",
+                "mp.currency AS market_currency",
+                "mp.last_updated_at AS market_last_updated_at",
+                "rs.num_for_sale",
+                "rs.lowest_price",
+                "rs.community_have",
+                "rs.community_want",
+                "rs.rating_count",
+                "rs.rating_average",
+            ]
+        )
+
+    sql = [
+        f"""
         SELECT
-            r.discogs_release_id,
-            r.artist,
-            r.title,
-            r.year,
-            r.genres,
-            r.styles,
-            r.thumb_url,
-            r.cover_url,
-            r.added_at,
-            r.last_synced_at,
-            r.is_active,
-            m.spotify_album_id
+            {", ".join(select_columns)}
         FROM releases r
         LEFT JOIN spotify_mapping m
           ON m.discogs_release_id = r.discogs_release_id
-        WHERE r.discogs_release_id = ?
-        """,
-        (discogs_release_id,),
-    ).fetchone()
+        """
+    ]
+    if include_market:
+        sql.append(
+            """
+            LEFT JOIN market_prices mp
+              ON mp.discogs_release_id = r.discogs_release_id
+            LEFT JOIN release_stats rs
+              ON rs.discogs_release_id = r.discogs_release_id
+            """
+        )
+    sql.append("WHERE r.discogs_release_id = ?")
+
+    row = conn.execute("\n".join(sql), (discogs_release_id,)).fetchone()
     if row is None:
         return None
-    return _row_to_release(row)
+    base = _row_to_release(row)
+    if include_market:
+        return _attach_market_fields(base, row)
+    return base
 
 
 def get_spotify_mapping(conn, discogs_release_id: int) -> dict[str, Any] | None:

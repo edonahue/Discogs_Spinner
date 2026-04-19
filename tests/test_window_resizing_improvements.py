@@ -91,7 +91,7 @@ def test_split_layout_ratio_logic_present():
 
 
 def test_split_layout_reflow_guards_present():
-    """Regression guard for wantlist/browse split reflow and fixed sidebar widths."""
+    """Regression guard for startup/maximize/tab-return reflow orchestration."""
 
     from pathlib import Path
 
@@ -105,10 +105,22 @@ def test_split_layout_reflow_guards_present():
     assert "self._wantlist_sidebar_scroll.set_size_request(wantlist_detail_width, -1)" in content
     assert "self._sidebar_scroll.set_propagate_natural_width(False)" in content
     assert "self._wantlist_sidebar_scroll.set_propagate_natural_width(False)" in content
-    assert "GLib.timeout_add(120, self._apply_split_layout_from_current_size)" in content
+    assert "_VISIBLE_LAYOUT_SETTLE_DELAYS_MS = (0, 90, 220, 420)" in content
+    assert "self._layout_settle_source_ids: dict[str, int] = {}" in content
+    assert "def _cancel_visible_layout_settle(self) -> None:" in content
+    assert "def _visible_layout_ready_for_reflow(self, active_view: str) -> bool:" in content
+    assert "def _run_visible_layout_settle_pass(" in content
+    assert "def _schedule_visible_layout_settle(self, *, reason: str) -> None:" in content
     assert "def _handle_main_stack_changed(" in content
-    assert "if self._active_main_view() == \"wantlist\":" in content
-    assert "if self._active_main_view() == \"browse\":" in content
+    assert 'active_view = self._active_main_view()' in content
+    assert 'elif active_view == "wantlist":' in content
+    assert 'if active_view == "browse":' in content
+    assert 'self._schedule_visible_layout_settle(reason="startup")' in content
+    assert 'self._schedule_visible_layout_settle(reason="window-resize")' in content
+    assert 'self._schedule_visible_layout_settle(reason="window-state")' in content
+    assert 'self._schedule_visible_layout_settle(reason="main-stack-changed")' in content
+    assert 'self._schedule_visible_layout_settle(reason="browse-load")' in content
+    assert 'self._schedule_visible_layout_settle(reason="wantlist-load")' in content
 
     print("✓ Split layout reflow guards are present")
 
@@ -134,7 +146,7 @@ def test_split_layout_resets_scrolled_max_width_before_min_width_updates():
 
 
 def test_better_default_window_size():
-    """Test that window default size is more reasonable."""
+    """Test that startup window sizing is monitor-aware and less aggressive."""
     
     from pathlib import Path
     
@@ -145,13 +157,18 @@ def test_better_default_window_size():
     with open(main_window_file, 'r') as f:
         content = f.read()
     
-    # Should have improved default size
-    assert 'set_default_size(1200, 800)' in content  # Better default size
-    assert 'set_size_request(900, 700)' in content  # Better minimum size
-    
+    assert "_STARTUP_WINDOW_DEFAULT_WIDTH = 1100" in content
+    assert "_STARTUP_WINDOW_DEFAULT_HEIGHT = 760" in content
+    assert "_STARTUP_WINDOW_MIN_WIDTH = 820" in content
+    assert "_STARTUP_WINDOW_MIN_HEIGHT = 620" in content
+    assert "def _startup_target_window_size(self) -> tuple[int, int]:" in content
+    assert "def _apply_startup_window_size(self) -> bool:" in content
+    assert "self.set_default_size(target_width, target_height)" in content
+    assert "self.queue_resize()" in content
+
     print("✓ Better default window size")
-    print("  Found set_default_size(1200, 800)")
-    print("  Found set_size_request(900, 700)")
+    print("  Found monitor-aware startup sizing helpers")
+    print("  Found smaller startup and minimum window targets")
 
 
 if __name__ == "__main__":

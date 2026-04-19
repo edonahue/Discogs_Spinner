@@ -145,6 +145,17 @@ def test_headless_screenshot_timing_constants_are_sane():
     assert c.get("INITIAL_DELAY_MS", 0) >= 2000, "INITIAL_DELAY_MS too short"
 
 
+def test_headless_screenshot_script_can_fallback_when_default_display_is_busy():
+    source = SCRIPT.read_text(encoding="utf-8")
+    for marker in (
+        "_DISPLAY_CANDIDATE_OFFSETS = tuple(range(0, 8))",
+        "for offset in _DISPLAY_CANDIDATE_OFFSETS",
+        'ACTIVE_DISPLAY = XVFB_DISPLAY',
+        "Xvfb could not start on any candidate display.",
+    ):
+        assert marker in source
+
+
 # ── integration test ───────────────────────────────────────────────────────────
 
 

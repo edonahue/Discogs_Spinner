@@ -1,5 +1,19 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchValueDashboard, fetchValueQueue, postJson, ValueDashboard, ValueRefreshQueue } from "../api";
+
+function formatCurrency(value: number | null, currency: string): string {
+  if (value == null) return "—";
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${currency}`;
+  }
+}
 
 export function ValuePage() {
   const [dashboard, setDashboard] = useState<ValueDashboard | null>(null);
@@ -48,121 +62,129 @@ export function ValuePage() {
   const hasData = dashboard && dashboard.top_releases.length > 0;
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "0 2rem 2rem", lineHeight: 1.5 }}>
-      <h2>Collection Value</h2>
-
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-        {dashboard?.last_updated ? (
-          <span style={{ color: "#555", fontSize: "0.9rem" }}>
-            Last updated: {dashboard.last_updated}
-          </span>
-        ) : null}
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          style={{ padding: "0.4rem 1rem" }}
-        >
-          {refreshing ? "Refreshing…" : "Refresh Values"}
-        </button>
-      </div>
+    <main className="app-page">
+      <header className="app-page__header">
+        <div>
+          <h1 className="app-page__title">Collection Value</h1>
+          <p className="app-page__subtitle">
+            Review price leaders and refresh candidates, then jump back into the collection with the target release focused.
+          </p>
+        </div>
+        <div className="app-inline-actions">
+          {dashboard?.last_updated ? (
+            <span className="app-muted">Last updated {dashboard.last_updated}</span>
+          ) : null}
+          <button
+            type="button"
+            className="app-button app-button--primary"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            {refreshing ? "Refreshing…" : "Refresh Values"}
+          </button>
+        </div>
+      </header>
 
       {refreshMsg ? (
-        <p style={{ color: refreshMsg.includes("failed") || refreshMsg.includes("Failed") ? "crimson" : "#2a7a2a" }}>
+        <p className={`app-message ${refreshMsg.toLowerCase().includes("fail") ? "app-message--error" : "app-message--success"}`}>
           {refreshMsg}
         </p>
       ) : null}
 
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {loading ? <p>Loading…</p> : null}
+      {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {loading ? <p className="app-message app-message--subtle">Loading market value dashboard…</p> : null}
 
       {!loading && !error && !hasData ? (
-        <p style={{ color: "#555" }}>Run a value refresh to see market prices.</p>
+        <p className="app-message app-message--subtle">Run a value refresh to see market prices.</p>
       ) : null}
 
       {hasData ? (
-        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.95rem" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-              <th style={{ padding: "0.4rem 0.75rem 0.4rem 0" }}>Artist</th>
-              <th style={{ padding: "0.4rem 0.75rem" }}>Title</th>
-              <th style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>Median</th>
-              <th style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>High</th>
-              <th style={{ padding: "0.4rem 0.75rem" }}>Currency</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dashboard.top_releases.map((r) => (
-              <tr key={r.discogs_release_id} style={{ borderBottom: "1px solid #eee" }}>
-                <td style={{ padding: "0.4rem 0.75rem 0.4rem 0" }}>{r.artist}</td>
-                <td style={{ padding: "0.4rem 0.75rem" }}>{r.title}</td>
-                <td style={{ padding: "0.4rem 0.75rem", textAlign: "right", color: "#2a7a2a", fontWeight: 500 }}>
-                  {r.price_median != null ? r.price_median.toFixed(2) : "—"}
-                </td>
-                <td style={{ padding: "0.4rem 0.75rem", textAlign: "right" }}>
-                  {r.price_high != null ? r.price_high.toFixed(2) : "—"}
-                </td>
-                <td style={{ padding: "0.4rem 0.75rem", color: "#888" }}>{r.currency}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <section className="app-surface app-table-shell">
+          <h2 className="app-page__section-title">Top Priced Releases</h2>
+          <div className="app-table-wrap">
+            <table className="app-table responsive-stack">
+              <thead>
+                <tr>
+                  <th>Artist</th>
+                  <th>Title</th>
+                  <th className="is-right">Median</th>
+                  <th className="is-right">High</th>
+                  <th>Currency</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.top_releases.map((release) => (
+                  <tr key={release.discogs_release_id}>
+                    <td data-label="Artist">{release.artist}</td>
+                    <td data-label="Title">{release.title}</td>
+                    <td data-label="Median" className="is-right">{formatCurrency(release.price_median, release.currency)}</td>
+                    <td data-label="High" className="is-right">{formatCurrency(release.price_high, release.currency)}</td>
+                    <td data-label="Currency">{release.currency}</td>
+                    <td data-label="Action">
+                      <Link className="app-link-button app-link-button--ghost" to={`/collection?focus=${release.discogs_release_id}`}>
+                        View in Collection
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       ) : null}
 
-      <h3 style={{ marginTop: "2rem" }}>Refresh Queue</h3>
-      {queue !== null && queue.total_candidates === 0 ? (
-        <p style={{ color: "#555" }}>All prices are up to date.</p>
-      ) : null}
-      {queue !== null && queue.total_candidates > 0 ? (
-        <>
-          <div style={{ display: "flex", gap: "1.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.9rem", color: "#555" }}>
-              Missing: <strong>{queue.missing_count}</strong>
-            </span>
-            <span style={{ fontSize: "0.9rem", color: "#555" }}>
-              Unpriced: <strong>{queue.unpriced_count}</strong>
-            </span>
-            <span style={{ fontSize: "0.9rem", color: "#555" }}>
-              Stale (&gt;{queue.stale_days}d): <strong>{queue.stale_count}</strong>
-            </span>
+      <section className="app-surface app-table-shell" style={{ marginTop: "1rem" }}>
+        <div className="app-page__header" style={{ marginBottom: "1rem" }}>
+          <div>
+            <h2 className="app-page__section-title">Refresh Queue</h2>
+            <p className="app-page__subtitle">
+              Releases below can jump back into the collection detail surface for follow-up.
+            </p>
           </div>
-          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                <th style={{ padding: "0.3rem 0.75rem 0.3rem 0" }}>Artist</th>
-                <th style={{ padding: "0.3rem 0.75rem" }}>Title</th>
-                <th style={{ padding: "0.3rem 0.75rem" }}>Reason</th>
-                <th style={{ padding: "0.3rem 0.75rem", textAlign: "right" }}>Median</th>
-              </tr>
-            </thead>
-            <tbody>
-              {queue.queue.map((item) => (
-                <tr key={item.discogs_release_id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "0.3rem 0.75rem 0.3rem 0" }}>{item.artist}</td>
-                  <td style={{ padding: "0.3rem 0.75rem" }}>{item.title}</td>
-                  <td style={{ padding: "0.3rem 0.75rem" }}>
-                    <span style={{
-                      fontSize: "0.8rem",
-                      padding: "0.1rem 0.4rem",
-                      borderRadius: "3px",
-                      background: item.market_need_reason === "missing" ? "#fde8e8"
-                        : item.market_need_reason === "unpriced" ? "#fdf3e0"
-                        : "#e8f0fe",
-                      color: item.market_need_reason === "missing" ? "crimson"
-                        : item.market_need_reason === "unpriced" ? "#b8860b"
-                        : "#1a56a0",
-                    }}>
-                      {item.market_need_reason}
-                    </span>
-                  </td>
-                  <td style={{ padding: "0.3rem 0.75rem", textAlign: "right", color: "#888" }}>
-                    {item.market_median != null ? item.market_median.toFixed(2) : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      ) : null}
+        </div>
+
+        {queue !== null && queue.total_candidates === 0 ? (
+          <p className="app-message app-message--subtle">All prices are up to date.</p>
+        ) : null}
+        {queue !== null && queue.total_candidates > 0 ? (
+          <>
+            <div className="app-inline-summary" style={{ marginBottom: "1rem" }}>
+              <span className="app-muted">Missing <strong>{queue.missing_count}</strong></span>
+              <span className="app-muted">Unpriced <strong>{queue.unpriced_count}</strong></span>
+              <span className="app-muted">Stale (&gt;{queue.stale_days}d) <strong>{queue.stale_count}</strong></span>
+            </div>
+            <div className="app-table-wrap">
+              <table className="app-table app-table--compact responsive-stack">
+                <thead>
+                  <tr>
+                    <th>Artist</th>
+                    <th>Title</th>
+                    <th>Reason</th>
+                    <th className="is-right">Median</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {queue.queue.map((item) => (
+                    <tr key={item.discogs_release_id}>
+                      <td data-label="Artist">{item.artist}</td>
+                      <td data-label="Title">{item.title}</td>
+                      <td data-label="Reason">{item.market_need_reason}</td>
+                      <td data-label="Median" className="is-right">{item.market_median != null ? item.market_median.toFixed(2) : "—"}</td>
+                      <td data-label="Action">
+                        <Link className="app-link-button app-link-button--ghost" to={`/collection?focus=${item.discogs_release_id}`}>
+                          View in Collection
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
+      </section>
     </main>
   );
 }

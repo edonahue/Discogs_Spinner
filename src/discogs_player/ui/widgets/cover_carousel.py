@@ -535,13 +535,9 @@ class CoverCarousel(Gtk.Box):
         candidate_width = max(candidate_width, current_slot_width)
         candidate_height = max(candidate_height, current_slot_height)
 
-        if (
-            candidate_width >= self._MIN_LAYOUT_HINT_WIDTH
-            and candidate_height >= self._MIN_LAYOUT_HINT_HEIGHT
-        ):
-            self._last_stable_hint_width = candidate_width
-            self._last_stable_hint_height = candidate_height
-
+        # Keep fallback-derived dimensions provisional. A later real allocation
+        # from apply_layout_hint() or _on_size_change() should decide what counts
+        # as "stable" so startup/maximize cannot lock in an oversized hint.
         return candidate_width, candidate_height
 
     def apply_layout_hint(self, width: int, height: int) -> None:

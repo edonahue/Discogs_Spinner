@@ -28,6 +28,9 @@ def test_ipod_theme_selectors_exist_in_main_window():
         ".ipod-view-row",
         ".ipod-view-switcher",
         ".ipod-value-dashboard",
+        ".ipod-value-workspace",
+        ".ipod-value-search-panel",
+        ".ipod-value-inspector",
         ".ipod-value-card",
         ".ipod-value-section",
         ".ipod-value-ops-row",
@@ -76,12 +79,14 @@ def test_main_window_exposes_gallery_mode_for_browse_and_wantlist():
         "self._gallery_mode.connect(\"toggled\", self._handle_gallery_mode_toggled)",
         'self._browse_stack.add_named(self._browse_gallery, "gallery")',
         'self._set_browse_mode("gallery")',
-        "def _handle_gallery_back_requested(self) -> None:",
+        "self._browse_gallery_clear_button,",
+        "self._build_detail_sidebar_header(",
+        "def _handle_browse_gallery_clear_clicked(self, _button: Gtk.Button) -> None:",
         'self._wantlist_gallery_mode = Gtk.ToggleButton(label="Gallery")',
         "self._wantlist_gallery_mode.connect(",
         'self._wantlist_stack.add_named(self._wantlist_gallery, "gallery")',
         'self._set_wantlist_mode("gallery")',
-        "def _handle_wantlist_gallery_back_requested(self) -> None:",
+        "def _handle_wantlist_gallery_clear_clicked(self, _button: Gtk.Button) -> None:",
     ):
         assert marker in source
 
@@ -142,6 +147,37 @@ def test_filter_sort_options_include_year_and_genre_modes():
         assert marker in source
 
 
+def test_filter_bars_expose_sync_controls_for_collection_and_wantlist():
+    collection_source = _source_text("src/discogs_player/ui/widgets/filters.py")
+    wantlist_source = _source_text("src/discogs_player/ui/widgets/wantlist_filters.py")
+
+    for marker in (
+        'sync_button = Gtk.Button(label="Sync Collection")',
+        "self._sync_button.set_sensitive(self._on_sync is not None)",
+        "def set_sync_enabled(self, enabled: bool) -> None:",
+    ):
+        assert marker in collection_source
+
+    for marker in (
+        'sync_button = Gtk.Button(label="Sync Wantlist")',
+        "self._sync_button.set_sensitive(self._on_sync is not None)",
+        "def set_sync_enabled(self, enabled: bool) -> None:",
+    ):
+        assert marker in wantlist_source
+
+
+def test_main_window_wires_filter_bar_sync_controls():
+    source = _source_text("src/discogs_player/ui/main_window.py")
+    for marker in (
+        "on_sync=self._handle_browse_sync_clicked",
+        "on_started=lambda: self._filters.set_sync_enabled(False)",
+        "on_finished=lambda: self._filters.set_sync_enabled(True)",
+        "on_started=lambda: self._wantlist_filters.set_sync_enabled(False)",
+        "on_finished=lambda: self._wantlist_filters.set_sync_enabled(True)",
+    ):
+        assert marker in source
+
+
 def test_main_window_resize_fallbacks_are_present():
     source = _source_text("src/discogs_player/ui/main_window.py")
     for marker in (
@@ -152,7 +188,7 @@ def test_main_window_resize_fallbacks_are_present():
         "self._sidebar_scroll = Gtk.ScrolledWindow()",
         "self._sidebar_scroll.set_min_content_width(320)",
         "self._sidebar_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)",
-        "content.set_position(850)",
+        "content.connect(\"notify::width\", self._on_content_width_change)",
     ):
         assert marker in source
 
@@ -217,6 +253,7 @@ def test_cover_carousel_uses_three_cover_flow_and_prefetches_upcoming_album_art(
         "def _schedule_responsive_slot_update(",
         "def _flush_pending_responsive_slot_update(",
         "def _on_size_change(",
+        "Keep fallback-derived dimensions provisional.",
         "_CENTER_SPIN_INTERVAL_MS =",
         "_CENTER_SPIN_MIN_TICKS =",
         "def start_center_spin_animation(self",
@@ -226,6 +263,26 @@ def test_cover_carousel_uses_three_cover_flow_and_prefetches_upcoming_album_art(
         "def set_spin_target_release(self, discogs_release_id: int | None) -> None:",
         "def _spin_stride_for_remaining(remaining: int) -> int:",
         "self._index = next_index",
+    ):
+        assert marker in source
+
+
+def test_main_window_uses_shared_visible_layout_settle_helper():
+    source = _source_text("src/discogs_player/ui/main_window.py")
+    for marker in (
+        "self._layout_settle_source_ids: dict[str, int] = {}",
+        "self._layout_settle_generation = 0",
+        "def _cancel_visible_layout_settle(self) -> None:",
+        "def _visible_layout_metrics(self, active_view: str) -> tuple[int, int, int]:",
+        "def _visible_layout_ready_for_reflow(self, active_view: str) -> bool:",
+        "def _run_visible_layout_settle_pass(",
+        "def _schedule_visible_layout_settle(self, *, reason: str) -> None:",
+        'self._schedule_visible_layout_settle(reason="startup")',
+        'self._schedule_visible_layout_settle(reason="window-resize")',
+        'self._schedule_visible_layout_settle(reason="window-state")',
+        'self._schedule_visible_layout_settle(reason="main-stack-changed")',
+        'self._schedule_visible_layout_settle(reason="browse-load")',
+        'self._schedule_visible_layout_settle(reason="wantlist-load")',
     ):
         assert marker in source
 
@@ -241,13 +298,13 @@ def test_filter_bar_uses_multi_row_layout_for_narrow_widths():
         assert marker in source
 
 
-def test_cover_grid_widget_supports_gallery_selection_overlay_and_back_action():
+def test_cover_grid_widget_supports_scrollable_split_gallery_selection():
     source = _source_text("src/discogs_player/ui/widgets/cover_grid.py")
     for marker in (
         "class CoverGrid(Gtk.Box):",
-        "self._hero_revealer = Gtk.Revealer()",
-        'self._back_button = Gtk.Button(label="Back to Gallery")',
-        'self._back_button.add_css_class("interactive-back-button")',
+        "self.set_focusable(True)",
+        "self._scroll = Gtk.ScrolledWindow()",
+        "self._scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)",
         "def clear_selection(self, *, emit: bool = True) -> None:",
         "def has_active_selection(self) -> bool:",
         "def apply_layout_hint(",
@@ -260,6 +317,7 @@ def test_cover_grid_uses_incremental_selection_and_layout_updates():
     for marker in (
         "self._buttons_by_id: dict[int, Gtk.Button] = {}",
         "self._selected_button_id: int | None = None",
+        "self._reserved_right_width = 0",
         "_RESIZE_DEBOUNCE_MS =",
         "self._pending_layout_source_id: int | None = None",
         "self.connect(\"destroy\", self._handle_destroy)",
@@ -267,7 +325,6 @@ def test_cover_grid_uses_incremental_selection_and_layout_updates():
         "def _flush_pending_responsive_layout(self) -> bool:",
         "def _cancel_pending_responsive_layout(self) -> None:",
         "GLib.timeout_add(",
-        "def _hero_key_for_item(self, item: dict[str, object]) -> tuple[int | None, str, int]:",
         "if self._selected_button_id == next_button_id:",
         "layout_changed = (",
         "if layout_changed:",
@@ -296,6 +353,8 @@ def test_main_window_exposes_market_value_dashboard_tab_and_data_refresh_hooks()
     for marker in (
         "get_int_setting",
         "from discogs_player.use_cases.value_dashboard import run_market_value_dashboard",
+        "from discogs_player.use_cases.value_release_detail import (",
+        "from discogs_player.use_cases.value_search import run_search_value_releases",
         "from discogs_player.use_cases.value_missing import run_market_value_missing",
         "from discogs_player.use_cases.value_refresh import run_refresh_market_values",
         "from discogs_player.use_cases.value_snapshot import run_market_value_snapshot",
@@ -304,7 +363,8 @@ def test_main_window_exposes_market_value_dashboard_tab_and_data_refresh_hooks()
         "_VALUE_DASHBOARD_TOP_LIMIT = 25",
         "_VALUE_DASHBOARD_BOTTOM_LIMIT = 25",
         "_VALUE_DASHBOARD_TREND_LIMIT = 12",
-        "from discogs_player.ui.widgets.value_dashboard import ValueDashboard",
+        "_VALUE_WORKSPACE_SEARCH_LIMIT = 25",
+        "from discogs_player.ui.widgets.value_workspace import ValueWorkspace",
         "self._value_ops_executor = ThreadPoolExecutor(",
         "self._main_stack = Gtk.Stack()",
         "self._main_stack_switcher = Gtk.StackSwitcher()",
@@ -312,7 +372,12 @@ def test_main_window_exposes_market_value_dashboard_tab_and_data_refresh_hooks()
         'self._browse_stack.set_visible_child_name("carousel")',
         "self._carousel_mode.set_active(True)",
         'self._set_browse_mode("carousel")',
-        "self._value_dashboard = ValueDashboard(",
+        "self._value_workspace = ValueWorkspace(",
+        "on_search_changed=self._handle_value_search_changed",
+        "on_search_result_selected=self._handle_value_search_result_selected",
+        "on_refresh_selected=self._handle_value_selected_refresh_requested",
+        "on_open_selected_source=self._handle_value_selected_open_requested",
+        "self._value_dashboard = self._value_workspace.dashboard",
         "on_ops_controls_changed=self._handle_value_ops_controls_changed",
         "self._value_dashboard.set_ops_controls(",
         "def _load_value_ops_controls_from_settings(self) -> tuple[int, int]:",
@@ -320,8 +385,10 @@ def test_main_window_exposes_market_value_dashboard_tab_and_data_refresh_hooks()
         "def _persist_value_ops_controls_to_settings(self) -> None:",
         "set_setting(_SETTING_VALUE_OPS_STALE_DAYS, str(stale_days))",
         "set_setting(_SETTING_VALUE_OPS_REFRESH_LIMIT, str(refresh_limit))",
-        'self._main_stack.add_titled(\n            self._value_dashboard_scroll, "value", "Market Value"\n        )',
+        'self._value_dashboard_scroll, "value", "Value"',
+        "self._value_dashboard_scroll.set_child(self._value_workspace)",
         "def _refresh_value_dashboard(",
+        "def _refresh_value_search_results(self) -> None:",
         "top_limit=_VALUE_DASHBOARD_TOP_LIMIT",
         "bottom_limit=_VALUE_DASHBOARD_BOTTOM_LIMIT",
         "trend_limit=_VALUE_DASHBOARD_TREND_LIMIT",
@@ -329,6 +396,9 @@ def test_main_window_exposes_market_value_dashboard_tab_and_data_refresh_hooks()
         "def _handle_value_refresh_missing_clicked(self) -> None:",
         "def _handle_value_refresh_stale_clicked(self) -> None:",
         "def _handle_value_snapshot_clicked(self) -> None:",
+        "def _select_value_release(",
+        "def _handle_value_selected_refresh_requested(",
+        "def _handle_value_selected_open_requested(",
         "refresh_limit = self._value_dashboard.refresh_limit()",
         "stale_days = self._value_dashboard.stale_days()",
         "self._spin_wheel.set_context_release(item)",
@@ -568,7 +638,7 @@ def test_detail_widgets_expose_spotify_links_help_links_and_value_jump_actions()
         "self._spotify_help_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)",
         "self._spotify_dashboard_link = Gtk.LinkButton.new(_SPOTIFY_DASHBOARD_URL)",
         "self._spotify_oauth_guide_link = Gtk.LinkButton.new(_SPOTIFY_OAUTH_GUIDE_URL)",
-        'self._view_market_value_button = Gtk.Button(',
+        'self._view_market_value_button = Gtk.Button(label="See in Value Tab")',
         "def _set_spotify_mapping_link(self, album_id_value: object | None) -> None:",
         "self._spotify_help_row.set_visible(bool(self._spotify_hint_label.get_text()))",
     ):
@@ -576,14 +646,12 @@ def test_detail_widgets_expose_spotify_links_help_links_and_value_jump_actions()
         assert marker in wantlist_source
 
 
-def test_cover_grid_hero_overlay_includes_external_action_links():
+def test_cover_grid_supports_split_view_layout_hints():
     source = _source_text("src/discogs_player/ui/widgets/cover_grid.py")
     for marker in (
-        "self._hero_actions_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)",
-        'self._hero_discogs_link = Gtk.LinkButton.new("https://www.discogs.com")',
-        'self._hero_marketplace_link = Gtk.LinkButton.new("https://www.discogs.com")',
-        "self._hero_spotify_link = Gtk.LinkButton.new(_SPOTIFY_HOME_URL)",
-        "def _set_hero_links(self, item: dict[str, object] | None) -> None:",
+        "reserved_right_width: int = 0",
+        "self._reserved_right_width = max(0, int(reserved_right_width))",
+        "usable_width = max(width - (2 * _GRID_MARGIN) - self._reserved_right_width, 360)",
         "def set_release_spotify_album_id(",
     ):
         assert marker in source
@@ -600,7 +668,9 @@ def test_main_window_exposes_help_menu_and_detail_to_value_navigation_hooks():
         "Setup Commands",
         "on_view_market_value=self._handle_view_market_value_clicked",
         "on_view_market_value=self._handle_wantlist_view_market_value_clicked",
-        "def _focus_value_dashboard_release(self, discogs_release_id: int, *, source: str) -> None:",
+        "def _focus_value_release(",
+        'self._focus_value_release("collection", release_id, origin="browse detail")',
+        'self._focus_value_release("wantlist", release_id, origin="wantlist detail")',
         "def _handle_view_market_value_clicked(self) -> None:",
         "def _handle_wantlist_view_market_value_clicked(self) -> None:",
     ):
@@ -618,6 +688,32 @@ def test_value_dashboard_supports_empty_state_actions_and_row_highlighting():
         "def _clear_release_row_registry(self) -> None:",
         "def _register_release_row_button(",
         "def highlight_release(self, discogs_release_id: int) -> bool:",
+        "def clear_release_highlight(self) -> None:",
         'button.add_css_class("is-highlighted")',
+    ):
+        assert marker in source
+
+
+def test_value_workspace_widget_exposes_search_and_selected_release_inspector():
+    source = _source_text("src/discogs_player/ui/widgets/value_workspace.py")
+    for marker in (
+        "class ValueWorkspace(Gtk.Box):",
+        'kicker = Gtk.Label(label="Value Workspace")',
+        'title = Gtk.Label(label="Release Value Inspector")',
+        "Search synced collection and wantlist records by artist, title, ",
+        "self.dashboard = ValueDashboard(",
+        "self._search_entry = Gtk.Entry()",
+        "self._search_entry.connect(\"changed\", self._handle_search_entry_changed)",
+        "self._results_list = Gtk.ListBox()",
+        "self._selected_title = Gtk.Label(label=\"Select a release to inspect value data.\")",
+        'self._refresh_selected_button = Gtk.Button(label="Refresh Selected Value")',
+        'self._open_source_button = Gtk.Button(label="Open in Browse")',
+        "def set_search_results(self, report: dict[str, object]) -> None:",
+        "def set_search_error(self, message: str) -> None:",
+        "def clear_selected_release(self) -> None:",
+        "def set_selected_busy(self, message: str) -> None:",
+        "def set_selected_error(self, message: str) -> None:",
+        "def set_selected_release(self, item: dict[str, object]) -> None:",
+        "self._open_source_button.set_label(",
     ):
         assert marker in source

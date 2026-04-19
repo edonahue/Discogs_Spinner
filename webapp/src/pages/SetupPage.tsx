@@ -28,9 +28,10 @@ export function SetupPage() {
   }
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", maxWidth: "480px", margin: "4rem auto", lineHeight: 1.6 }}>
-      <h1>Welcome to Discogs Spinner</h1>
-      <p>
+    <main className="app-page app-page--narrow">
+      <section className="app-surface app-card" style={{ marginTop: "2.5rem" }}>
+      <h1 className="app-page__title">Welcome to Discogs Spinner</h1>
+      <p className="app-page__subtitle" style={{ marginBottom: "1.25rem" }}>
         Enter your Discogs personal access token to get started. You can find it at{" "}
         <a href="https://www.discogs.com/settings/developers" target="_blank" rel="noreferrer">
           discogs.com/settings/developers
@@ -39,7 +40,7 @@ export function SetupPage() {
       </p>
       <form onSubmit={(e) => { void handleSubmit(e); }}>
         <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="token" style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}>
+          <label htmlFor="token" className="app-stack-label">
             Discogs Token
           </label>
           <input
@@ -49,18 +50,19 @@ export function SetupPage() {
             onChange={(e) => setToken(e.target.value)}
             placeholder="your_personal_access_token"
             required
-            style={{ width: "100%", padding: "0.5rem", fontSize: "1rem", boxSizing: "border-box" }}
+            className="app-input"
           />
         </div>
-        {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
+        {error ? <p className="app-message app-message--error">{error}</p> : null}
         <button
           type="submit"
           disabled={saving}
-          style={{ padding: "0.5rem 1.5rem", fontSize: "1rem", cursor: saving ? "not-allowed" : "pointer" }}
+          className="app-button app-button--primary"
         >
           {saving ? "Saving…" : "Save Token"}
         </button>
       </form>
+      </section>
     </main>
   );
 }

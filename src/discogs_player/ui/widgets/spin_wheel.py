@@ -68,6 +68,7 @@ class SpinWheel(Gtk.Box):
         if self._compact:
             button_row.set_halign(Gtk.Align.END)
             button_row.set_hexpand(True)
+        self._button_row = button_row
         self._spin_button = Gtk.Button(label="Spin")
         if on_spin is not None:
             self._spin_button.connect("clicked", lambda *_: on_spin())
@@ -132,6 +133,22 @@ class SpinWheel(Gtk.Box):
 
     def set_controls_enabled(self, enabled: bool) -> None:
         self._set_controls_enabled(bool(enabled))
+
+    def set_compact_layout(self, stacked: bool) -> None:
+        if not self._compact:
+            return
+        if bool(stacked):
+            self._button_row.set_orientation(Gtk.Orientation.VERTICAL)
+            self._button_row.set_spacing(4)
+            self._button_row.set_halign(Gtk.Align.FILL)
+            self._spin_button.set_hexpand(True)
+            self._play_last_button.set_hexpand(True)
+        else:
+            self._button_row.set_orientation(Gtk.Orientation.HORIZONTAL)
+            self._button_row.set_spacing(6)
+            self._button_row.set_halign(Gtk.Align.END)
+            self._spin_button.set_hexpand(False)
+            self._play_last_button.set_hexpand(False)
 
     def _cancel_spin_animation(self) -> None:
         if self._spin_source_id is not None:

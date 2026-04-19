@@ -28,7 +28,45 @@ from gi.repository import Gtk, GLib
 from discogs_player.services.image_cache import get_or_fetch_cover_path
 
 
-class VirtualizedGrid(Gtk.ScrolledWindow):
+_GTK_SCROLLED_WINDOW_BASE = (
+    Gtk.ScrolledWindow
+    if isinstance(getattr(Gtk, "ScrolledWindow", None), type)
+    else object
+)
+
+
+def _maybe_call(target: object, method_name: str, *args: object) -> object | None:
+    method = getattr(target, method_name, None)
+    if callable(method):
+        return method(*args)
+    return None
+
+
+def _coerce_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return int(value)
+    return int(default)
+
+
+def _coerce_float(value: object, default: float) -> float:
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    return float(default)
+
+
+class _FallbackAdjustment:
+    def connect(self, *_args: object, **_kwargs: object) -> None:
+        return None
+
+    def get_value(self) -> float:
+        return 0.0
+
+
+class VirtualizedGrid(_GTK_SCROLLED_WINDOW_BASE):
     """
     A virtualized grid widget that efficiently renders large datasets.
 
@@ -43,9 +81,11 @@ class VirtualizedGrid(Gtk.ScrolledWindow):
         on_selection_changed: Callable[[dict[str, Any] | None], None] | None = None,
         viewport_size: int = 50,  # Number of items to render at once
     ) -> None:
-        super().__init__()
-        self.set_vexpand(True)
-        self.set_hexpand(True)
+        if _GTK_SCROLLED_WINDOW_BASE is not object:
+            super().__init__()
+
+        _maybe_call(self, "set_vexpand", True)
+        _maybe_call(self, "set_hexpand", True)
 
         self._item_builder = item_builder
         self._on_selection_changed = on_selection_changed
@@ -60,23 +100,23 @@ class VirtualizedGrid(Gtk.ScrolledWindow):
 
         # Create viewport with efficient scrolling
         self._viewport = Gtk.Viewport()
-        self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        _maybe_call(self, "set_policy", Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         # Grid for efficient layout
         self._grid = Gtk.Grid()
-        self._grid.set_row_spacing(8)
-        self._grid.set_column_spacing(8)
-        self._grid.set_margin_top(8)
-        self._grid.set_margin_bottom(8)
-        self._grid.set_margin_start(8)
-        self._grid.set_margin_end(8)
+        _maybe_call(self._grid, "set_row_spacing", 8)
+        _maybe_call(self._grid, "set_column_spacing", 8)
+        _maybe_call(self._grid, "set_margin_top", 8)
+        _maybe_call(self._grid, "set_margin_bottom", 8)
+        _maybe_call(self._grid, "set_margin_start", 8)
+        _maybe_call(self._grid, "set_margin_end", 8)
 
-        self._viewport.set_child(self._grid)
-        self.set_child(self._viewport)
+        _maybe_call(self._viewport, "set_child", self._grid)
+        _maybe_call(self, "set_child", self._viewport)
 
         # Connect scroll events for virtualization
-        self._vadj = self._viewport.get_vadjustment()
-        self._vadj.connect("value-changed", self._on_scroll)
+        self._vadj = _maybe_call(self._viewport, "get_vadjustment") or _FallbackAdjustment()
+        _maybe_call(self._vadj, "connect", "value-changed", self._on_scroll)
 
         # Track scroll performance
         self._scroll_debounce_id = None
@@ -88,10 +128,11 @@ class VirtualizedGrid(Gtk.ScrolledWindow):
             GLib.source_remove(self._scroll_debounce_id)
 
         # Debounce scroll events to avoid excessive re-rendering
+        priority = getattr(GLib, "PRIORITY_DEFAULT_IDLE", 0)
         self._scroll_debounce_id = GLib.timeout_add(
             50,  # 50ms debounce
             self._update_visible_range,
-            priority=GLib.PRIORITY_DEFAULT_IDLE,
+            priority=priority,
         )
 
     def _update_visible_range(self) -> None:
@@ -99,11 +140,19 @@ class VirtualizedGrid(Gtk.ScrolledWindow):
         if not self._items:
             return
 
-        viewport_height = self._viewport.get_allocated_height()
+        viewport_height = _coerce_int(
+            _maybe_call(self._viewport, "get_allocated_height"),
+            self._viewport_size * 280,
+        )
         item_height = 280  # Approximate item height
-        visible_count = min(self._viewport_size, viewport_height // item_height + 5)
+        visible_count = min(
+            self._viewport_size,
+            max(1, viewport_height // item_height + 5),
+        )
 
-        start_idx = int(self._vadj.get_value() // item_height)
+        start_idx = int(
+            _coerce_float(_maybe_call(self._vadj, "get_value"), 0.0) // item_height
+        )
         start_idx = max(0, start_idx - 5)  # Small buffer above
         end_idx = min(len(self._items), start_idx + visible_count + 5)  # Small buffer below
 
@@ -116,10 +165,10 @@ class VirtualizedGrid(Gtk.ScrolledWindow):
         start_time = time.time()
 
         # Clear existing children efficiently
-        child = self._grid.get_first_child()
-        while child:
-            next_child = child.get_next_sibling()
-            self._grid.remove(child)
+        child = _maybe_call(self._grid, "get_first_child")
+        while child is not None:
+            next_child = _maybe_call(child, "get_next_sibling")
+            _maybe_call(self._grid, "remove", child)
             child = next_child
 
         # Render visible items
@@ -128,7 +177,7 @@ class VirtualizedGrid(Gtk.ScrolledWindow):
             widget = self._item_builder(item)
             row = i // 5  # 5 columns
             col = i % 5
-            self._grid.attach(widget, col, row, 1, 1)
+            _maybe_call(self._grid, "attach", widget, col, row, 1, 1)
 
         self._render_count += 1
         self._last_render_time = time.time() - start_time

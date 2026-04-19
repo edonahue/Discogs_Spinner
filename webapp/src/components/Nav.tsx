@@ -1,42 +1,35 @@
 import { NavLink } from "react-router-dom";
 
-const linkStyle: React.CSSProperties = {
-  marginRight: "1.5rem",
-  textDecoration: "none",
-  color: "#555",
-  fontWeight: 500,
-};
-
-const activeStyle: React.CSSProperties = {
-  ...linkStyle,
-  color: "#000",
-  borderBottom: "2px solid #000",
-};
-
 export function Nav() {
+  function navClass(isActive: boolean): string {
+    return isActive ? "app-nav__link app-nav__link--active" : "app-nav__link";
+  }
+
   return (
-    <nav style={{ padding: "0.75rem 2rem", borderBottom: "1px solid #ddd", marginBottom: "1.5rem" }}>
-      <NavLink to="/" end style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Home
-      </NavLink>
-      <NavLink to="/collection" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Collection
-      </NavLink>
-      <NavLink to="/wantlist" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Wantlist
-      </NavLink>
-      <NavLink to="/value" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Value
-      </NavLink>
-      <NavLink to="/health" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Health
-      </NavLink>
-      <NavLink to="/recent" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Recent
-      </NavLink>
-      <NavLink to="/analytics" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
-        Analytics
-      </NavLink>
+    <nav className="app-nav" aria-label="Primary">
+      <div className="app-nav__inner">
+        <NavLink to="/" end className={({ isActive }) => navClass(isActive)}>
+          Home
+        </NavLink>
+        <NavLink to="/collection" className={({ isActive }) => navClass(isActive)}>
+          Collection
+        </NavLink>
+        <NavLink to="/wantlist" className={({ isActive }) => navClass(isActive)}>
+          Wantlist
+        </NavLink>
+        <NavLink to="/value" className={({ isActive }) => navClass(isActive)}>
+          Value
+        </NavLink>
+        <NavLink to="/health" className={({ isActive }) => navClass(isActive)}>
+          Health
+        </NavLink>
+        <NavLink to="/recent" className={({ isActive }) => navClass(isActive)}>
+          Recent
+        </NavLink>
+        <NavLink to="/analytics" className={({ isActive }) => navClass(isActive)}>
+          Analytics
+        </NavLink>
+      </div>
     </nav>
   );
 }

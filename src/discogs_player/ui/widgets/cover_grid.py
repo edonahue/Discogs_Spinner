@@ -17,46 +17,7 @@ _MAX_COLUMNS = 8
 _CARD_MIN_WIDTH = 148
 _CARD_MAX_WIDTH = 312
 _CARD_TEXT_HEIGHT = 74
-_HERO_MIN_COVER_SIZE = 260
-_HERO_MAX_COVER_SIZE = 760
 _RESIZE_DEBOUNCE_MS = 36
-_SPOTIFY_HOME_URL = "https://open.spotify.com"
-
-
-def _discogs_release_url(release_id_value: object | None) -> str | None:
-    if not isinstance(release_id_value, int):
-        return None
-    if release_id_value <= 0:
-        return None
-    return f"https://www.discogs.com/release/{release_id_value}"
-
-
-def _discogs_marketplace_url(release_id_value: object | None) -> str | None:
-    if not isinstance(release_id_value, int):
-        return None
-    if release_id_value <= 0:
-        return None
-    return f"https://www.discogs.com/sell/release/{release_id_value}"
-
-
-def _spotify_album_url(album_id_value: object | None) -> str | None:
-    raw = str(album_id_value or "").strip()
-    if not raw:
-        return None
-    if raw.startswith("https://open.spotify.com/album/"):
-        return raw
-    if raw.startswith("http://open.spotify.com/album/"):
-        return f"https://{raw.removeprefix('http://')}"
-    if raw.startswith("spotify:album:"):
-        normalized = raw.removeprefix("spotify:album:").strip()
-        if not normalized:
-            return None
-        return f"https://open.spotify.com/album/{normalized}"
-    if "://" in raw:
-        return None
-    if any(char.isspace() for char in raw):
-        return None
-    return f"https://open.spotify.com/album/{raw}"
 
 
 class CoverGrid(Gtk.Box):
@@ -64,14 +25,13 @@ class CoverGrid(Gtk.Box):
         self,
         *,
         on_selection_changed: Callable[[dict[str, object] | None], None] | None = None,
-        on_back_requested: Callable[[], None] | None = None,
     ) -> None:
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.set_vexpand(True)
         self.set_hexpand(True)
+        self.set_focusable(True)
         self.add_css_class("ipod-gallery")
         self._on_selection_changed = on_selection_changed
-        self._on_back_requested = on_back_requested
 
         self._items: list[dict[str, object]] = []
         self._selected_release_id: int | None = None
@@ -88,20 +48,13 @@ class CoverGrid(Gtk.Box):
         self._card_width = 0
         self._cover_size = 0
         self._columns = _MIN_COLUMNS
-        self._hero_cover_size = _HERO_MIN_COVER_SIZE
-        self._hero_media_key: tuple[int | None, str, int] | None = None
         self._pending_layout_source_id: int | None = None
-
-        self._overlay = Gtk.Overlay()
-        self._overlay.set_hexpand(True)
-        self._overlay.set_vexpand(True)
-        self.append(self._overlay)
 
         self._scroll = Gtk.ScrolledWindow()
         self._scroll.set_hexpand(True)
         self._scroll.set_vexpand(True)
         self._scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        self._overlay.set_child(self._scroll)
+        self.append(self._scroll)
 
         self._flow = Gtk.FlowBox()
         self._flow.set_selection_mode(Gtk.SelectionMode.NONE)
@@ -118,85 +71,6 @@ class CoverGrid(Gtk.Box):
         self._flow.add_css_class("ipod-gallery-grid")
         self._scroll.set_child(self._flow)
 
-        self._hero_revealer = Gtk.Revealer()
-        self._hero_revealer.set_transition_type(Gtk.RevealerTransitionType.CROSSFADE)
-        self._hero_revealer.set_transition_duration(170)
-        self._hero_revealer.set_hexpand(True)
-        self._hero_revealer.set_vexpand(True)
-        self._hero_revealer.set_halign(Gtk.Align.FILL)
-        self._hero_revealer.set_valign(Gtk.Align.FILL)
-        self._overlay.add_overlay(self._hero_revealer)
-
-        hero_scrim = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        hero_scrim.set_hexpand(True)
-        hero_scrim.set_vexpand(True)
-        hero_scrim.set_halign(Gtk.Align.FILL)
-        hero_scrim.set_valign(Gtk.Align.FILL)
-        hero_scrim.add_css_class("ipod-gallery-hero-scrim")
-        self._hero_revealer.set_child(hero_scrim)
-
-        hero_shell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        hero_shell.set_halign(Gtk.Align.CENTER)
-        hero_shell.set_valign(Gtk.Align.CENTER)
-        hero_shell.set_margin_top(18)
-        hero_shell.set_margin_bottom(18)
-        hero_shell.set_margin_start(18)
-        hero_shell.set_margin_end(18)
-        hero_shell.add_css_class("ipod-gallery-hero-shell")
-        hero_scrim.append(hero_shell)
-
-        self._back_button = Gtk.Button(label="Back to Gallery")
-        self._back_button.add_css_class("interactive-back-button")
-        self._back_button.add_css_class("ipod-gallery-back-button")
-        self._back_button.connect("clicked", self._handle_back_clicked)
-        hero_shell.append(self._back_button)
-
-        self._hero_frame = Gtk.Frame()
-        self._hero_frame.set_halign(Gtk.Align.CENTER)
-        self._hero_frame.add_css_class("ipod-gallery-hero-frame")
-        hero_shell.append(self._hero_frame)
-
-        self._hero_title = Gtk.Label(label="")
-        self._hero_title.set_xalign(0.5)
-        self._hero_title.set_halign(Gtk.Align.CENTER)
-        self._hero_title.set_wrap(True)
-        self._hero_title.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
-        self._hero_title.set_max_width_chars(54)
-        self._hero_title.add_css_class("ipod-gallery-hero-title")
-        hero_shell.append(self._hero_title)
-
-        self._hero_subtitle = Gtk.Label(label="")
-        self._hero_subtitle.set_xalign(0.5)
-        self._hero_subtitle.set_halign(Gtk.Align.CENTER)
-        self._hero_subtitle.set_wrap(True)
-        self._hero_subtitle.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
-        self._hero_subtitle.set_max_width_chars(54)
-        self._hero_subtitle.add_css_class("ipod-gallery-hero-subtitle")
-        hero_shell.append(self._hero_subtitle)
-
-        self._hero_actions_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self._hero_actions_row.set_halign(Gtk.Align.CENTER)
-        self._hero_actions_row.set_valign(Gtk.Align.CENTER)
-        self._hero_actions_row.add_css_class("ipod-gallery-hero-actions")
-        hero_shell.append(self._hero_actions_row)
-
-        self._hero_discogs_link = Gtk.LinkButton.new("https://www.discogs.com")
-        self._hero_discogs_link.set_label("Discogs Release")
-        self._hero_discogs_link.add_css_class("ipod-gallery-hero-action")
-        self._hero_actions_row.append(self._hero_discogs_link)
-
-        self._hero_marketplace_link = Gtk.LinkButton.new("https://www.discogs.com")
-        self._hero_marketplace_link.set_label("Marketplace")
-        self._hero_marketplace_link.add_css_class("ipod-gallery-hero-action")
-        self._hero_actions_row.append(self._hero_marketplace_link)
-
-        self._hero_spotify_link = Gtk.LinkButton.new(_SPOTIFY_HOME_URL)
-        self._hero_spotify_link.set_label("Spotify Album")
-        self._hero_spotify_link.add_css_class("ipod-gallery-hero-action")
-        self._hero_actions_row.append(self._hero_spotify_link)
-        self._hero_actions_row.set_visible(False)
-
-        self._hero_revealer.set_reveal_child(False)
         self.connect("notify::width", self._handle_size_change)
         self.connect("notify::height", self._handle_size_change)
         self.connect("destroy", self._handle_destroy)
@@ -254,7 +128,6 @@ class CoverGrid(Gtk.Box):
         self._button_to_frame.clear()
         self._button_to_media.clear()
         self._selected_button_id = None
-        self._hero_media_key = None
 
     def _build_card(self, item: dict[str, object]) -> Gtk.FlowBoxChild:
         item_dict = dict(item)
@@ -335,96 +208,6 @@ class CoverGrid(Gtk.Box):
         item = self._button_to_item.get(id(button))
         return dict(item) if isinstance(item, dict) else None
 
-    def _hero_key_for_item(self, item: dict[str, object]) -> tuple[int | None, str, int]:
-        release_id = item.get("discogs_release_id")
-        normalized_release_id = int(release_id) if isinstance(release_id, int) else None
-        cover_path = str(item.get("cover_path") or "").strip()
-        return (normalized_release_id, cover_path, int(self._hero_cover_size))
-
-    def _update_hero_content(self, item: dict[str, object] | None) -> None:
-        if not isinstance(item, dict):
-            self._hero_title.set_text("")
-            self._hero_subtitle.set_text("")
-            self._hero_frame.set_child(None)
-            self._set_hero_links(None)
-            self._hero_media_key = None
-            return
-
-        title = str(item.get("title") or "Unknown Title")
-        artist = str(item.get("artist") or "Unknown Artist")
-        year_value = item.get("year")
-        year_text = str(year_value).strip() if year_value is not None else ""
-        subtitle = artist if not year_text else f"{artist} • {year_text}"
-        self._hero_title.set_text(title)
-        self._hero_subtitle.set_text(subtitle)
-        next_key = self._hero_key_for_item(item)
-        if next_key != self._hero_media_key:
-            self._hero_frame.set_child(
-                self._build_cover_media(
-                    item,
-                    size=self._hero_cover_size,
-                    placeholder_caption="No Cover",
-                )
-            )
-            self._hero_media_key = next_key
-        self._set_hero_links(item)
-
-    def _set_link_button_uri(
-        self,
-        button: Gtk.LinkButton,
-        *,
-        uri: str | None,
-        label_when_available: str,
-    ) -> None:
-        if not uri:
-            button.set_uri("https://www.discogs.com")
-            button.set_sensitive(False)
-            button.set_visible(False)
-            return
-        button.set_uri(uri)
-        button.set_label(label_when_available)
-        button.set_sensitive(True)
-        button.set_visible(True)
-
-    def _set_hero_links(self, item: dict[str, object] | None) -> None:
-        if not isinstance(item, dict):
-            self._hero_actions_row.set_visible(False)
-            self._hero_discogs_link.set_visible(False)
-            self._hero_marketplace_link.set_visible(False)
-            self._hero_spotify_link.set_visible(False)
-            return
-
-        release_id = item.get("discogs_release_id")
-        discogs_url = _discogs_release_url(release_id)
-        market_url = _discogs_marketplace_url(release_id)
-        spotify_url = _spotify_album_url(item.get("spotify_album_id"))
-
-        label_suffix = (
-            f" #{release_id}" if isinstance(release_id, int) and release_id > 0 else ""
-        )
-        self._set_link_button_uri(
-            self._hero_discogs_link,
-            uri=discogs_url,
-            label_when_available=f"Discogs{label_suffix}",
-        )
-        self._set_link_button_uri(
-            self._hero_marketplace_link,
-            uri=market_url,
-            label_when_available="Marketplace",
-        )
-        self._set_link_button_uri(
-            self._hero_spotify_link,
-            uri=spotify_url,
-            label_when_available="Spotify Album",
-        )
-        self._hero_actions_row.set_visible(
-            bool(
-                self._hero_discogs_link.get_visible()
-                or self._hero_marketplace_link.get_visible()
-                or self._hero_spotify_link.get_visible()
-            )
-        )
-
     def _set_card_selection(self, release_id: int | None) -> None:
         next_button_id: int | None = None
         if release_id is not None:
@@ -459,21 +242,13 @@ class CoverGrid(Gtk.Box):
         item_dict = dict(item)
         self._selected_release_id = int(release_id)
         self._set_card_selection(self._selected_release_id)
-        self._update_hero_content(item_dict)
-        self._hero_revealer.set_reveal_child(True)
         if self._on_selection_changed is not None and emit:
             self._on_selection_changed(item_dict)
-
-    def _handle_back_clicked(self, _button: Gtk.Button) -> None:
-        self.clear_selection()
-        if self._on_back_requested is not None:
-            self._on_back_requested()
 
     def set_items(self, items: list[dict[str, object]]) -> None:
         previous_selected = self._selected_release_id
         self._items = [dict(item) for item in items]
         self._selected_release_id = None
-        self._hero_revealer.set_reveal_child(False)
         self._clear()
         for item in self._items:
             self._flow.append(self._build_card(item))
@@ -490,8 +265,6 @@ class CoverGrid(Gtk.Box):
     def clear_selection(self, *, emit: bool = True) -> None:
         self._selected_release_id = None
         self._set_card_selection(None)
-        self._hero_revealer.set_reveal_child(False)
-        self._update_hero_content(None)
         if self._on_selection_changed is not None and emit:
             self._on_selection_changed(None)
 
@@ -518,8 +291,6 @@ class CoverGrid(Gtk.Box):
         normalized_album_id = str(spotify_album_id or "").strip()
         item["spotify_album_id"] = normalized_album_id or None
         self._button_to_item[button_id] = item
-        if self._selected_release_id == int(discogs_release_id):
-            self._set_hero_links(item)
 
     def _compute_columns(self, usable_width: int) -> int:
         for candidate in range(_MAX_COLUMNS, _MIN_COLUMNS - 1, -1):
@@ -568,12 +339,6 @@ class CoverGrid(Gtk.Box):
                 media = self._button_to_media.get(button_id)
                 if isinstance(media, Gtk.Picture):
                     media.set_size_request(cover_size, cover_size)
-
-        hero_cover_size = int(min(usable_width * 0.70, usable_height * 0.76))
-        hero_cover_size = max(_HERO_MIN_COVER_SIZE, min(_HERO_MAX_COVER_SIZE, hero_cover_size))
-        if hero_cover_size != self._hero_cover_size:
-            self._hero_cover_size = hero_cover_size
-            self._update_hero_content(self._selected_item())
 
     def _schedule_responsive_layout(self) -> None:
         if self._pending_layout_source_id is not None:

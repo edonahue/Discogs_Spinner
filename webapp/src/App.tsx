@@ -36,13 +36,17 @@ function AppRoutes() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!checked) {
-    return <p style={{ fontFamily: "system-ui, sans-serif", margin: "2rem" }}>Loading…</p>;
+    return (
+      <main className="app-page">
+        <p className="app-message app-message--subtle">Loading…</p>
+      </main>
+    );
   }
 
   const showNav = location.pathname !== "/setup";
 
   return (
-    <>
+    <div className="app-shell">
       {showNav ? <Nav /> : null}
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -55,7 +59,7 @@ function AppRoutes() {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </div>
   );
 }
 

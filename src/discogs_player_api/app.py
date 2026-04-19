@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from discogs_player import __version__ as APP_VERSION
 from discogs_player_api.contracts import error_envelope, success_envelope
 from discogs_player_api.routers.cache import router as cache_router
 from discogs_player_api.routers.catalog import router as catalog_router
@@ -43,7 +44,7 @@ def _error_from_detail(detail: object) -> dict[str, Any]:
 def create_app() -> FastAPI:
     app = FastAPI(
         title="discogs_player API",
-        version="0.1.0",
+        version=APP_VERSION,
         summary="Local-first Discogs Player API for web and desktop clients.",
     )
 

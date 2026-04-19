@@ -10,6 +10,15 @@ export type ApiEnvelope<T> = {
   meta: Record<string, unknown>;
 };
 
+export interface SyncSummary {
+  fetched_count: number;
+  upserted_count: number;
+  deactivated_count: number;
+  last_sync_time: string | null;
+  skipped_empty_deactivate?: boolean;
+  warnings?: string[];
+}
+
 const DEFAULT_BASE_URL = "http://127.0.0.1:8768/api/v1";
 
 export function apiBaseUrl(): string {
@@ -80,6 +89,33 @@ export interface ReleaseFilters {
   limit?: number;
 }
 
+export interface ReleaseDetail {
+  discogs_release_id: number;
+  title: string;
+  artist: string;
+  year: string | number | null;
+  genres: string[];
+  styles: string[];
+  thumb_url: string | null;
+  cover_url: string | null;
+  added_at: string | null;
+  last_synced_at: string | null;
+  is_active: boolean;
+  spotify_album_id: string | null;
+  notes?: string | null;
+  market_lowest?: number | null;
+  market_median?: number | null;
+  market_highest?: number | null;
+  market_currency?: string | null;
+  market_last_updated_at?: string | null;
+  num_for_sale?: number | null;
+  lowest_price?: number | null;
+  community_have?: number | null;
+  community_want?: number | null;
+  rating_count?: number | null;
+  rating_average?: number | null;
+}
+
 function buildReleaseParams(filters: ReleaseFilters): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.limit !== undefined) params.set("limit", String(filters.limit));
@@ -104,12 +140,32 @@ export function fetchWantlist(filters: ReleaseFilters): Promise<ApiEnvelope<Rele
   return getJson<Release[]>(`/wantlist?${buildReleaseParams(filters).toString()}`);
 }
 
-export function syncCollection(): Promise<ApiEnvelope<unknown>> {
-  return postJson<unknown>("/sync/collection", {});
+export function fetchReleaseDetail(
+  releaseId: number,
+  params?: { withValue?: boolean },
+): Promise<ApiEnvelope<ReleaseDetail>> {
+  const qs = new URLSearchParams();
+  if (params?.withValue) qs.set("with_value", "true");
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return getJson<ReleaseDetail>(`/releases/${releaseId}${suffix}`);
 }
 
-export function syncWantlist(): Promise<ApiEnvelope<unknown>> {
-  return postJson<unknown>("/sync/wantlist", {});
+export function fetchWantlistDetail(
+  releaseId: number,
+  params?: { withValue?: boolean },
+): Promise<ApiEnvelope<ReleaseDetail>> {
+  const qs = new URLSearchParams();
+  if (params?.withValue) qs.set("with_value", "true");
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return getJson<ReleaseDetail>(`/wantlist/${releaseId}${suffix}`);
+}
+
+export function syncCollection(): Promise<ApiEnvelope<SyncSummary>> {
+  return postJson<SyncSummary>("/sync/collection", {});
+}
+
+export function syncWantlist(): Promise<ApiEnvelope<SyncSummary>> {
+  return postJson<SyncSummary>("/sync/wantlist", {});
 }
 
 export interface ValueEntry {

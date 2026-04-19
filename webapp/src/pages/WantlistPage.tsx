@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchWantlist, Release } from "../api";
+import { useSearchParams } from "react-router-dom";
+import { fetchWantlist, Release, SyncSummary, syncWantlist } from "../api";
+import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
 
 const PAGE_SIZE = 25;
 
 type SortKey = "artist_asc" | "artist_desc" | "title_asc" | "year_desc" | "year_asc" | "value_desc";
+type SyncState = "idle" | "syncing" | "done" | "error";
 
 function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
   return [...releases].sort((a, b) => {
@@ -19,16 +22,24 @@ function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
 }
 
 const pillStyle: React.CSSProperties = {
-  display: "inline-block",
-  background: "#f0f0f0",
-  borderRadius: "4px",
-  padding: "0 0.4rem",
-  fontSize: "0.75rem",
-  marginRight: "0.25rem",
-  color: "#555",
+  display: "inline-flex",
 };
 
+function parseFocusId(raw: string | null): number | null {
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function formatSyncSummary(summary: SyncSummary): string {
+  return (
+    `Wantlist sync complete: fetched ${summary.fetched_count}, `
+    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
+  );
+}
+
 export function WantlistPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [entries, setEntries] = useState<Release[]>([]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -41,6 +52,11 @@ export function WantlistPage() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [syncState, setSyncState] = useState<SyncState>("idle");
+  const [syncMessage, setSyncMessage] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
+  const [pendingFocusValidation, setPendingFocusValidation] = useState(false);
+  const focusedReleaseId = parseFocusId(searchParams.get("focus"));
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query), 300);
@@ -63,6 +79,7 @@ export function WantlistPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const shouldValidateFocus = pendingFocusValidation;
     setLoading(true);
     setError("");
     fetchWantlist({
@@ -73,16 +90,32 @@ export function WantlistPage() {
       withValue: showValue || undefined,
     })
       .then((payload) => {
-        if (!cancelled) setEntries(payload.data ?? []);
+        if (cancelled) return;
+        const nextEntries = payload.data ?? [];
+        setEntries(nextEntries);
+        if (
+          shouldValidateFocus
+          && focusedReleaseId != null
+          && !nextEntries.some((entry) => entry.discogs_release_id === focusedReleaseId)
+        ) {
+          clearFocus();
+        }
+        if (shouldValidateFocus) {
+          setPendingFocusValidation(false);
+        }
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load wantlist.");
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load wantlist.");
+        if (shouldValidateFocus) {
+          setPendingFocusValidation(false);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [debouncedQuery, debouncedYear, debouncedGenre, showValue, limit]);
+  }, [debouncedQuery, debouncedYear, debouncedGenre, showValue, limit, reloadToken]);
 
   function clearFilters() {
     setQuery("");
@@ -95,92 +128,175 @@ export function WantlistPage() {
 
   const sorted = sortReleases(entries, sortKey);
 
+  function setFocus(releaseId: number) {
+    const next = new URLSearchParams(searchParams);
+    next.set("focus", String(releaseId));
+    setSearchParams(next, { replace: true });
+  }
+
+  function clearFocus() {
+    const next = new URLSearchParams(searchParams);
+    next.delete("focus");
+    setSearchParams(next, { replace: true });
+  }
+
+  function handleSyncWantlist() {
+    setSyncState("syncing");
+    setSyncMessage("");
+    syncWantlist()
+      .then((payload) => {
+        const summary = payload.data;
+        if (!summary) {
+          throw new Error("Wantlist sync completed without a summary.");
+        }
+        setSyncState("done");
+        setSyncMessage(formatSyncSummary(summary));
+        setPendingFocusValidation(true);
+        setReloadToken((value) => value + 1);
+      })
+      .catch((err: unknown) => {
+        setSyncState("error");
+        setSyncMessage(err instanceof Error ? err.message : "Wantlist sync failed.");
+      });
+  }
+
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", margin: "0 2rem 2rem", lineHeight: 1.5 }}>
-      <h2>Wantlist</h2>
+    <main className="app-page">
+      <header className="app-page__header">
+        <div>
+          <h1 className="app-page__title">Wantlist</h1>
+          <p className="app-page__subtitle">
+            Keep the browsing view readable at narrower sizes and use the focused detail panel for richer wantlist context without leaving the page.
+          </p>
+        </div>
+      </header>
 
-      {/* Filter bar */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginBottom: "0.75rem" }}>
-        <input
-          type="search"
-          placeholder="Search…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ padding: "0.4rem 0.75rem", fontSize: "1rem", width: "220px" }}
+      {focusedReleaseId ? (
+        <FocusedReleaseCard
+          releaseId={focusedReleaseId}
+          scope="wantlist"
+          onClear={clearFocus}
         />
-        <input
-          type="text"
-          placeholder="Year"
-          value={yearFilter}
-          onChange={(e) => setYearFilter(e.target.value)}
-          style={{ padding: "0.4rem 0.75rem", fontSize: "1rem", width: "80px" }}
-        />
-        <input
-          type="text"
-          placeholder="Genre"
-          value={genreFilter}
-          onChange={(e) => setGenreFilter(e.target.value)}
-          style={{ padding: "0.4rem 0.75rem", fontSize: "1rem", width: "120px" }}
-        />
-        <label style={{ fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-          <input type="checkbox" checked={showValue} onChange={(e) => setShowValue(e.target.checked)} />
-          Show value
-        </label>
-        <button onClick={clearFilters} style={{ padding: "0.4rem 0.75rem", fontSize: "0.9rem" }}>
-          Clear
-        </button>
-      </div>
+      ) : null}
 
-      {/* Sort */}
-      <div style={{ marginBottom: "1rem" }}>
-        <label style={{ fontSize: "0.9rem", marginRight: "0.5rem" }}>Sort:</label>
-        <select
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value as SortKey)}
-          style={{ padding: "0.3rem 0.5rem", fontSize: "0.9rem" }}
-        >
-          <option value="artist_asc">Artist A→Z</option>
-          <option value="artist_desc">Artist Z→A</option>
-          <option value="title_asc">Title A→Z</option>
-          <option value="year_desc">Year (newest first)</option>
-          <option value="year_asc">Year (oldest first)</option>
-          {showValue && <option value="value_desc">Value (high→low)</option>}
-        </select>
-      </div>
+      <section className="app-surface app-toolbar">
+        <div className="app-toolbar__group">
+          <div className="app-toolbar__field">
+            <input
+              className="app-input"
+              type="search"
+              placeholder="Search artist or title"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="app-toolbar__field app-toolbar__field--compact">
+            <input
+              className="app-input"
+              type="text"
+              placeholder="Year"
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+            />
+          </div>
+          <div className="app-toolbar__field">
+            <input
+              className="app-input"
+              type="text"
+              placeholder="Genre"
+              value={genreFilter}
+              onChange={(e) => setGenreFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="app-toolbar__group">
+          <label className="app-checkbox">
+            <input type="checkbox" checked={showValue} onChange={(e) => setShowValue(e.target.checked)} />
+            Show value
+          </label>
+          <div className="app-toolbar__field">
+            <select
+              className="app-select"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+            >
+              <option value="artist_asc">Artist A→Z</option>
+              <option value="artist_desc">Artist Z→A</option>
+              <option value="title_asc">Title A→Z</option>
+              <option value="year_desc">Year (newest first)</option>
+              <option value="year_asc">Year (oldest first)</option>
+              {showValue ? <option value="value_desc">Value (high→low)</option> : null}
+            </select>
+          </div>
+          <button type="button" className="app-button app-button--ghost" onClick={clearFilters}>
+            Clear Filters
+          </button>
+          <button
+            type="button"
+            className="app-button"
+            onClick={handleSyncWantlist}
+            disabled={syncState === "syncing"}
+          >
+            {syncState === "syncing" ? "Syncing…" : "Sync Wantlist"}
+          </button>
+        </div>
+      </section>
 
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-      {loading && entries.length === 0 ? <p>Loading…</p> : null}
-      {!loading && !error && entries.length === 0 ? <p>No wantlist entries found.</p> : null}
+      {syncMessage ? (
+        <p className={`app-message ${syncState === "error" ? "app-message--error" : "app-message--success"}`}>
+          {syncMessage}
+        </p>
+      ) : null}
+      {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {loading && entries.length === 0 ? <p className="app-message app-message--subtle">Loading wantlist…</p> : null}
+      {!loading && !error && entries.length === 0 ? <p className="app-message app-message--subtle">No wantlist entries found.</p> : null}
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {sorted.map((e) => (
-          <li key={e.discogs_release_id} style={{ padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span>
-                <strong>{e.artist}</strong> — {e.title}
-                {e.year ? <span style={{ color: "#888", marginLeft: "0.5rem" }}>({e.year})</span> : null}
-              </span>
-              {showValue && e.value?.price_median != null ? (
-                <span style={{ color: "#2a7a2a", fontWeight: 500, marginLeft: "1rem", whiteSpace: "nowrap" }}>
-                  {e.value.price_median.toFixed(2)} {e.value.currency}
-                </span>
-              ) : null}
-            </div>
-            {(e.genres.length > 0 || e.styles.length > 0) ? (
-              <div style={{ marginTop: "0.2rem" }}>
-                {[...e.genres, ...e.styles].slice(0, 3).map((tag) => (
-                  <span key={tag} style={pillStyle}>{tag}</span>
-                ))}
+      <ul className="app-record-list">
+        {sorted.map((entry) => {
+          const isFocused = focusedReleaseId === entry.discogs_release_id;
+          return (
+            <li
+              key={entry.discogs_release_id}
+              className={`app-surface app-record app-record--interactive${isFocused ? " app-record--focused" : ""}`}
+              onClick={() => setFocus(entry.discogs_release_id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setFocus(entry.discogs_release_id);
+                }
+              }}
+              tabIndex={0}
+              aria-current={isFocused ? "true" : undefined}
+            >
+              <div className="app-record__header">
+                <p className="app-record__title">
+                  <strong>{entry.artist}</strong> — {entry.title}
+                  {entry.year ? <span className="app-record__year"> ({entry.year})</span> : null}
+                </p>
+                {showValue && entry.value?.price_median != null ? (
+                  <span className="app-record__price">
+                    {entry.value.price_median.toFixed(2)} {entry.value.currency}
+                  </span>
+                ) : null}
               </div>
-            ) : null}
-          </li>
-        ))}
+              {entry.genres.length > 0 || entry.styles.length > 0 ? (
+                <div className="app-tag-list" style={{ marginTop: "0.5rem" }}>
+                  {[...entry.genres, ...entry.styles].slice(0, 3).map((tag) => (
+                    <span key={tag} className="app-tag" style={pillStyle}>{tag}</span>
+                  ))}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
 
       {entries.length === limit ? (
         <button
+          type="button"
+          className="app-button"
           onClick={() => setLimit((l) => l + PAGE_SIZE)}
-          style={{ marginTop: "1rem", padding: "0.4rem 1rem" }}
+          style={{ marginTop: "1rem" }}
         >
           Load more
         </button>
