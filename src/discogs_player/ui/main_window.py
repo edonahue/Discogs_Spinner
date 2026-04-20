@@ -19,7 +19,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from discogs_player.capabilities import get_capabilities
 from discogs_player.core.settings import (
@@ -1302,6 +1302,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self._spin_wheel.add_css_class("ipod-panel")
         self._spin_wheel.add_css_class("ipod-mode-spin")
         mode_row.append(self._spin_wheel)
+
+        self._download_csv_button = Gtk.Button(label="Download CSV")
+        self._download_csv_button.add_css_class("ipod-mode-toggle")
+        self._download_csv_button.connect("clicked", self._handle_download_csv_clicked)
+        mode_row.append(self._download_csv_button)
 
         self._browse_stack = Gtk.Stack()
         self._browse_stack.set_hexpand(True)
@@ -4791,6 +4796,47 @@ class MainWindow(Gtk.ApplicationWindow):
         self._wantlist_detail.set_entry(selected)
         release_id_text = str(release_id) if isinstance(release_id, int) else "n/a"
         self._set_status(f"Pricing refreshed for wantlist release {release_id_text}.")
+
+    def _handle_download_csv_clicked(self, _button: Gtk.Button) -> None:
+        dialog = Gtk.FileDialog()
+        dialog.set_title("Save Collection CSV")
+        dialog.set_initial_name("collection.csv")
+        csv_filter = Gtk.FileFilter()
+        csv_filter.set_name("CSV files (*.csv)")
+        csv_filter.add_pattern("*.csv")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(csv_filter)
+        dialog.set_filters(filters)
+        dialog.set_default_filter(csv_filter)
+        dialog.save(self, None, self._on_download_csv_file_chosen)
+
+    def _on_download_csv_file_chosen(
+        self, dialog: Gtk.FileDialog, result: Gio.AsyncResult
+    ) -> None:
+        try:
+            gfile = dialog.save_finish(result)
+        except GLib.Error:
+            return
+        path = gfile.get_path()
+        if not path:
+            return
+        from discogs_player.use_cases.export_collection import run_export_collection
+        self._start_async_action(
+            action_key="download-csv",
+            busy_message="Exporting collection to CSV…",
+            duplicate_message="CSV export already in progress.",
+            runner=lambda: run_export_collection(
+                output_path=path,
+                export_format="csv",
+                include_inactive=False,
+            ),
+            on_success=self._on_download_csv_success,
+            on_error=lambda msg: self._set_status(f"CSV export failed: {msg}"),
+        )
+
+    def _on_download_csv_success(self, result: dict[str, object]) -> None:
+        count = result.get("release_count", "?")
+        self._set_status(f"Exported {count} releases to CSV.")
 
     def _handle_browse_sync_clicked(self) -> None:
         self._start_async_action(
