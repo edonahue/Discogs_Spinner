@@ -448,6 +448,10 @@ button.ipod-gallery-card.is-selected {
   min-width: 36px;
 }
 
+.ipod-root.ipod-width-ultra-compact .ipod-download-csv-button {
+  display: none;
+}
+
 .ipod-help-menu-button {
   border-radius: 999px;
 }
@@ -1305,6 +1309,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self._download_csv_button = Gtk.Button(label="Download CSV")
         self._download_csv_button.add_css_class("ipod-mode-toggle")
+        self._download_csv_button.add_css_class("ipod-download-csv-button")
         self._download_csv_button.connect("clicked", self._handle_download_csv_clicked)
         mode_row.append(self._download_csv_button)
 
@@ -4830,6 +4835,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 export_format="csv",
                 include_inactive=False,
             ),
+            on_started=lambda: self._download_csv_button.set_sensitive(False),
+            on_finished=lambda: self._download_csv_button.set_sensitive(True),
             on_success=self._on_download_csv_success,
             on_error=lambda msg: self._set_status(f"CSV export failed: {msg}"),
         )
