@@ -254,6 +254,7 @@ def _get_schema_version(conn: sqlite3.Connection) -> int:
 
 
 def _set_schema_version(conn: sqlite3.Connection, version: int) -> None:
+    # SQLite PRAGMA doesn't support bind parameters; int() is the injection guard.
     conn.execute(f"PRAGMA user_version = {int(version)}")
 
 

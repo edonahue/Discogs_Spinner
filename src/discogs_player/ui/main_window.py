@@ -7,10 +7,13 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 import json
+import logging
 from pathlib import Path
 import sys
 import time
 import traceback
+
+logger = logging.getLogger(__name__)
 
 import gi
 
@@ -1505,7 +1508,7 @@ class MainWindow(Gtk.ApplicationWindow):
             try:
                 GLib.source_remove(source_id)
             except Exception:
-                pass
+                logger.debug("GLib.source_remove failed during animation cleanup", exc_info=True)
         self._split_animation_source_ids.clear()
         self._actions_executor.shutdown(wait=False, cancel_futures=True)
         self._value_ops_executor.shutdown(wait=False, cancel_futures=True)
@@ -2165,7 +2168,7 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             GLib.source_remove(source_id)
         except Exception:
-            pass
+            logger.debug("GLib.source_remove failed clearing layout settle source", exc_info=True)
 
     def _cancel_visible_layout_settle(self) -> None:
         self._layout_settle_generation += 1
@@ -2261,7 +2264,7 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             GLib.source_remove(source_id)
         except Exception:
-            pass
+            logger.debug("GLib.source_remove failed clearing split animation source", exc_info=True)
 
     def _animate_split_position(
         self,
@@ -2882,6 +2885,7 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             report = run_setup_report()
         except Exception:
+            logger.warning("Failed to load setup report; skipping first-run check", exc_info=True)
             return
         stage = report.get("onboarding_stage")
         if stage == "needs_discogs_token":
