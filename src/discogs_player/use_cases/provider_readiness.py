@@ -7,6 +7,7 @@ from typing import Any
 
 from discogs_player.capabilities import AppCapabilities, ProviderCapability, get_capabilities
 from discogs_player.core.settings import get_discogs_token
+from discogs_player.integrations.provider_registry import provider_descriptor
 
 _SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard"
 _SPOTIFY_OAUTH_GUIDE_URL = (
@@ -14,50 +15,64 @@ _SPOTIFY_OAUTH_GUIDE_URL = (
 )
 _DISCOGS_TOKEN_URL = "https://www.discogs.com/settings/developers"
 
-_PROVIDER_CAPABILITIES: dict[str, tuple[str, ...]] = {
-    "spotify": (
-        "playback",
-        "device_selection",
-        "catalog_matching",
-        "oauth_login",
-        "auth_diagnostics",
-    ),
-    "youtube_music": (
-        "playback",
-        "catalog_matching",
-        "browser_playback",
-    ),
-}
+
+def _provider_auth_required(provider: ProviderCapability, descriptor: dict[str, Any]) -> bool:
+    raw = descriptor.get("auth_required")
+    if isinstance(raw, bool):
+        return raw
+    return provider.provider_id == "spotify"
 
 
-def _provider_auth_required(provider_id: str) -> bool:
-    return provider_id == "spotify"
+def _provider_supported_capabilities(descriptor: dict[str, Any]) -> list[str]:
+    raw = descriptor.get("supported_capabilities")
+    if isinstance(raw, list):
+        return [str(item).strip() for item in raw if str(item).strip()]
+    return []
 
 
-def _provider_supported_capabilities(provider_id: str) -> list[str]:
-    return list(_PROVIDER_CAPABILITIES.get(provider_id, ()))
-
-
-def _provider_next_actions(provider: ProviderCapability) -> list[str]:
+def _provider_next_actions(
+    provider: ProviderCapability,
+    *,
+    descriptor: dict[str, Any],
+    auth_required: bool,
+) -> list[str]:
     if not provider.enabled and provider.experimental_flag:
         return [f"Set {provider.experimental_flag}=1 to enable provider scaffolding."]
     if not provider.importable:
         return ["Install provider dependencies before enabling this provider."]
     if not provider.addon_available:
         return ["Install optional addon dependencies for this provider."]
-    if _provider_auth_required(provider.provider_id) and not provider.configured:
+    if auth_required and not provider.configured:
+        configured_actions = descriptor.get("next_actions_when_unconfigured")
+        actions: list[str] = []
+        if isinstance(configured_actions, list):
+            actions.extend(str(item).strip() for item in configured_actions if str(item).strip())
+        setup_url = str(descriptor.get("setup_url") or "").strip()
+        oauth_url = str(descriptor.get("oauth_guide_url") or "").strip()
+        if setup_url:
+            actions.append(f"Setup: {setup_url}")
+        if oauth_url:
+            actions.append(f"Guide: {oauth_url}")
+        if actions:
+            return list(dict.fromkeys(actions))
         return [
-            "Run `dplayer auth spotify-doctor`.",
-            "Run `dplayer auth spotify --open-browser`.",
-            f"Spotify dashboard: {_SPOTIFY_DASHBOARD_URL}",
-            f"Spotify OAuth guide: {_SPOTIFY_OAUTH_GUIDE_URL}",
+            "Run provider auth/setup flow.",
         ]
     if not provider.configured:
+        configured_actions = descriptor.get("next_actions_when_unconfigured")
+        if isinstance(configured_actions, list):
+            actions = [str(item).strip() for item in configured_actions if str(item).strip()]
+            if actions:
+                return list(dict.fromkeys(actions))
         return ["Run provider auth/setup flow."]
     return ["Provider is ready for playback and matching."]
 
 
-def _provider_degraded_reasons(provider: ProviderCapability) -> list[str]:
+def _provider_degraded_reasons(
+    provider: ProviderCapability,
+    *,
+    auth_required: bool,
+) -> list[str]:
     reasons: list[str] = []
     if not provider.enabled:
         reasons.append("disabled")
@@ -65,15 +80,15 @@ def _provider_degraded_reasons(provider: ProviderCapability) -> list[str]:
         reasons.append("backend_not_installed")
     if provider.importable and not provider.addon_available:
         reasons.append("addon_unavailable")
-    if provider.addon_available and _provider_auth_required(provider.provider_id) and not provider.configured:
+    if provider.addon_available and auth_required and not provider.configured:
         reasons.append("unauthenticated")
-    if provider.addon_available and not _provider_auth_required(provider.provider_id) and not provider.configured:
+    if provider.addon_available and not auth_required and not provider.configured:
         reasons.append("not_configured")
     return reasons
 
 
-def _provider_readiness(provider: ProviderCapability) -> str:
-    reasons = _provider_degraded_reasons(provider)
+def _provider_readiness(provider: ProviderCapability, *, auth_required: bool) -> str:
+    reasons = _provider_degraded_reasons(provider, auth_required=auth_required)
     if not reasons and provider.configured:
         return "ready"
     if not provider.importable or not provider.addon_available:
@@ -82,9 +97,10 @@ def _provider_readiness(provider: ProviderCapability) -> str:
 
 
 def _provider_contract_row(provider: ProviderCapability) -> dict[str, object]:
-    auth_required = _provider_auth_required(provider.provider_id)
-    readiness = _provider_readiness(provider)
-    degraded_reasons = _provider_degraded_reasons(provider)
+    descriptor = provider_descriptor(provider.provider_id)
+    auth_required = _provider_auth_required(provider, descriptor)
+    readiness = _provider_readiness(provider, auth_required=auth_required)
+    degraded_reasons = _provider_degraded_reasons(provider, auth_required=auth_required)
     auth_state = "not_required"
     if auth_required:
         auth_state = "authenticated" if provider.configured else "unauthenticated"
@@ -105,11 +121,22 @@ def _provider_contract_row(provider: ProviderCapability) -> dict[str, object]:
         "degraded_reasons": degraded_reasons,
         "status_message": provider.status_message,
         "action_label": provider.action_label,
-        "supported_capabilities": _provider_supported_capabilities(provider.provider_id),
-        "can_skip_setup": True,
-        "can_retry_setup": bool(not provider.configured or not provider.addon_available),
-        "next_actions": _provider_next_actions(provider),
+        "supported_capabilities": _provider_supported_capabilities(descriptor),
+        "can_skip_setup": bool(descriptor.get("can_skip_setup", True)),
+        "can_retry_setup": bool(
+            descriptor.get(
+                "can_retry_setup",
+                bool(not provider.configured or not provider.addon_available),
+            )
+        ),
+        "next_actions": _provider_next_actions(
+            provider,
+            descriptor=descriptor,
+            auth_required=auth_required,
+        ),
         "docs_url": provider.docs_url,
+        "setup_url": str(descriptor.get("setup_url") or "") or None,
+        "oauth_guide_url": str(descriptor.get("oauth_guide_url") or "") or None,
         "experimental": provider.experimental,
         "experimental_flag": provider.experimental_flag,
     }
@@ -175,6 +202,14 @@ def build_provider_readiness_contract(
     # Ensure Spotify exists in providers even if not listed externally.
     spotify = getattr(capabilities, "spotify", None)
     if "spotify" not in provider_rows and spotify is not None:
+        descriptor = provider_descriptor("spotify")
+        supported_capabilities = _provider_supported_capabilities(descriptor)
+        next_actions = descriptor.get("next_actions_when_unconfigured")
+        if not isinstance(next_actions, list):
+            next_actions = [
+                "Run `dplayer auth spotify-doctor`.",
+                "Run `dplayer auth spotify --open-browser`.",
+            ]
         provider_rows["spotify"] = {
             "provider_id": "spotify",
             "display_name": "Spotify",
@@ -191,14 +226,17 @@ def build_provider_readiness_contract(
             "degraded_reasons": [] if spotify.configured else ["unauthenticated"],
             "status_message": spotify.status_message,
             "action_label": spotify.action_label,
-            "supported_capabilities": _provider_supported_capabilities("spotify"),
+            "supported_capabilities": supported_capabilities,
             "can_skip_setup": True,
             "can_retry_setup": True,
             "next_actions": [
-                "Run `dplayer auth spotify-doctor`.",
-                "Run `dplayer auth spotify --open-browser`.",
+                str(item).strip() for item in next_actions if str(item).strip()
             ],
-            "docs_url": _SPOTIFY_OAUTH_GUIDE_URL,
+            "docs_url": str(descriptor.get("setup_url") or _SPOTIFY_DASHBOARD_URL),
+            "setup_url": str(descriptor.get("setup_url") or _SPOTIFY_DASHBOARD_URL),
+            "oauth_guide_url": str(
+                descriptor.get("oauth_guide_url") or _SPOTIFY_OAUTH_GUIDE_URL
+            ),
             "experimental": False,
             "experimental_flag": None,
         }
@@ -234,9 +272,10 @@ def build_provider_readiness_contract(
     next_actions = list(dict.fromkeys(next_actions))
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "core_service": _discogs_contract_row(discogs_configured=bool(discogs_configured)),
         "providers": providers,
+        "next_actions": next_actions,
         "summary": {
             "required_services_configured": bool(discogs_configured),
             "optional_provider_count": optional_provider_count,

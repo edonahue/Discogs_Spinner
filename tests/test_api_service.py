@@ -156,7 +156,7 @@ def test_api_capabilities_uses_capability_model(monkeypatch):
     assert body["data"]["spotify"]["configured"] is False
     assert body["data"]["spotify"]["action_label"] == "Connect Spotify"
     readiness = body["data"]["provider_readiness"]
-    assert readiness["schema_version"] == 1
+    assert readiness["schema_version"] == 2
     assert readiness["core_service"]["service_id"] == "discogs"
 
 

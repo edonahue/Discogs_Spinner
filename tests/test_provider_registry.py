@@ -111,3 +111,37 @@ def test_get_backend_returns_provider_backend_when_available(monkeypatch):
 def test_get_backend_type_returns_none_when_experimental_provider_disabled(monkeypatch):
     monkeypatch.setenv("DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC", "0")
     assert provider_registry.get_backend_type("youtube_music") is None
+
+
+def test_provider_descriptor_returns_static_when_backend_unavailable(monkeypatch):
+    monkeypatch.setenv("DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC", "0")
+    descriptor = provider_registry.provider_descriptor("youtube_music")
+    assert descriptor["auth_required"] is False
+    assert "browser_playback" in descriptor["supported_capabilities"]
+
+
+def test_provider_descriptor_prefers_backend_descriptor_when_importable(monkeypatch):
+    monkeypatch.setitem(
+        provider_registry._BACKEND_SPECS,
+        "fake_provider",
+        ("fake.module", "FakeBackend"),
+    )
+
+    class _FakeDescriptorBackend(_FakeAvailableBackend):
+        @classmethod
+        def provider_descriptor(cls):
+            return {
+                "auth_required": False,
+                "supported_capabilities": ["playback", "custom_capability"],
+                "setup_url": "https://example.test/setup",
+            }
+
+    monkeypatch.setattr(
+        provider_registry,
+        "import_module",
+        lambda module_name: SimpleNamespace(FakeBackend=_FakeDescriptorBackend),
+    )
+    descriptor = provider_registry.provider_descriptor("fake_provider")
+    assert descriptor["auth_required"] is False
+    assert "custom_capability" in descriptor["supported_capabilities"]
+    assert descriptor["setup_url"] == "https://example.test/setup"

@@ -61,7 +61,8 @@ def test_provider_readiness_contract_exposes_required_core_and_optional_provider
         collection_synced=True,
     )
 
-    assert contract["schema_version"] == 1
+    assert contract["schema_version"] == 2
+    assert isinstance(contract.get("next_actions"), list)
     core = contract["core_service"]
     assert core["service_id"] == "discogs"
     assert core["required"] is True
@@ -78,6 +79,8 @@ def test_provider_readiness_contract_exposes_required_core_and_optional_provider
     assert providers[0]["can_skip_setup"] is True
     assert providers[0]["can_retry_setup"] is True
     assert "catalog_matching" in providers[0]["supported_capabilities"]
+    assert "setup_url" in providers[0]
+    assert "oauth_guide_url" in providers[0]
 
 
 def test_provider_readiness_contract_marks_disabled_provider_as_unavailable():
@@ -162,3 +165,37 @@ def test_provider_readiness_contract_summary_counts_ready_providers():
     assert summary["ready_provider_count"] == 2
     assert summary["degraded_mode"] is False
     assert summary["onboarding_state"] == "ready"
+
+
+def test_provider_readiness_contract_stability_keys():
+    caps = AppCapabilities(
+        spotify=SpotifyCapabilities(
+            addon_available=False,
+            configured=False,
+            action_label="Enable Spotify (optional)",
+            status_message="Spotify addon unavailable.",
+        ),
+        providers=(),
+    )
+    contract = build_provider_readiness_contract(
+        app_capabilities=caps,
+        discogs_configured=False,
+        collection_synced=False,
+    )
+    assert set(contract.keys()) == {
+        "schema_version",
+        "core_service",
+        "providers",
+        "next_actions",
+        "summary",
+    }
+    assert set(contract["summary"].keys()) == {
+        "required_services_configured",
+        "optional_provider_count",
+        "ready_provider_count",
+        "degraded_mode",
+        "onboarding_state",
+        "collection_synced",
+        "next_actions",
+        "can_skip_optional_setup",
+    }
