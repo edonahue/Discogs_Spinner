@@ -84,6 +84,15 @@ def test_wizard_spawns_spotify_oauth_in_background():
     )
 
 
+def test_wizard_consumes_provider_readiness_contract():
+    assert "run_setup_report" in _WIZARD_SOURCE, (
+        "SetupWizard should consume setup readiness contract from run_setup_report"
+    )
+    assert "provider_readiness" in _WIZARD_SOURCE, (
+        "SetupWizard should read provider_readiness payload fields"
+    )
+
+
 def test_wizard_hooks_close_request_for_executor_cleanup():
     assert "close-request" in _WIZARD_SOURCE, (
         "SetupWizard must connect to close-request to shut down executor on X-close"

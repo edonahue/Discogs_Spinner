@@ -79,6 +79,7 @@ Normalize data/API contracts around provider-neutral mapping and capability disc
 Stage 2 foundation status:
 
 - Completed (foundation): a shared provider readiness contract now exists for setup/status/capability surfaces, with additive backward-compatible exposure.
+- Expanded: readiness schema is versioned (`schema_version = 2`) with top-level `next_actions` and contract-stability tests.
 - Included contract fields now cover:
   - provider identity and display name
   - required vs optional
@@ -99,7 +100,13 @@ Onboarding and FTUX modernization:
 Stage 3 status:
 
 - In progress (early): CLI setup/status now exposes provider readiness summary fields additively.
+- In progress (expanded): web onboarding/home and GTK setup flow now consume readiness fields for required vs optional setup messaging.
 - Remaining: broader UI/web onboarding flows should consume the readiness contract more deeply without breaking existing behavior.
+
+Stage 4 foundation status:
+
+- Early seam in place: provider capability hints are now descriptor-driven via backend/registry metadata instead of readiness-only heuristics.
+- Not in scope yet: remote account systems, entitlements, subscriptions, or packaging differentiation.
 
 ### Stage 4
 
