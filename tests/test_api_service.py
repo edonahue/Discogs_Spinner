@@ -272,6 +272,50 @@ def test_api_list_releases_forwards_filter_params(monkeypatch):
     assert captured["with_value"] is True
 
 
+def test_api_release_summary_forwards_filter_params(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def _fake_run_release_summary(**kwargs):
+        captured.update(kwargs)
+        return {
+            "release_count": 3,
+            "lp_count": 2,
+            "rpm45_count": 1,
+            "format_counts_ready": True,
+            "priced_release_count": 2,
+            "total_median": 50.0,
+            "median_currency": "USD",
+            "mixed_currencies": False,
+            "most_recent_added_at": "2026-04-18T14:00:00Z",
+            "most_recent_release_id": 1,
+            "most_recent_release_artist": "Miles Davis",
+            "most_recent_release_title": "Kind of Blue",
+        }
+
+    monkeypatch.setattr(catalog, "run_release_collection_summary", _fake_run_release_summary)
+
+    client = TestClient(create_app())
+    response = client.get(
+        "/api/v1/releases/summary",
+        params=[
+            ("q", "miles"),
+            ("genres", "Jazz"),
+            ("styles", "Modal"),
+            ("year", "1959"),
+            ("unmatched", "true"),
+        ],
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"]["lp_count"] == 2
+    assert captured["q"] == "miles"
+    assert captured["genres"] == ["Jazz"]
+    assert captured["styles"] == ["Modal"]
+    assert captured["year"] == "1959"
+    assert captured["unmatched"] is True
+
+
 def test_api_maps_use_case_value_error_to_consistent_envelope(monkeypatch):
     def _fake_run_match_review_action(*args, **kwargs):
         _ = (args, kwargs)
@@ -313,6 +357,87 @@ def test_api_value_queue_returns_envelope(monkeypatch):
     body = response.json()
     assert body["ok"] is True
     assert body["data"] == stub
+
+
+def test_api_envelope_adds_provider_mapping_aliases(monkeypatch):
+    stub = {
+        "ok": True,
+        "releases": [
+            {
+                "discogs_release_id": 1,
+                "artist": "A",
+                "title": "B",
+                "spotify_album_id": "album-1",
+            }
+        ],
+        "count": 1,
+        "days": 7,
+        "limit": 25,
+    }
+    monkeypatch.setattr(catalog, "run_recent_releases", lambda **_: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/releases/recent")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    row = body["data"]["releases"][0]
+    assert row["spotify_album_id"] == "album-1"
+    assert row["provider_release_id"] == "album-1"
+    assert row["provider_id"] == "spotify"
+
+
+def test_api_envelope_preserves_existing_provider_mapping_fields(monkeypatch):
+    stub = {
+        "ok": True,
+        "releases": [
+            {
+                "discogs_release_id": 1,
+                "spotify_album_id": "album-1",
+                "provider_release_id": "custom-release-id",
+                "provider_id": "youtube_music",
+            }
+        ],
+        "count": 1,
+        "days": 7,
+        "limit": 25,
+    }
+    monkeypatch.setattr(catalog, "run_recent_releases", lambda **_: stub)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/releases/recent")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    row = body["data"]["releases"][0]
+    assert row["spotify_album_id"] == "album-1"
+    assert row["provider_release_id"] == "custom-release-id"
+    assert row["provider_id"] == "youtube_music"
+
+
+def test_api_hidden_gems_returns_envelope_and_forwards_params(monkeypatch):
+    captured: dict[str, object] = {}
+    stub = {
+        "ok": True,
+        "min_median": 40.0,
+        "limit": 7,
+        "count": 0,
+        "gems": [],
+    }
+
+    def _fake_run_hidden_gems(**kwargs):
+        captured.update(kwargs)
+        return stub
+
+    monkeypatch.setattr(value_router, "run_hidden_gems", _fake_run_hidden_gems)
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/value/gems?min_median=40&limit=7")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"] == stub
+    assert captured == {"min_median": 40.0, "limit": 7}
 
 
 def test_api_collection_health_returns_envelope(monkeypatch):
