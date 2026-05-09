@@ -20,6 +20,12 @@ def _stub_report(stage: str = "needs_discogs_token", configured: bool = False):
         "onboarding_stage": stage,
         "discogs": {"configured": configured, "token_source": "missing"},
         "profile": "core",
+        "provider_readiness": {
+            "schema_version": 1,
+            "core_service": {"service_id": "discogs", "required": True},
+            "providers": [],
+            "summary": {"required_services_configured": configured},
+        },
     }
 
 
@@ -30,6 +36,7 @@ def test_get_setup_returns_ok_with_onboarding_stage(monkeypatch):
     body = response.json()
     assert body["ok"] is True
     assert "onboarding_stage" in body["data"]
+    assert body["data"]["provider_readiness"]["schema_version"] == 1
     assert body["error"] is None
     assert isinstance(body["meta"], dict)
 

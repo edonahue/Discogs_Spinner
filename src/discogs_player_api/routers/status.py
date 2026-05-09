@@ -6,6 +6,9 @@ from fastapi import APIRouter, Query
 
 from discogs_player.capabilities import get_capabilities
 from discogs_player.use_cases.collection_analytics import run_collection_analytics
+from discogs_player.use_cases.provider_readiness import (
+    build_provider_readiness_contract,
+)
 from discogs_player.use_cases.status_report import get_status_report
 from discogs_player_api.runtime import run_use_case
 
@@ -58,6 +61,10 @@ def api_capabilities() -> dict[str, object]:
             )
         if providers:
             payload["providers"] = providers
+        payload["provider_readiness"] = build_provider_readiness_contract(
+            app_capabilities=capabilities,
+            collection_synced=None,
+        )
         return payload
 
     return run_use_case(_payload)

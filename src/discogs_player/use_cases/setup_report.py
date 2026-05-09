@@ -12,6 +12,9 @@ from discogs_player.core.settings import (
 )
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import get_release_counts
+from discogs_player.use_cases.provider_readiness import (
+    build_provider_readiness_contract,
+)
 
 _DEFAULT_SPOTIFY_REDIRECT_URI = "http://127.0.0.1:8765/callback"
 _DISCOGS_TOKEN_URL = "https://www.discogs.com/settings/developers"
@@ -41,7 +44,8 @@ def _discogs_token_source(conn=None) -> str:
 
 def run_setup_report() -> dict[str, object]:
     """Return onboarding/setup readiness for Discogs core + optional Spotify."""
-    capabilities = get_capabilities().spotify
+    app_capabilities = get_capabilities()
+    capabilities = app_capabilities.spotify
     conn = get_connection()
     try:
         counts = get_release_counts(conn)
@@ -53,6 +57,7 @@ def run_setup_report() -> dict[str, object]:
     release_count_active = int(counts.get("release_count_active") or 0)
     release_count_total = int(counts.get("release_count_total") or 0)
     discogs_configured = discogs_source != "missing"
+    collection_synced = bool(release_count_active > 0)
     profile = "plus" if capabilities.addon_available else "core"
 
     if not discogs_configured:
@@ -129,7 +134,7 @@ def run_setup_report() -> dict[str, object]:
 
     first_run_checklist = {
         "discogs_configured": bool(discogs_configured),
-        "collection_synced": bool(release_count_active > 0),
+        "collection_synced": collection_synced,
         "spotify_addon_available": bool(capabilities.addon_available),
         "spotify_configured": bool(capabilities.configured),
     }
@@ -142,9 +147,16 @@ def run_setup_report() -> dict[str, object]:
         )
     )
 
+    readiness_contract = build_provider_readiness_contract(
+        app_capabilities=app_capabilities,
+        discogs_configured=discogs_configured,
+        collection_synced=collection_synced,
+    )
+
     return {
         "profile": profile,
         "onboarding_stage": onboarding_stage,
+        "provider_readiness": readiness_contract,
         "discogs": {
             "configured": bool(discogs_configured),
             "token_source": discogs_source,

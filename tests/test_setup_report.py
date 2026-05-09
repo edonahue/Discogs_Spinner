@@ -53,6 +53,10 @@ def test_setup_report_requires_discogs_token_and_spotify_addon(
     assert report["onboarding_stage"] == "needs_discogs_token"
     assert report["discogs"]["configured"] is False
     assert report["spotify"]["addon_available"] is False
+    readiness = report["provider_readiness"]
+    assert readiness["core_service"]["service_id"] == "discogs"
+    assert readiness["core_service"]["required"] is True
+    assert readiness["summary"]["required_services_configured"] is False
     checklist = report["first_run_checklist"]
     assert checklist["discogs_configured"] is False
     assert checklist["collection_synced"] is True
@@ -100,6 +104,9 @@ def test_setup_report_ready_when_discogs_and_spotify_are_configured(
     assert report["discogs"]["token_source"] == "environment"
     assert report["collection"]["release_count_active"] == 1
     assert report["spotify"]["configured"] is True
+    readiness = report["provider_readiness"]
+    assert readiness["summary"]["required_services_configured"] is True
+    assert readiness["summary"]["collection_synced"] is True
     checklist = report["first_run_checklist"]
     assert checklist["discogs_configured"] is True
     assert checklist["collection_synced"] is True
@@ -138,6 +145,9 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
     assert report["profile"] == "plus"
     assert report["onboarding_stage"] == "needs_spotify_auth"
     assert report["spotify"]["configured"] is False
+    readiness = report["provider_readiness"]
+    assert isinstance(readiness.get("providers"), list)
+    assert readiness["summary"]["ready_provider_count"] == 0
     checklist = report["first_run_checklist"]
     assert checklist["discogs_configured"] is True
     assert checklist["collection_synced"] is True

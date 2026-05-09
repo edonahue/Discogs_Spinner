@@ -155,6 +155,9 @@ def test_api_capabilities_uses_capability_model(monkeypatch):
     assert body["data"]["spotify"]["addon_available"] is True
     assert body["data"]["spotify"]["configured"] is False
     assert body["data"]["spotify"]["action_label"] == "Connect Spotify"
+    readiness = body["data"]["provider_readiness"]
+    assert readiness["schema_version"] == 1
+    assert readiness["core_service"]["service_id"] == "discogs"
 
 
 def test_api_capabilities_includes_provider_listing_when_available(monkeypatch):
@@ -194,6 +197,8 @@ def test_api_capabilities_includes_provider_listing_when_available(monkeypatch):
     assert isinstance(providers, list)
     assert providers[0]["provider_id"] == "youtube_music"
     assert providers[0]["action_label"] == "Planned"
+    readiness_providers = body["data"]["provider_readiness"]["providers"]
+    assert isinstance(readiness_providers, list)
 
 
 def test_api_sync_collection_forwards_allow_empty_deactivate(monkeypatch):
