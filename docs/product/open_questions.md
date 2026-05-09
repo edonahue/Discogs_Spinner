@@ -8,6 +8,10 @@ These questions should guide the next product planning pass. They are intentiona
 2. Which home surface should be primary across web and GTK: quick actions, discovery cards, or status overview?
 3. How much opinionated curation is desired vs. neutral data display?
 
+Priority hint for next planning session:
+
+- Decide this section first before roadmap sequencing for the next release train.
+
 ## Mobile Direction
 
 1. Should mobile be companion-only (browse + discovery + queue) or full-featured (sync + play handoff)?
@@ -44,3 +48,10 @@ These questions should guide the next product planning pass. They are intentiona
 2. Which top three friction signals should block a release?
 3. Should release artifacts prioritize one native mode (GTK or Tauri) per OS as the default recommendation?
 
+## Suggested Decision Order
+
+1. Experience Priority
+2. Privacy and Data Promises
+3. Provider Strategy
+4. Trial and Launch Operations
+5. Mobile and Paid/Pro questions
