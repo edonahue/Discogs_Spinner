@@ -56,6 +56,39 @@ account. Just your collection on your machine.
 
 ---
 
+## Daily Collector Loop
+
+For most users, the daily flow should be simple:
+
+1. **Sync occasionally** (`dplayer sync`) to keep collection + wantlist fresh
+2. **Pick something quickly** (`dplayer spin` or native/web browse)
+3. **Check context** (value, hidden gems, health, wantlist pressure)
+4. **Play or open** (`dplayer play --last-spin --open`) if optional playback is connected
+
+If you prefer a compact terminal briefing, run:
+
+```bash
+dplayer insights
+```
+
+---
+
+## What Works Without Spotify
+
+Spotify (and other playback providers) are optional.
+
+Without Spotify configured, you still get:
+
+- full Discogs collection + wantlist sync
+- browse, filters, and spin workflows
+- value dashboard, hidden gems, and health scoring
+- local cache and export/share tooling
+- provider readiness + setup diagnostics for optional integrations
+
+You only lose direct playback control handoff until an optional provider is connected.
+
+---
+
 ## Three Ways to Use
 
 | Mode | Launch | Best for |
@@ -112,6 +145,7 @@ Quick install notes:
 Sending this to a friend?
 
 - Use the [Friend Trial Guide](docs/friend_trial.md) for the shortest install/setup checklist.
+- Use the [Friend Trial Checklist](docs/friend_trial_checklist.md) for a fast pass/fail validation run.
 - Ask them to report install, setup, or playback friction with OS, installer used, exact warning text, and a screenshot if possible.
 - GitHub issue templates: [install](https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml), [auth/setup](https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml), [playback](https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml)
 
@@ -155,6 +189,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 - [Web App Quickstart](docs/quickstart_web.md)
 - [Token Setup (Discogs + Spotify)](docs/token_setup.md)
 - [Friend Trial Guide](docs/friend_trial.md)
+- [Friend Trial Checklist](docs/friend_trial_checklist.md)
 - [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 
 ---

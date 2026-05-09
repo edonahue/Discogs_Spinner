@@ -1,6 +1,7 @@
 # Friend Trial Guide
 
 Use this when you want a friend to try the public installers without asking them to learn the whole project first.
+For a shorter pass/fail runbook, use [`docs/friend_trial_checklist.md`](friend_trial_checklist.md).
 
 ## What To Download
 
@@ -23,6 +24,7 @@ If you would rather browse the full release page first, start here: [Download th
    - reach the setup wizard, or
    - see your collection after setup and first sync.
 4. If you use Spotify features, stop after verifying auth/setup prompts make sense. Full playback testing is optional for friend trials.
+5. Optional quick quality pass: run `dplayer insights` and confirm the output is understandable.
 
 ## What Feedback Is Most Helpful
 
@@ -33,6 +35,7 @@ Please report any of these:
 - Linux package choices were confusing
 - The app did not launch after install
 - The setup wizard was confusing or failed
+- I did not understand optional provider status (ready/degraded/unavailable)
 - The app launched, but collection sync or basic browsing failed
 
 ## How To Report A Problem
