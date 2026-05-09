@@ -54,6 +54,8 @@ def run_diagnostics_report() -> dict[str, object]:
     capabilities = get_capabilities()
     spotify_capabilities = capabilities.spotify
     backend = get_player_backend()
+    status_payload = get_status_report()
+    setup_payload = run_setup_report()
 
     provider_diagnostics: dict[str, object]
     try:
@@ -111,8 +113,17 @@ def run_diagnostics_report() -> dict[str, object]:
             },
             "providers": providers_payload,
         },
-        "status_report": get_status_report(),
-        "setup_report": run_setup_report(),
+        "provider_readiness": dict(status_payload.get("provider_readiness") or {}),
+        "legacy_spotify_compatibility": {
+            "status_report_has_spotify_capability": isinstance(
+                status_payload.get("spotify_capability"), dict
+            ),
+            "setup_report_has_spotify_block": isinstance(
+                setup_payload.get("spotify"), dict
+            ),
+        },
+        "status_report": status_payload,
+        "setup_report": setup_payload,
         "provider_diagnostics": {
             backend.name: provider_diagnostics,
         },

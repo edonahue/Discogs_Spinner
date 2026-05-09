@@ -417,8 +417,85 @@ def _render_diagnostics_table(report: dict[str, object]) -> None:
     table.add_row("data_dir", str(paths.get("data_dir") or ""))
     table.add_row("db_path", str(paths.get("db_path") or ""))
     table.add_row("db_exists", str(paths.get("db_exists")))
+    provider_readiness = _as_dict(report.get("provider_readiness"))
+    readiness_summary = _as_dict(provider_readiness.get("summary"))
+    if readiness_summary:
+        table.add_row(
+            "provider_readiness_state",
+            str(readiness_summary.get("onboarding_state") or ""),
+        )
+        table.add_row(
+            "provider_optional_ready_count",
+            "{}/{}".format(
+                readiness_summary.get("ready_provider_count", 0),
+                readiness_summary.get("optional_provider_count", 0),
+            ),
+        )
+        table.add_row(
+            "provider_degraded_mode",
+            str(bool(readiness_summary.get("degraded_mode"))),
+        )
     table.add_row("command_hint", str(report.get("command_hint") or ""))
     console.print(table)
+
+
+def _render_providers_table(payload: dict[str, object]) -> None:
+    summary = _as_dict(payload.get("summary"))
+    summary_table = Table(title="provider readiness summary")
+    summary_table.add_column("Field", style="cyan")
+    summary_table.add_column("Value", style="white")
+    summary_table.add_row(
+        "required_services_configured",
+        str(bool(summary.get("required_services_configured"))),
+    )
+    summary_table.add_row(
+        "onboarding_state",
+        str(summary.get("onboarding_state") or ""),
+    )
+    summary_table.add_row(
+        "optional_provider_count",
+        str(summary.get("optional_provider_count") or 0),
+    )
+    summary_table.add_row(
+        "ready_provider_count",
+        str(summary.get("ready_provider_count") or 0),
+    )
+    summary_table.add_row(
+        "degraded_mode",
+        str(bool(summary.get("degraded_mode"))),
+    )
+    console.print(summary_table)
+
+    providers = _as_dict_list(payload.get("providers"))
+    if not providers:
+        return
+
+    providers_table = Table(title="providers")
+    providers_table.add_column("ID", style="cyan")
+    providers_table.add_column("Name", style="white")
+    providers_table.add_column("Readiness", style="magenta")
+    providers_table.add_column("Auth", style="yellow")
+    providers_table.add_column("Configured", justify="center")
+    providers_table.add_column("Capabilities", style="green")
+    providers_table.add_column("Status", style="white")
+
+    for row in providers:
+        capabilities = ", ".join(
+            str(item).strip()
+            for item in _as_object_list(row.get("supported_capabilities"))
+            if str(item).strip()
+        )
+        providers_table.add_row(
+            str(row.get("provider_id") or ""),
+            str(row.get("display_name") or ""),
+            str(row.get("readiness") or ""),
+            str(row.get("auth_state") or ""),
+            "yes" if row.get("configured") else "no",
+            capabilities,
+            str(row.get("status_message") or ""),
+        )
+
+    console.print(providers_table)
 
 
 def _render_spotify_auth_doctor_table(report: dict[str, object]) -> None:
@@ -1029,6 +1106,23 @@ def diagnostics(
         _emit_json(report)
         return
     _render_diagnostics_table(report)
+
+
+@app.command("providers")
+def providers(
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show provider readiness rows and summary."""
+    report = get_status_report()
+    readiness = _as_dict(report.get("provider_readiness"))
+    payload = {
+        "summary": _as_dict(readiness.get("summary")),
+        "providers": _as_dict_list(readiness.get("providers")),
+    }
+    if json_output:
+        _emit_json(payload)
+        return
+    _render_providers_table(payload)
 
 
 @app.command("analytics")
