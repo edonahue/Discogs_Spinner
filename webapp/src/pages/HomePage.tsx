@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  CollectorInsightsPayload,
+  fetchCollectorInsights,
   getJson,
   ProviderReadinessContract,
   SyncSummary,
@@ -41,6 +43,7 @@ function readinessNextActions(readiness: ProviderReadinessContract): string[] {
 
 export function HomePage() {
   const [status, setStatus] = useState<StatusPayload | null>(null);
+  const [insights, setInsights] = useState<CollectorInsightsPayload | null>(null);
   const [error, setError] = useState<string>("");
   const [collectionSync, setCollectionSync] = useState<SyncState>("idle");
   const [collectionMsg, setCollectionMsg] = useState("");
@@ -48,11 +51,15 @@ export function HomePage() {
   const [wantlistMsg, setWantlistMsg] = useState("");
 
   function loadStatus() {
-    return getJson<StatusPayload>("/status")
-      .then((payload) => {
-        setStatus(payload.data);
+    return Promise.all([
+      getJson<StatusPayload>("/status"),
+      fetchCollectorInsights({ gems_limit: 3, queue_limit: 5 }),
+    ])
+      .then(([statusPayload, insightsPayload]) => {
+        setStatus(statusPayload.data);
+        setInsights(insightsPayload.data);
         setError("");
-        return payload.data;
+        return statusPayload.data;
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Unknown API error.");
@@ -62,8 +69,15 @@ export function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    getJson<StatusPayload>("/status")
-      .then((payload) => { if (!cancelled) setStatus(payload.data); })
+    Promise.all([
+      getJson<StatusPayload>("/status"),
+      fetchCollectorInsights({ gems_limit: 3, queue_limit: 5 }),
+    ])
+      .then(([statusPayload, insightsPayload]) => {
+        if (cancelled) return;
+        setStatus(statusPayload.data);
+        setInsights(insightsPayload.data);
+      })
       .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Unknown API error."); });
     return () => { cancelled = true; };
   }, []);
@@ -195,6 +209,37 @@ export function HomePage() {
               </h3>
               <ul className="app-list">
                 {readinessNextActions(status.provider_readiness).map((action) => (
+                  <li key={action}>{action}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </section>
+      ) : null}
+      {insights ? (
+        <section className="app-surface app-card" style={{ marginTop: "1.25rem" }}>
+          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Tonight's Collector Insights</h2>
+          <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
+            Health {insights.summary.health_score}/100 · Hidden gems {insights.summary.hidden_gems_count} · Value queue {insights.summary.refresh_queue_count}
+          </p>
+          {insights.highlights.length > 0 ? (
+            <ul className="app-list">
+              {insights.highlights.map((item) => (
+                <li key={`${item.kind}-${item.title}`}>
+                  <strong>{item.title}</strong>: {item.message}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="app-message app-message--subtle">No urgent insights right now. Try a fresh sync or value refresh.</p>
+          )}
+          {insights.daily_use_actions.length > 0 ? (
+            <>
+              <h3 className="app-stack-label" style={{ marginBottom: "0.4rem", marginTop: "1rem" }}>
+                Daily Use Actions
+              </h3>
+              <ul className="app-list">
+                {insights.daily_use_actions.slice(0, 4).map((action) => (
                   <li key={action}>{action}</li>
                 ))}
               </ul>

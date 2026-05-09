@@ -423,6 +423,60 @@ export function fetchAnalytics(params?: {
   return getJson<CollectionAnalytics>(`/analytics${qs}`);
 }
 
+export interface CollectorInsightHighlight {
+  kind: string;
+  title: string;
+  message: string;
+  command_hint?: string;
+  release_id?: number;
+}
+
+export interface CollectorInsightGem {
+  discogs_release_id: number | null;
+  artist: string | null;
+  title: string | null;
+  year: number | null;
+  market_median: number | null;
+  market_currency: string | null;
+  num_for_sale: number | null;
+  gem_score: number | null;
+  reasons: string[];
+}
+
+export interface CollectorInsightsPayload {
+  summary: {
+    release_count_active: number;
+    mapped_count: number;
+    unmatched_count: number;
+    wantlist_count: number;
+    market_value_last_updated: string | null;
+    last_sync_time: string | null;
+    last_spin_release_id: number | null;
+    onboarding_state: string;
+    degraded_mode: boolean;
+    health_score: number;
+    hidden_gems_count: number;
+    refresh_queue_count: number;
+    ready_for_daily_use: boolean;
+  };
+  highlights: CollectorInsightHighlight[];
+  daily_use_actions: string[];
+  top_hidden_gems: CollectorInsightGem[];
+}
+
+export function fetchCollectorInsights(params?: {
+  gems_limit?: number;
+  queue_limit?: number;
+  min_median?: number;
+}, options: RequestOptions = {}): Promise<ApiEnvelope<CollectorInsightsPayload>> {
+  const qs = new URLSearchParams();
+  if (params?.gems_limit != null) qs.set("gems_limit", String(params.gems_limit));
+  if (params?.queue_limit != null) qs.set("queue_limit", String(params.queue_limit));
+  if (params?.min_median != null) qs.set("min_median", String(params.min_median));
+  const q = qs.toString() ? `?${qs.toString()}` : "";
+  return getJson<CollectorInsightsPayload>(`/insights${q}`, options);
+}
+
 export interface Track {
   position: string;
   title: string;
