@@ -250,3 +250,4 @@ And these standard support surfaces:
 ### Test Harness
 
 Use `tests/test_provider_readiness_fake_harness.py` to validate new descriptors and readiness behavior before adding real SDK/API integrations.
+For step-by-step contributor workflow, see `docs/provider_integration_developer_checklist.md`.
