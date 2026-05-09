@@ -24,10 +24,12 @@ function AppRoutes() {
   useEffect(() => {
     getJson<SetupPayload>("/setup")
       .then((payload) => {
-        const onboardingStage = payload.data?.onboarding_stage;
-        const requiredConfigured = payload.data?.provider_readiness?.summary?.required_services_configured;
+        const readinessSummary = payload.data?.provider_readiness?.summary;
+        const onboardingStage = readinessSummary?.onboarding_state ?? payload.data?.onboarding_stage;
+        const requiredConfigured = readinessSummary?.required_services_configured;
         if (
-          onboardingStage === "needs_discogs_token"
+          onboardingStage === "needs_required_setup"
+          || onboardingStage === "needs_discogs_token"
           || requiredConfigured === false
         ) {
           navigate("/setup", { replace: true });

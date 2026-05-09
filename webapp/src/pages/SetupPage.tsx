@@ -8,6 +8,13 @@ type SetupResponse = {
   provider_readiness?: ProviderReadinessContract;
 };
 
+function setupNextActions(readiness: ProviderReadinessContract): string[] {
+  if (readiness.summary.next_actions.length > 0) {
+    return readiness.summary.next_actions;
+  }
+  return readiness.next_actions;
+}
+
 export function SetupPage() {
   const navigate = useNavigate();
   const [token, setToken] = useState("");
@@ -58,7 +65,7 @@ export function SetupPage() {
       {setupState?.provider_readiness ? (
         <div className="app-message app-message--subtle" style={{ marginBottom: "1rem" }}>
           <div>
-            Onboarding state: {setupState.provider_readiness.summary.onboarding_state}
+            Onboarding state: {setupState.provider_readiness.summary.onboarding_state || setupState.onboarding_stage}
           </div>
           <div>
             Optional providers ready: {setupState.provider_readiness.summary.ready_provider_count}/
@@ -66,6 +73,11 @@ export function SetupPage() {
           </div>
           {setupState.provider_readiness.summary.degraded_mode ? (
             <div>Degraded mode is available: collection browsing still works without optional providers.</div>
+          ) : null}
+          {setupNextActions(setupState.provider_readiness).length > 0 ? (
+            <div style={{ marginTop: "0.5rem" }}>
+              Next actions: {setupNextActions(setupState.provider_readiness).join(" | ")}
+            </div>
           ) : null}
         </div>
       ) : null}

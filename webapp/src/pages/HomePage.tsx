@@ -32,6 +32,13 @@ function formatSyncSummary(label: "Collection" | "Wantlist", summary: SyncSummar
   );
 }
 
+function readinessNextActions(readiness: ProviderReadinessContract): string[] {
+  if (readiness.summary.next_actions.length > 0) {
+    return readiness.summary.next_actions;
+  }
+  return readiness.next_actions;
+}
+
 export function HomePage() {
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [error, setError] = useState<string>("");
@@ -181,6 +188,18 @@ export function HomePage() {
               </li>
             ))}
           </ul>
+          {readinessNextActions(status.provider_readiness).length > 0 ? (
+            <>
+              <h3 className="app-stack-label" style={{ marginBottom: "0.4rem", marginTop: "1rem" }}>
+                Next Actions
+              </h3>
+              <ul className="app-list">
+                {readinessNextActions(status.provider_readiness).map((action) => (
+                  <li key={action}>{action}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </section>
       ) : null}
 
