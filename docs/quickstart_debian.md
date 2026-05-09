@@ -23,7 +23,7 @@ Download the current stable GTK `.deb` directly:
 Then install it:
 
 ```bash
-sudo apt install ./discogs-spinner_*_amd64.deb
+sudo apt install ./discogs-spinner-gtk4_0.2.0_amd64.deb
 ```
 
 Launch **Discogs Spinner** from your app menu, or run:
@@ -74,6 +74,12 @@ If you want the Tauri desktop package instead of the GTK build, download:
 - [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb)
 - Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+
+Then install it:
+
+```bash
+sudo apt install ./discogs-spinner-tauri_0.2.0_amd64.deb
+```
 
 ---
 

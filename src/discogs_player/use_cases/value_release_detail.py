@@ -41,13 +41,62 @@ def _discogs_marketplace_url(release_id: int) -> str:
     return f"https://www.discogs.com/sell/release/{int(release_id)}"
 
 
+def _as_int(value: object) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return int(text)
+        except ValueError:
+            return None
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_float(value: object) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return float(text)
+        except ValueError:
+            return None
+    try:
+        return float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_nonempty_str(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    return text or None
+
+
 def build_value_release_record(
     source: str,
     item: dict[str, object],
 ) -> dict[str, object]:
     normalized_source = _normalize_source(source)
     result = dict(item)
-    release_id = int(result.get("discogs_release_id") or 0)
+    release_id = _as_int(result.get("discogs_release_id")) or 0
 
     result["source"] = normalized_source
     result["source_label"] = _source_label(normalized_source)
@@ -198,6 +247,10 @@ def run_refresh_value_release_detail(
     refreshed_at = datetime.now(timezone.utc).isoformat()
     price_payload = client.fetch_market_price_suggestions(normalized_release_id)
     stats_payload = client.fetch_release_stats(normalized_release_id)
+    price_lowest = _as_float(price_payload.get("lowest"))
+    price_median = _as_float(price_payload.get("median"))
+    price_highest = _as_float(price_payload.get("highest"))
+    price_currency = _as_nonempty_str(price_payload.get("currency"))
 
     conn = get_connection()
     try:
@@ -210,27 +263,10 @@ def run_refresh_value_release_detail(
             upsert_wantlist_market_price(
                 conn,
                 discogs_release_id=normalized_release_id,
-                lowest=(
-                    float(price_payload["lowest"])
-                    if isinstance(price_payload.get("lowest"), (int, float))
-                    else None
-                ),
-                median=(
-                    float(price_payload["median"])
-                    if isinstance(price_payload.get("median"), (int, float))
-                    else None
-                ),
-                highest=(
-                    float(price_payload["highest"])
-                    if isinstance(price_payload.get("highest"), (int, float))
-                    else None
-                ),
-                currency=(
-                    str(price_payload.get("currency")).strip()
-                    if isinstance(price_payload.get("currency"), str)
-                    and str(price_payload.get("currency")).strip()
-                    else None
-                ),
+                lowest=price_lowest,
+                median=price_median,
+                highest=price_highest,
+                currency=price_currency,
                 last_updated_at=refreshed_at,
                 commit=False,
             )
@@ -238,27 +274,10 @@ def run_refresh_value_release_detail(
             upsert_market_price(
                 conn,
                 discogs_release_id=normalized_release_id,
-                lowest=(
-                    float(price_payload["lowest"])
-                    if isinstance(price_payload.get("lowest"), (int, float))
-                    else None
-                ),
-                median=(
-                    float(price_payload["median"])
-                    if isinstance(price_payload.get("median"), (int, float))
-                    else None
-                ),
-                highest=(
-                    float(price_payload["highest"])
-                    if isinstance(price_payload.get("highest"), (int, float))
-                    else None
-                ),
-                currency=(
-                    str(price_payload.get("currency")).strip()
-                    if isinstance(price_payload.get("currency"), str)
-                    and str(price_payload.get("currency")).strip()
-                    else None
-                ),
+                lowest=price_lowest,
+                median=price_median,
+                highest=price_highest,
+                currency=price_currency,
                 last_updated_at=refreshed_at,
                 commit=False,
             )

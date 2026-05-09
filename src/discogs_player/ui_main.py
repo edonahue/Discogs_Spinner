@@ -1,4 +1,4 @@
-"""GTK entrypoint for Discogs Player."""
+"""GTK entrypoint for Discogs Spinner."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def _missing_gui_dependency_message(module_name: str) -> str:
 
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dplayer-gui", description="Discogs Player GTK UI"
+        prog="dplayer-gui", description="Discogs Spinner GTK UI"
     )
     parser.add_argument(
         "--limit",
@@ -37,7 +37,16 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-preload-covers",
         action="store_true",
-        help="Skip cover prefetch and render placeholders only",
+        help="Deprecated alias for --cover-preload off",
+    )
+    parser.add_argument(
+        "--cover-preload",
+        choices=("off", "visible", "all"),
+        default="visible",
+        help=(
+            "Cover prefetch strategy: off skips prefetch, visible warms nearby "
+            "covers after first paint, all blocks load while warming every cover"
+        ),
     )
     parser.add_argument(
         "--smoke-test",
@@ -48,6 +57,21 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--timing",
         action="store_true",
         help="Print per-operation latency samples to stderr (browse-load and wantlist-load hotspots)",
+    )
+    parser.add_argument(
+        "--perf-report",
+        action="store_true",
+        help="Include CPU/memory/performance profile fields in smoke-test JSON output",
+    )
+    parser.add_argument(
+        "--idle-probe",
+        type=int,
+        default=0,
+        metavar="SECONDS",
+        help=(
+            "Load the GTK UI, force background-idle suspension, sample CPU/memory "
+            "for SECONDS, print a JSON report, and exit"
+        ),
     )
     return parser
 
@@ -85,10 +109,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         if set_timing_enabled is not None:
             set_timing_enabled(True)
 
+    cover_preload = "off" if args.no_preload_covers else str(args.cover_preload)
     app = DiscogsPlayerApp(
         limit=max(0, int(args.limit)),
-        preload_covers=not args.no_preload_covers,
+        preload_covers=cover_preload == "all",
         smoke_test=bool(args.smoke_test),
+        perf_report=bool(args.perf_report),
+        idle_probe_seconds=max(0, int(args.idle_probe)),
     )
     app.run(["dplayer-gui"])
     return int(app.exit_code)

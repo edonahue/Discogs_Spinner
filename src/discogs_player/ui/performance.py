@@ -28,13 +28,6 @@ from gi.repository import Gtk, GLib
 from discogs_player.services.image_cache import get_or_fetch_cover_path
 
 
-_GTK_SCROLLED_WINDOW_BASE = (
-    Gtk.ScrolledWindow
-    if isinstance(getattr(Gtk, "ScrolledWindow", None), type)
-    else object
-)
-
-
 def _maybe_call(target: object, method_name: str, *args: object) -> object | None:
     method = getattr(target, method_name, None)
     if callable(method):
@@ -66,7 +59,7 @@ class _FallbackAdjustment:
         return 0.0
 
 
-class VirtualizedGrid(_GTK_SCROLLED_WINDOW_BASE):
+class VirtualizedGrid(Gtk.ScrolledWindow):  # type: ignore[misc]
     """
     A virtualized grid widget that efficiently renders large datasets.
 
@@ -81,8 +74,7 @@ class VirtualizedGrid(_GTK_SCROLLED_WINDOW_BASE):
         on_selection_changed: Callable[[dict[str, Any] | None], None] | None = None,
         viewport_size: int = 50,  # Number of items to render at once
     ) -> None:
-        if _GTK_SCROLLED_WINDOW_BASE is not object:
-            super().__init__()
+        super().__init__()
 
         _maybe_call(self, "set_vexpand", True)
         _maybe_call(self, "set_hexpand", True)

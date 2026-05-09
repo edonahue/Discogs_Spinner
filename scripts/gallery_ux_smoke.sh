@@ -8,6 +8,11 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
 fi
 
 LIMIT="${1:-12}"
+SMOKE_TIMEOUT="${DP_GALLERY_UX_TIMEOUT:-45s}"
+SMOKE_TIMEOUT_SECONDS="${SMOKE_TIMEOUT%s}"
+case "${SMOKE_TIMEOUT_SECONDS}" in
+  ''|*[!0-9]*) SMOKE_TIMEOUT_SECONDS=45 ;;
+esac
 
 # Improve stability in headless CI/SSH sessions.
 export GSK_RENDERER="${GSK_RENDERER:-cairo}"
@@ -42,11 +47,16 @@ if [ -z "${PYTHON_BIN:-}" ]; then
   fi
 fi
 
-PYTHONPATH=src xvfb-run -a "${PYTHON_BIN}" - <<'PY'
+timeout_marker="$(mktemp "/tmp/gallery-ux-smoke-timeout.XXXXXX")"
+rm -f "${timeout_marker}"
+trap 'rm -f "${timeout_marker}"' EXIT
+
+PYTHONPATH=src xvfb-run -a "${PYTHON_BIN}" - <<'PY' &
 from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 import traceback
 
@@ -58,6 +68,10 @@ gi.require_version("Gdk", "4.0")
 from gi.repository import Adw, Gdk, GLib
 
 from discogs_player.ui.main_window import MainWindow
+
+
+def _progress(message: str) -> None:
+    print(f"[gallery-ux-smoke] {message}", file=sys.stderr, flush=True)
 
 
 def _to_positive_int(value: str, *, default: int = 12) -> int:
@@ -145,27 +159,36 @@ class GalleryUxSmokeApp(Adw.Application):
         ctx = GLib.MainContext.default()
         end = time.monotonic() + max(0.0, float(seconds))
         while time.monotonic() < end:
-            while ctx.pending():
+            drain_count = 0
+            while ctx.pending() and drain_count < 250:
                 ctx.iteration(False)
+                drain_count += 1
             time.sleep(0.01)
-        while ctx.pending():
+        drain_count = 0
+        while ctx.pending() and drain_count < 500:
             ctx.iteration(False)
+            drain_count += 1
 
     def do_activate(self) -> None:
         if self._window is not None:
             self._window.present()
             return
+        _progress("creating main window")
         self._window = MainWindow(self, limit=self._limit, preload_covers=False)
         self._window.present()
+        _progress("main window presented")
         GLib.timeout_add(220, self._run_checks)
 
     def _run_checks(self) -> bool:
         assert self._window is not None
         window = self._window
         try:
+            _progress("starting checks")
             self._pump(0.25)
             startup_width = int(window.get_width() or 0)
             startup_height = int(window.get_height() or 0)
+            startup_target_width, startup_target_height = window._startup_target_window_size()
+            _progress(f"startup size {startup_width}x{startup_height}")
 
             browse_items = [
                 {
@@ -175,7 +198,7 @@ class GalleryUxSmokeApp(Adw.Application):
                     "year": 2000 + i,
                     "cover_path": "",
                 }
-                for i in range(max(self._limit, 36))
+                for i in range(max(self._limit, 60))
             ]
             wantlist_items = [
                 {
@@ -185,7 +208,7 @@ class GalleryUxSmokeApp(Adw.Application):
                     "year": 1990 + i,
                     "cover_path": "",
                 }
-                for i in range(max(self._limit, 36))
+                for i in range(max(self._limit, 60))
             ]
 
             window._apply_release_load_result(
@@ -196,6 +219,7 @@ class GalleryUxSmokeApp(Adw.Application):
                 {"items": wantlist_items, "cover_cached_count": 0},
                 preferred_release_id=None,
             )
+            _progress("stub items applied")
             self._pump(0.45)
             startup_browse_carousel = _browse_carousel_metrics(window)
 
@@ -204,6 +228,7 @@ class GalleryUxSmokeApp(Adw.Application):
             window._main_stack.set_visible_child_name("browse")
             self._pump(0.45)
             startup_browse_carousel_repaired = _browse_carousel_metrics(window)
+            _progress("startup carousel metrics checked")
 
             for metric_name, tolerance in (
                 ("detail_width", 28),
@@ -225,14 +250,16 @@ class GalleryUxSmokeApp(Adw.Application):
                 base_width=startup_width,
                 base_height=startup_height,
             )
+            _progress(f"maximized/expanded size {maximized_width}x{maximized_height}")
             self._pump(0.45)
             maximized_browse_carousel = _browse_carousel_metrics(window)
 
-            window._main_stack.set_visible_child_name("queue")
+            window._main_stack.set_visible_child_name("health")
             self._pump(0.18)
             window._main_stack.set_visible_child_name("browse")
             self._pump(0.45)
             maximized_browse_carousel_repaired = _browse_carousel_metrics(window)
+            _progress("maximized carousel metrics checked")
 
             for metric_name, tolerance in (
                 ("detail_width", 28),
@@ -255,10 +282,12 @@ class GalleryUxSmokeApp(Adw.Application):
             window._gallery_mode.set_active(True)
             self._pump(0.12)
             browse_gallery_status = window._status.get_text()
+            _progress("browse gallery selected")
             assert browse_gallery_status == "Browse mode: Gallery"
             browse_overflow_expected = (
                 len(browse_items) > (window._browse_gallery.current_columns() * 3)
             )
+            _progress("browse overflow checked")
             assert browse_overflow_expected is True, {
                 "section": "browse",
                 "reason": "gallery dataset does not exceed the visible three-row target",
@@ -269,11 +298,13 @@ class GalleryUxSmokeApp(Adw.Application):
             window._text_mode.set_active(True)
             self._pump(0.12)
             browse_text_status = window._status.get_text()
+            _progress("browse text mode selected")
             assert browse_text_status == "Browse mode: Text Menu"
 
             window._carousel_mode.set_active(True)
             self._pump(0.12)
             browse_carousel_status = window._status.get_text()
+            _progress("browse carousel selected")
             assert browse_carousel_status == "Browse mode: Carousel"
 
             # Browse gallery keyboard stepping.
@@ -281,6 +312,7 @@ class GalleryUxSmokeApp(Adw.Application):
             self._pump(0.12)
             window._gallery_mode.grab_focus()
             self._pump(0.05)
+            _progress("browse gallery focus grabbed")
             assert (
                 window._handle_key_pressed(
                     None, Gdk.KEY_Down, 0, Gdk.ModifierType(0)
@@ -288,6 +320,7 @@ class GalleryUxSmokeApp(Adw.Application):
                 is True
             )
             self._pump(0.12)
+            _progress("browse down key handled")
             browse_first = int(window._selected_release_id or 0)
             assert browse_first == 3000
             browse_detail_release_id = int(window._album_detail._current_release_id or 0)
@@ -316,6 +349,7 @@ class GalleryUxSmokeApp(Adw.Application):
                 is True
             )
             self._pump(0.12)
+            _progress("browse right key handled")
             browse_second = int(window._selected_release_id or 0)
             assert browse_second == 3001
 
@@ -327,13 +361,17 @@ class GalleryUxSmokeApp(Adw.Application):
                 is True
             )
             self._pump(0.12)
+            _progress("browse second down key handled")
             browse_third = int(window._selected_release_id or 0)
             assert browse_third == _next_with_wrap(
                 3001, browse_columns_for_step, self._limit, 3000
             )
 
+            _progress("browse clear click starting")
             window._browse_gallery_clear_button.emit("clicked")
+            _progress("browse clear click emitted")
             self._pump(0.18)
+            _progress("browse clear pump complete")
             browse_clear_status = window._status.get_text()
             assert browse_clear_status == "Browse gallery selection cleared."
             browse_detail_width_after_clear = _detail_width(window._sidebar_scroll)
@@ -354,7 +392,12 @@ class GalleryUxSmokeApp(Adw.Application):
             window._wantlist_gallery_mode.set_active(True)
             self._pump(0.12)
             want_gallery_status = window._status.get_text()
-            assert want_gallery_status == "Wantlist mode: Gallery"
+            _progress(f"wantlist gallery selected: {want_gallery_status!r}")
+            assert want_gallery_status == "Wantlist mode: Gallery", {
+                "section": "wantlist",
+                "reason": "gallery toggle did not update status",
+                "status": want_gallery_status,
+            }
             want_overflow_expected = (
                 len(wantlist_items) > (window._wantlist_gallery.current_columns() * 3)
             )
@@ -368,18 +411,36 @@ class GalleryUxSmokeApp(Adw.Application):
             window._wantlist_text_mode.set_active(True)
             self._pump(0.12)
             want_text_status = window._status.get_text()
-            assert want_text_status == "Wantlist mode: Text Menu"
+            _progress(f"wantlist text selected: {want_text_status!r}")
+            assert want_text_status == "Wantlist mode: Text Menu", {
+                "section": "wantlist",
+                "reason": "text toggle did not update status",
+                "status": want_text_status,
+            }
 
             window._wantlist_carousel_mode.set_active(True)
             self._pump(0.12)
             want_carousel_status = window._status.get_text()
-            assert want_carousel_status == "Wantlist mode: Carousel"
+            _progress(f"wantlist carousel selected: {want_carousel_status!r}")
+            assert want_carousel_status == "Wantlist mode: Carousel", {
+                "section": "wantlist",
+                "reason": "carousel toggle did not update status",
+                "status": want_carousel_status,
+            }
 
             # Wantlist gallery keyboard stepping.
             window._wantlist_gallery_mode.set_active(True)
             self._pump(0.12)
             window._wantlist_gallery_mode.grab_focus()
+            window.set_focus(None)
             self._pump(0.05)
+            _progress(
+                "wantlist gallery focus grabbed: "
+                f"active_view={window._active_main_view()!r} "
+                f"active_mode={window._active_wantlist_mode()!r} "
+                f"focus={type(window.get_focus()).__name__ if window.get_focus() is not None else None} "
+                f"focus_in_panel={window._is_descendant_of(window.get_focus(), window._wantlist_panel) if window.get_focus() is not None else None}"
+            )
             assert (
                 window._handle_key_pressed(
                     None, Gdk.KEY_Down, 0, Gdk.ModifierType(0)
@@ -387,6 +448,7 @@ class GalleryUxSmokeApp(Adw.Application):
                 is True
             )
             self._pump(0.12)
+            _progress("wantlist down key handled")
             want_first = int(window._selected_wantlist_id or 0)
             assert want_first == 4000
             want_detail_release_id = int(
@@ -460,6 +522,8 @@ class GalleryUxSmokeApp(Adw.Application):
                 "startup": {
                     "width": startup_width,
                     "height": startup_height,
+                    "target_width": int(startup_target_width),
+                    "target_height": int(startup_target_height),
                     "browse_carousel_detail_width": browse_carousel_detail_width,
                     "browse_carousel": startup_browse_carousel,
                     "browse_carousel_repaired": startup_browse_carousel_repaired,
@@ -500,6 +564,7 @@ class GalleryUxSmokeApp(Adw.Application):
                     "ids": [want_first, want_second, want_third],
                 },
             }
+            _progress("checks passed")
         except Exception as exc:
             self.result = {
                 "ok": False,
@@ -520,3 +585,30 @@ print(json.dumps(app.result, sort_keys=True))
 if not bool(app.result.get("ok")):
     raise SystemExit(1)
 PY
+smoke_pid=$!
+(
+  trap 'exit 0' TERM
+  elapsed=0
+  while [ "${elapsed}" -lt "${SMOKE_TIMEOUT_SECONDS}" ]; do
+    sleep 1
+    elapsed=$((elapsed + 1))
+  done
+  if kill -0 "${smoke_pid}" >/dev/null 2>&1; then
+    : >"${timeout_marker}"
+    echo "Gallery UX smoke timed out after ${SMOKE_TIMEOUT}" >&2
+    kill "${smoke_pid}" >/dev/null 2>&1 || true
+  fi
+) &
+watchdog_pid=$!
+
+set +e
+wait "${smoke_pid}"
+status=$?
+set -e
+kill "${watchdog_pid}" >/dev/null 2>&1 || true
+wait "${watchdog_pid}" >/dev/null 2>&1 || true
+
+if [ -e "${timeout_marker}" ]; then
+  status=124
+fi
+exit "${status}"

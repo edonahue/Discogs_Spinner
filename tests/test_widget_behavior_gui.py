@@ -358,6 +358,15 @@ def test_cover_grid_clear_selection_emit_false_suppresses_callback():
     received.clear()
     grid.clear_selection(emit=False)
     assert received == [], "clear_selection(emit=False) must not fire the callback"
+
+
+def test_cover_grid_background_suspension_pauses_lazy_append():
+    grid = _make_grid(items=_make_releases(80))
+    grid.set_background_suspended(True)
+    before = grid._rendered_count
+    grid._schedule_append_next_chunk()
+    assert grid._pending_append_source_id is None
+    assert grid._rendered_count == before
     assert not grid.has_active_selection()
 
 
@@ -393,6 +402,21 @@ def test_cover_grid_set_empty_items_clears_selection():
     grid.select_release(1)
     grid.set_items([])
     assert not grid.has_active_selection()
+
+
+def test_cover_grid_large_sets_render_lazy_initial_chunk(monkeypatch):
+    monkeypatch.setenv("DP_GALLERY_INITIAL_ITEMS", "10")
+    grid = _make_grid(items=_make_releases(50))
+    assert grid._rendered_count == 10
+    assert len(grid._buttons_by_id) == 10
+
+
+def test_cover_grid_select_release_renders_target_chunk(monkeypatch):
+    monkeypatch.setenv("DP_GALLERY_INITIAL_ITEMS", "10")
+    grid = _make_grid(items=_make_releases(50))
+    assert grid.select_release(45) is True
+    assert grid._rendered_count >= 45
+    assert grid._selected_release_id == 45
 
 
 # ============================================================

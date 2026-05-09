@@ -1,14 +1,11 @@
 """Performance optimization tests for Discogs Player UI."""
 
 import importlib
-import os
 import sys
 import time
 import types
 from pathlib import Path
 from unittest.mock import Mock, patch
-
-import pytest
 
 
 def _load_performance_module(monkeypatch):
@@ -262,6 +259,77 @@ def test_ui_main_timing_flag_present():
     src = ui_main_file.read_text()
     assert "--timing" in src, "--timing argument must be declared in ui_main.py"
     assert "set_timing_enabled" in src, "set_timing_enabled must be called in ui_main.py"
+
+
+def test_ui_main_perf_flags_present():
+    """Verify performance-report and cover-preload CLI arguments are wired."""
+    root_dir = Path(__file__).parents[1]
+    ui_main_file = root_dir / "src" / "discogs_player" / "ui_main.py"
+    src = ui_main_file.read_text()
+
+    assert "--perf-report" in src
+    assert "--cover-preload" in src
+    assert '"visible"' in src
+    assert '"all"' in src
+    assert "--idle-probe" in src
+
+
+def test_bounded_cover_prefetch_defaults_present():
+    """Guard against regressing to 32-worker image prefetch bursts."""
+    root_dir = Path(__file__).parents[1]
+    carousel_file = root_dir / "src" / "discogs_player" / "ui" / "widgets" / "cover_carousel.py"
+    release_grid_file = root_dir / "src" / "discogs_player" / "use_cases" / "browse_release_grid.py"
+    wantlist_grid_file = root_dir / "src" / "discogs_player" / "use_cases" / "browse_wantlist_grid.py"
+
+    carousel_src = carousel_file.read_text()
+    release_grid_src = release_grid_file.read_text()
+    wantlist_grid_src = wantlist_grid_file.read_text()
+
+    assert "_CAROUSEL_PREFETCH_MAX_WORKERS = 4" in carousel_src
+    assert "_CAROUSEL_PREFETCH_MAX_INFLIGHT = 8" in carousel_src
+    assert "carousel_prefetch_inflight" in carousel_src
+    assert "set_background_suspended" in carousel_src
+    assert "trim_idle_resources" in carousel_src
+    assert "cover_worker_count" in release_grid_src
+    assert "cover_worker_count" in wantlist_grid_src
+    assert "_BROWSE_COVER_PRELOAD_MAX_WORKERS = 32" not in release_grid_src
+    assert "_BROWSE_COVER_PRELOAD_MAX_WORKERS = 32" not in wantlist_grid_src
+
+
+def test_game_performance_profile_and_idle_probe_script_present():
+    root_dir = Path(__file__).parents[1]
+    profile_src = (root_dir / "src" / "discogs_player" / "performance.py").read_text()
+    probe_src = (root_dir / "scripts" / "gui_idle_probe.sh").read_text()
+
+    assert '"game": PerformanceProfile(' in profile_src
+    assert "carousel_prefetch_inflight=0" in profile_src
+    assert "DP_PERF_PROFILE" in probe_src
+    assert "--idle-probe" in probe_src
+
+
+def test_main_window_uses_lazy_startup_and_idle_suspension():
+    root_dir = Path(__file__).parents[1]
+    src = (root_dir / "src" / "discogs_player" / "ui" / "main_window.py").read_text()
+
+    assert "GLib.idle_add(self._initial_load)" not in src
+    assert "self._browse_items: list[dict[str, object]] = []" in src
+    assert "self._browse_populated_modes: set[str] = set()" in src
+    assert "def _set_background_suspended(" in src
+    assert "def idle_debug_state(" in src
+    assert "def _emit_idle_probe_report(" in src
+    assert "run_market_value_dashboard(" not in src[src.index("def _run_release_load_operation"):src.index("def _apply_release_load_result")]
+
+
+def test_performance_estimate_document_exists():
+    root_dir = Path(__file__).parents[1]
+    doc_file = root_dir / "docs" / "performance_efficiency_estimates.md"
+    src = doc_file.read_text()
+
+    assert "Performance and Efficiency Estimates" in src
+    assert "Expected CPU Impact" in src
+    assert "Expected Memory Impact" in src
+    assert "Expected GPU Impact" in src
+    assert "Measured Results" in src
 
 
 def test_main_window_empty_state_messages_use_plain_quotes():

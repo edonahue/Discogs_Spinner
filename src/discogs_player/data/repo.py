@@ -16,6 +16,12 @@ def _to_json_array(value: Any) -> str:
     return json.dumps([str(value)])
 
 
+def _to_nullable_db_bool(value: Any) -> int | None:
+    if value is None:
+        return None
+    return 1 if bool(value) else 0
+
+
 def _row_to_release(row) -> dict[str, Any]:
     try:
         genres = json.loads(row["genres"] or "[]")
@@ -27,7 +33,7 @@ def _row_to_release(row) -> dict[str, Any]:
     except json.JSONDecodeError:
         styles = []
 
-    return {
+    item = {
         "discogs_release_id": row["discogs_release_id"],
         "artist": row["artist"],
         "title": row["title"],
@@ -41,6 +47,11 @@ def _row_to_release(row) -> dict[str, Any]:
         "is_active": bool(row["is_active"]),
         "spotify_album_id": row["spotify_album_id"],
     }
+    if "has_lp" in row.keys():
+        item["has_lp"] = None if row["has_lp"] is None else bool(row["has_lp"])
+    if "has_45" in row.keys():
+        item["has_45"] = None if row["has_45"] is None else bool(row["has_45"])
+    return item
 
 
 def _attach_market_fields(item: dict[str, Any], row) -> dict[str, Any]:
@@ -67,6 +78,10 @@ def _row_to_release_export(row) -> dict[str, Any]:
     item["spotify_confidence"] = row["spotify_confidence"]
     item["spotify_last_checked_at"] = row["spotify_last_checked_at"]
     item["spotify_is_override"] = bool(row["spotify_is_override"])
+    if "has_lp" in row.keys():
+        item["has_lp"] = None if row["has_lp"] is None else bool(row["has_lp"])
+    if "has_45" in row.keys():
+        item["has_45"] = None if row["has_45"] is None else bool(row["has_45"])
     return _attach_market_fields(item, row)
 
 
@@ -91,7 +106,7 @@ def _row_to_wantlist(row) -> dict[str, Any]:
     except json.JSONDecodeError:
         styles = []
 
-    return {
+    item = {
         "discogs_release_id": row["discogs_release_id"],
         "artist": row["artist"],
         "title": row["title"],
@@ -106,6 +121,11 @@ def _row_to_wantlist(row) -> dict[str, Any]:
         "is_active": bool(row["is_active"]),
         "spotify_album_id": row["spotify_album_id"],
     }
+    if "has_lp" in row.keys():
+        item["has_lp"] = None if row["has_lp"] is None else bool(row["has_lp"])
+    if "has_45" in row.keys():
+        item["has_45"] = None if row["has_45"] is None else bool(row["has_45"])
+    return item
 
 
 def get_wantlist_by_id(
@@ -126,6 +146,8 @@ def get_wantlist_by_id(
         "w.notes",
         "w.added_at",
         "w.last_synced_at",
+        "w.has_lp",
+        "w.has_45",
         "w.is_active",
         "m.spotify_album_id",
     ]
@@ -192,6 +214,8 @@ def upsert_releases(conn, releases: Iterable[dict[str, Any]]) -> int:
                 "cover_url": release.get("cover_url"),
                 "added_at": release.get("added_at"),
                 "last_synced_at": release.get("last_synced_at"),
+                "has_lp": _to_nullable_db_bool(release.get("has_lp")),
+                "has_45": _to_nullable_db_bool(release.get("has_45")),
                 "is_active": int(release.get("is_active", 1)),
             }
         )
@@ -204,11 +228,11 @@ def upsert_releases(conn, releases: Iterable[dict[str, Any]]) -> int:
         INSERT INTO releases(
             discogs_release_id, artist, title, year,
             genres, styles, thumb_url, cover_url,
-            added_at, last_synced_at, is_active
+            added_at, last_synced_at, has_lp, has_45, is_active
         ) VALUES (
             :discogs_release_id, :artist, :title, :year,
             :genres, :styles, :thumb_url, :cover_url,
-            :added_at, :last_synced_at, :is_active
+            :added_at, :last_synced_at, :has_lp, :has_45, :is_active
         )
         ON CONFLICT(discogs_release_id) DO UPDATE SET
             artist = excluded.artist,
@@ -220,6 +244,8 @@ def upsert_releases(conn, releases: Iterable[dict[str, Any]]) -> int:
             cover_url = excluded.cover_url,
             added_at = excluded.added_at,
             last_synced_at = excluded.last_synced_at,
+            has_lp = excluded.has_lp,
+            has_45 = excluded.has_45,
             is_active = excluded.is_active
         """,
         rows,
@@ -261,6 +287,8 @@ def get_release_by_id(
         "r.cover_url",
         "r.added_at",
         "r.last_synced_at",
+        "r.has_lp",
+        "r.has_45",
         "r.is_active",
         "m.spotify_album_id",
     ]
@@ -427,31 +455,16 @@ def query_releases(
     sql.append("WHERE r.is_active = 1")
     params: list[Any] = []
 
-    if q:
-        sql.append("AND (LOWER(r.artist) LIKE ? OR LOWER(r.title) LIKE ?)")
-        pattern = f"%{q.lower()}%"
-        params.extend([pattern, pattern])
-
-    if year_from is not None:
-        sql.append("AND r.year >= ?")
-        params.append(year_from)
-
-    if year_to is not None:
-        sql.append("AND r.year <= ?")
-        params.append(year_to)
-
-    if genres:
-        for genre in genres:
-            sql.append("AND LOWER(r.genres) LIKE ?")
-            params.append(f'%"{genre.lower()}"%')
-
-    if styles:
-        for style in styles:
-            sql.append("AND LOWER(r.styles) LIKE ?")
-            params.append(f'%"{style.lower()}"%')
-
-    if unmatched:
-        sql.append("AND (m.spotify_album_id IS NULL OR m.spotify_album_id = '')")
+    _append_release_filters(
+        sql,
+        params,
+        q=q,
+        year_from=year_from,
+        year_to=year_to,
+        genres=genres,
+        styles=styles,
+        unmatched=unmatched,
+    )
 
     sql.append("ORDER BY LOWER(r.artist), LOWER(r.title)")
     if limit is not None:
@@ -482,6 +495,8 @@ def query_releases_for_export(
             r.cover_url,
             r.added_at,
             r.last_synced_at,
+            r.has_lp,
+            r.has_45,
             r.is_active,
             m.spotify_album_id,
             m.confidence AS spotify_confidence,
@@ -570,6 +585,8 @@ def upsert_wantlist_entries(conn, entries: Iterable[dict[str, Any]]) -> int:
                 "notes": entry.get("notes"),
                 "added_at": entry.get("added_at"),
                 "last_synced_at": entry.get("last_synced_at"),
+                "has_lp": _to_nullable_db_bool(entry.get("has_lp")),
+                "has_45": _to_nullable_db_bool(entry.get("has_45")),
                 "is_active": int(entry.get("is_active", 1)),
             }
         )
@@ -582,11 +599,11 @@ def upsert_wantlist_entries(conn, entries: Iterable[dict[str, Any]]) -> int:
         INSERT INTO wantlist(
             discogs_release_id, artist, title, year,
             genres, styles, thumb_url, cover_url,
-            notes, added_at, last_synced_at, is_active
+            notes, added_at, last_synced_at, has_lp, has_45, is_active
         ) VALUES (
             :discogs_release_id, :artist, :title, :year,
             :genres, :styles, :thumb_url, :cover_url,
-            :notes, :added_at, :last_synced_at, :is_active
+            :notes, :added_at, :last_synced_at, :has_lp, :has_45, :is_active
         )
         ON CONFLICT(discogs_release_id) DO UPDATE SET
             artist = excluded.artist,
@@ -599,6 +616,8 @@ def upsert_wantlist_entries(conn, entries: Iterable[dict[str, Any]]) -> int:
             notes = excluded.notes,
             added_at = excluded.added_at,
             last_synced_at = excluded.last_synced_at,
+            has_lp = excluded.has_lp,
+            has_45 = excluded.has_45,
             is_active = excluded.is_active
         """,
         rows,
@@ -1238,6 +1257,271 @@ def get_market_value_summary(conn) -> dict[str, Any]:
         else None,
         "currency_counts": currency_counts,
     }
+
+
+def query_hidden_gems(
+    conn,
+    *,
+    min_median: float = 25.0,
+    limit: int = 25,
+) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        """
+        SELECT
+            r.discogs_release_id,
+            r.artist,
+            r.title,
+            r.year,
+            r.thumb_url,
+            r.cover_url,
+            mp.lowest AS market_lowest,
+            mp.median AS market_median,
+            mp.highest AS market_highest,
+            mp.currency AS market_currency,
+            mp.last_updated_at AS market_last_updated_at,
+            rs.num_for_sale AS num_for_sale,
+            rs.community_have AS community_have,
+            rs.community_want AS community_want,
+            rs.rating_average AS rating_average,
+            rs.rating_count AS rating_count
+        FROM releases r
+        JOIN market_prices mp
+          ON mp.discogs_release_id = r.discogs_release_id
+        LEFT JOIN release_stats rs
+          ON rs.discogs_release_id = r.discogs_release_id
+        WHERE r.is_active = 1
+          AND mp.median IS NOT NULL
+          AND mp.median >= ?
+        ORDER BY
+            (mp.median * 1.0 / (1.0 + COALESCE(rs.num_for_sale, 99))) DESC,
+            mp.median DESC,
+            LOWER(r.artist),
+            LOWER(r.title),
+            r.discogs_release_id
+        LIMIT ?
+        """,
+        (float(min_median), max(1, int(limit))),
+    ).fetchall()
+
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        result.append(
+            {
+                "discogs_release_id": int(row["discogs_release_id"]),
+                "artist": row["artist"],
+                "title": row["title"],
+                "year": row["year"],
+                "thumb_url": row["thumb_url"],
+                "cover_url": row["cover_url"],
+                "market_lowest": row["market_lowest"],
+                "market_median": row["market_median"],
+                "market_highest": row["market_highest"],
+                "market_currency": row["market_currency"],
+                "market_last_updated_at": row["market_last_updated_at"],
+                "num_for_sale": row["num_for_sale"],
+                "community_have": row["community_have"],
+                "community_want": row["community_want"],
+                "rating_average": row["rating_average"],
+                "rating_count": row["rating_count"],
+            }
+        )
+    return result
+
+
+def _append_release_filters(
+    sql: list[str],
+    params: list[Any],
+    *,
+    q: str | None = None,
+    year_from: int | None = None,
+    year_to: int | None = None,
+    genres: Sequence[str] | None = None,
+    styles: Sequence[str] | None = None,
+    unmatched: bool = False,
+) -> None:
+    if q:
+        sql.append("AND (LOWER(r.artist) LIKE ? OR LOWER(r.title) LIKE ?)")
+        pattern = f"%{q.lower()}%"
+        params.extend([pattern, pattern])
+
+    if year_from is not None:
+        sql.append("AND r.year >= ?")
+        params.append(year_from)
+
+    if year_to is not None:
+        sql.append("AND r.year <= ?")
+        params.append(year_to)
+
+    if genres:
+        for genre in genres:
+            sql.append("AND LOWER(r.genres) LIKE ?")
+            params.append(f'%"{genre.lower()}"%')
+
+    if styles:
+        for style in styles:
+            sql.append("AND LOWER(r.styles) LIKE ?")
+            params.append(f'%"{style.lower()}"%')
+
+    if unmatched:
+        sql.append("AND (m.spotify_album_id IS NULL OR m.spotify_album_id = '')")
+
+
+def query_release_summary(
+    conn,
+    *,
+    q: str | None = None,
+    year_from: int | None = None,
+    year_to: int | None = None,
+    genres: Sequence[str] | None = None,
+    styles: Sequence[str] | None = None,
+    unmatched: bool = False,
+) -> dict[str, Any]:
+    sql = [
+        """
+        SELECT
+            COUNT(*) AS release_count,
+            SUM(CASE WHEN r.has_lp = 1 THEN 1 ELSE 0 END) AS lp_count,
+            SUM(CASE WHEN r.has_45 = 1 THEN 1 ELSE 0 END) AS rpm45_count,
+            SUM(CASE WHEN r.has_lp IS NULL OR r.has_45 IS NULL THEN 1 ELSE 0 END) AS unknown_format_count,
+            SUM(CASE WHEN mp.median IS NOT NULL THEN 1 ELSE 0 END) AS priced_release_count,
+            SUM(COALESCE(mp.median, 0.0)) AS total_median
+        FROM releases r
+        LEFT JOIN spotify_mapping m
+          ON m.discogs_release_id = r.discogs_release_id
+        LEFT JOIN market_prices mp
+          ON mp.discogs_release_id = r.discogs_release_id
+        WHERE r.is_active = 1
+        """
+    ]
+    params: list[Any] = []
+    _append_release_filters(
+        sql,
+        params,
+        q=q,
+        year_from=year_from,
+        year_to=year_to,
+        genres=genres,
+        styles=styles,
+        unmatched=unmatched,
+    )
+    row = conn.execute("\n".join(sql), params).fetchone()
+
+    release_count = int(row["release_count"] or 0) if row else 0
+    unknown_format_count = int(row["unknown_format_count"] or 0) if row else 0
+    priced_release_count = int(row["priced_release_count"] or 0) if row else 0
+    total_median = (
+        float(row["total_median"])
+        if row and row["total_median"] is not None and priced_release_count > 0
+        else None
+    )
+
+    currency_sql = [
+        """
+        SELECT mp.currency AS currency, COUNT(*) AS count
+        FROM releases r
+        LEFT JOIN spotify_mapping m
+          ON m.discogs_release_id = r.discogs_release_id
+        JOIN market_prices mp
+          ON mp.discogs_release_id = r.discogs_release_id
+        WHERE r.is_active = 1
+          AND mp.median IS NOT NULL
+          AND mp.currency IS NOT NULL
+          AND mp.currency <> ''
+        """
+    ]
+    currency_params: list[Any] = []
+    _append_release_filters(
+        currency_sql,
+        currency_params,
+        q=q,
+        year_from=year_from,
+        year_to=year_to,
+        genres=genres,
+        styles=styles,
+        unmatched=unmatched,
+    )
+    currency_sql.append(
+        """
+        GROUP BY mp.currency
+        ORDER BY count DESC, mp.currency ASC
+        """
+    )
+    currency_rows = conn.execute("\n".join(currency_sql), currency_params).fetchall()
+    currencies = [str(item["currency"]) for item in currency_rows if item["currency"]]
+    median_currency = currencies[0] if len(currencies) == 1 else None
+    mixed_currencies = len(currencies) > 1
+
+    recent_sql = [
+        """
+        SELECT
+            r.discogs_release_id,
+            r.artist,
+            r.title,
+            r.added_at
+        FROM releases r
+        LEFT JOIN spotify_mapping m
+          ON m.discogs_release_id = r.discogs_release_id
+        WHERE r.is_active = 1
+          AND r.added_at IS NOT NULL
+          AND r.added_at <> ''
+        """
+    ]
+    recent_params: list[Any] = []
+    _append_release_filters(
+        recent_sql,
+        recent_params,
+        q=q,
+        year_from=year_from,
+        year_to=year_to,
+        genres=genres,
+        styles=styles,
+        unmatched=unmatched,
+    )
+    recent_sql.append("ORDER BY r.added_at DESC, LOWER(r.artist), LOWER(r.title)")
+    recent_rows = conn.execute("\n".join(recent_sql), recent_params).fetchall()
+
+    most_recent_added_at = None
+    most_recent_release_id = None
+    most_recent_release_artist = None
+    most_recent_release_title = None
+    for recent in recent_rows:
+        added_at = str(recent["added_at"] or "").strip()
+        if not _is_iso_datetime(added_at):
+            continue
+        most_recent_added_at = added_at
+        most_recent_release_id = recent["discogs_release_id"]
+        most_recent_release_artist = recent["artist"]
+        most_recent_release_title = recent["title"]
+        break
+
+    return {
+        "release_count": release_count,
+        "lp_count": int(row["lp_count"] or 0) if row else 0,
+        "rpm45_count": int(row["rpm45_count"] or 0) if row else 0,
+        "format_counts_ready": (release_count == 0) or (unknown_format_count == 0),
+        "priced_release_count": priced_release_count,
+        "total_median": total_median,
+        "median_currency": median_currency,
+        "mixed_currencies": mixed_currencies,
+        "most_recent_added_at": most_recent_added_at,
+        "most_recent_release_id": most_recent_release_id,
+        "most_recent_release_artist": most_recent_release_artist,
+        "most_recent_release_title": most_recent_release_title,
+    }
+
+
+def _is_iso_datetime(value: str) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return False
+    normalized = text.replace("Z", "+00:00")
+    try:
+        from datetime import datetime
+
+        datetime.fromisoformat(normalized)
+    except ValueError:
+        return False
+    return True
 
 
 def insert_market_value_snapshot(

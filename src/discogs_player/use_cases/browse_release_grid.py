@@ -9,9 +9,10 @@ from discogs_player.services.high_res_art import (
     resolve_cover_url_for_preference,
 )
 from discogs_player.services.image_cache import get_or_fetch_cover_path
+from discogs_player.performance import cover_worker_count
 from discogs_player.use_cases.list_releases import run_list_releases
 
-_BROWSE_COVER_PRELOAD_MAX_WORKERS = 32
+_BROWSE_COVER_PRELOAD_MAX_WORKERS = cover_worker_count
 
 
 def run_browse_release_grid(
@@ -81,7 +82,10 @@ def run_browse_release_grid(
             cover_url_to_indices.setdefault(cover_url, []).append(len(items) - 1)
 
     if preload_covers and cover_url_to_indices:
-        max_workers = min(_BROWSE_COVER_PRELOAD_MAX_WORKERS, len(cover_url_to_indices))
+        max_workers = min(
+            _BROWSE_COVER_PRELOAD_MAX_WORKERS(),
+            len(cover_url_to_indices),
+        )
         with ThreadPoolExecutor(
             max_workers=max_workers, thread_name_prefix="browse-cover"
         ) as executor:

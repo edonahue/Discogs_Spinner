@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from discogs_player.services import image_cache
@@ -44,6 +46,31 @@ def test_get_or_fetch_cover_path_caches_once(isolated_xdg, monkeypatch):
     assert Path(first).exists()
     assert Path(first).suffix == ".jpg"
     assert Path(first).read_bytes() == b"image-bytes"
+
+
+def test_get_or_fetch_cover_path_deduplicates_concurrent_fetches(
+    isolated_xdg,
+    monkeypatch,
+):
+    calls = {"count": 0}
+
+    def _fake_urlopen(request, timeout=None):
+        _ = (request, timeout)
+        calls["count"] += 1
+        time.sleep(0.05)
+        return _FakeResponse(b"image-bytes")
+
+    monkeypatch.setattr(image_cache.urllib.request, "urlopen", _fake_urlopen)
+
+    url = "https://example.test/concurrent-cover.jpg"
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(image_cache.get_or_fetch_cover_path, url)
+        second = executor.submit(image_cache.get_or_fetch_cover_path, url)
+        results = [first.result(timeout=2), second.result(timeout=2)]
+
+    assert results[0] is not None
+    assert results[1] == results[0]
+    assert calls["count"] == 1
 
 
 def test_get_or_fetch_cover_path_rejects_non_image_content(isolated_xdg, monkeypatch):

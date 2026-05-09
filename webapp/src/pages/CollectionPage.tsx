@@ -1,8 +1,16 @@
 import { KeyboardEvent, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchReleases, Release, SyncSummary, syncCollection } from "../api";
+import {
+  fetchReleases,
+  fetchReleaseSummary,
+  Release,
+  ReleaseCollectionSummary,
+  SyncSummary,
+  syncCollection,
+} from "../api";
 import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
 import { TracklistModal } from "../components/TracklistModal";
+import { usePageVisible } from "../hooks/usePageVisible";
 
 const PAGE_SIZE = 25;
 
@@ -45,9 +53,44 @@ function formatSyncSummary(summary: SyncSummary): string {
   );
 }
 
+function formatSummaryPrice(summary: ReleaseCollectionSummary | null): string {
+  if (!summary || summary.total_median == null || summary.priced_release_count <= 0) {
+    return "—";
+  }
+  if (summary.mixed_currencies) {
+    return summary.total_median.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+  const currency = (summary.median_currency ?? "").trim().toUpperCase();
+  const amount = summary.total_median.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  if (!currency || currency === "USD" || currency === "US$" || currency === "$") {
+    return `$${amount}`;
+  }
+  return `${currency} ${amount}`;
+}
+
+function formatLocalDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
 export function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [releases, setReleases] = useState<Release[]>([]);
+  const [summary, setSummary] = useState<ReleaseCollectionSummary | null>(null);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [yearFilter, setYearFilter] = useState("");
@@ -60,11 +103,14 @@ export function CollectionPage() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
   const [syncState, setSyncState] = useState<SyncState>("idle");
   const [syncMessage, setSyncMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [pendingFocusValidation, setPendingFocusValidation] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<TracklistTarget | null>(null);
+  const pageVisible = usePageVisible();
   const focusedReleaseId = parseFocusId(searchParams.get("focus"));
 
   useEffect(() => {
@@ -87,7 +133,9 @@ export function CollectionPage() {
   }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, showValue]);
 
   useEffect(() => {
+    if (!pageVisible) return;
     let cancelled = false;
+    const controller = new AbortController();
     const shouldValidateFocus = pendingFocusValidation;
     setLoading(true);
     setError("");
@@ -98,7 +146,7 @@ export function CollectionPage() {
       genres: debouncedGenre ? [debouncedGenre] : undefined,
       unmatched: unmatchedOnly || undefined,
       withValue: showValue || undefined,
-    })
+    }, { signal: controller.signal })
       .then((payload) => {
         if (cancelled) return;
         const nextReleases = payload.data ?? [];
@@ -116,6 +164,7 @@ export function CollectionPage() {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to load collection.");
         if (shouldValidateFocus) {
           setPendingFocusValidation(false);
@@ -124,8 +173,43 @@ export function CollectionPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
-  }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, showValue, limit, reloadToken]);
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, showValue, limit, reloadToken, pageVisible]);
+
+  useEffect(() => {
+    if (!pageVisible) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    setSummaryLoading(true);
+    setSummaryError("");
+    fetchReleaseSummary({
+      q: debouncedQuery || undefined,
+      year: debouncedYear || undefined,
+      genres: debouncedGenre ? [debouncedGenre] : undefined,
+      unmatched: unmatchedOnly || undefined,
+    }, { signal: controller.signal })
+      .then((payload) => {
+        if (cancelled) return;
+        setSummary(payload.data ?? null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (err instanceof Error && err.name === "AbortError") return;
+        setSummaryError(
+          err instanceof Error ? err.message : "Failed to load collection summary.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setSummaryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, reloadToken, pageVisible]);
 
   function clearFilters() {
     setQuery("");
@@ -206,6 +290,53 @@ export function CollectionPage() {
         />
       ) : null}
 
+      <section className="app-summary-grid" aria-label="Collection summary">
+        <article className="app-surface app-summary-card">
+          <p className="app-summary-card__label">LPs</p>
+          <p className="app-summary-card__value">
+            {summary && summary.format_counts_ready ? summary.lp_count : "—"}
+          </p>
+          <p className="app-summary-card__meta">
+            {summary && summary.format_counts_ready
+              ? "Explicit Discogs LP tags"
+              : "Run Sync Collection to populate LP/45 format tags"}
+          </p>
+        </article>
+        <article className="app-surface app-summary-card">
+          <p className="app-summary-card__label">45s</p>
+          <p className="app-summary-card__value">
+            {summary && summary.format_counts_ready ? summary.rpm45_count : "—"}
+          </p>
+          <p className="app-summary-card__meta">
+            {summary && summary.format_counts_ready
+              ? "Explicit 45 / 45 RPM tags"
+              : "Run Sync Collection to populate LP/45 format tags"}
+          </p>
+        </article>
+        <article className="app-surface app-summary-card">
+          <p className="app-summary-card__label">Median</p>
+          <p className="app-summary-card__value">{formatSummaryPrice(summary)}</p>
+          <p className="app-summary-card__meta">
+            {summary && summary.priced_release_count > 0
+              ? summary.mixed_currencies
+                ? `Summed across ${summary.priced_release_count} priced releases with mixed currencies`
+                : `Summed across ${summary.priced_release_count} priced releases`
+              : "No priced releases in the current result set"}
+          </p>
+        </article>
+        <article className="app-surface app-summary-card">
+          <p className="app-summary-card__label">Most Recently Added</p>
+          <p className="app-summary-card__value app-summary-card__value--small">
+            {formatLocalDateTime(summary?.most_recent_added_at)}
+          </p>
+          <p className="app-summary-card__meta">
+            {summary?.most_recent_release_artist && summary?.most_recent_release_title
+              ? `${summary.most_recent_release_artist} — ${summary.most_recent_release_title}`
+              : "No added timestamp available"}
+          </p>
+        </article>
+      </section>
+
       <section className="app-surface app-toolbar">
         <div className="app-toolbar__group">
           <div className="app-toolbar__field">
@@ -279,6 +410,10 @@ export function CollectionPage() {
         </p>
       ) : null}
       {error ? <p className="app-message app-message--error">{error}</p> : null}
+      {summaryError ? <p className="app-message app-message--error">{summaryError}</p> : null}
+      {summaryLoading ? (
+        <p className="app-message app-message--subtle">Loading collection summary…</p>
+      ) : null}
       {loading && releases.length === 0 ? <p className="app-message app-message--subtle">Loading releases…</p> : null}
       {!loading && !error && releases.length === 0 ? <p className="app-message app-message--subtle">No releases found.</p> : null}
 

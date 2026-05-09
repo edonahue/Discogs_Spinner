@@ -283,6 +283,7 @@ def test_normalize_release_year_string():
                 "artists": [{"name": "Artist"}],
                 "genres": ["Rock"],
                 "styles": ["Indie"],
+                "formats": [{"descriptions": ["LP"]}],
                 "thumb": "",
                 "cover_image": "",
             },
@@ -292,6 +293,8 @@ def test_normalize_release_year_string():
 
     assert normalized is not None
     assert normalized["year"] == 1999
+    assert normalized["has_lp"] is True
+    assert normalized["has_45"] is False
 
 
 def test_normalize_wantlist_release_includes_notes():
@@ -307,6 +310,7 @@ def test_normalize_wantlist_release_includes_notes():
                 "artists": [{"name": "Artist"}],
                 "genres": ["Rock"],
                 "styles": ["Post-Punk"],
+                "formats": [{"descriptions": ["45 RPM"]}],
                 "thumb": "",
                 "cover_image": "",
             },
@@ -318,6 +322,8 @@ def test_normalize_wantlist_release_includes_notes():
     assert normalized["discogs_release_id"] == 555
     assert normalized["year"] == 1980
     assert normalized["notes"] == "Need this pressing"
+    assert normalized["has_lp"] is False
+    assert normalized["has_45"] is True
 
 
 def test_extract_market_price_suggestions():
