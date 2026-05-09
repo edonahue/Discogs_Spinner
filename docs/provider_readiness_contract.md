@@ -166,12 +166,56 @@ This document defines the additive `provider_readiness` contract used by setup, 
 
 Future provider integration should expose descriptor metadata through the backend/registry seam:
 
-- `auth_required`
-- `supported_capabilities`
-- `setup_url`
-- `oauth_guide_url` (if applicable)
-- `next_actions_when_unconfigured`
-- `can_skip_setup`
-- `can_retry_setup`
+- `provider_id`: stable machine id used in contracts, tests, and client routing.
+- `display_name`: user-facing provider name.
+- `auth_required`: `true` for OAuth/service auth providers, `false` for local/no-auth providers.
+- `supported_capabilities`: explicit capability list such as `playback`, `catalog_matching`, `browser_playback`.
+- `setup_url`: canonical setup/portal page for end users.
+- `oauth_guide_url`: OAuth docs link when applicable.
+- `next_actions_when_unconfigured`: plain-language user actions when provider is present but not ready.
+- `can_skip_setup`: whether onboarding can continue without connecting this provider.
+- `can_retry_setup`: whether adapters should expose retry affordances.
+- `experimental` and `experimental_flag`: feature-gated scaffolding metadata.
 
-This allows readiness logic to stay provider-neutral while adapters remain thin.
+Provider readiness rows are derived from provider capability + descriptor data, so provider-specific UI branching is not required for normal onboarding/status flows.
+
+### Provider Descriptor Pattern
+
+Use this minimal descriptor shape when introducing a future provider scaffold:
+
+```json
+{
+  "provider_id": "future_provider",
+  "display_name": "Future Provider",
+  "auth_required": true,
+  "supported_capabilities": ["playback", "catalog_matching"],
+  "setup_url": "https://provider.example/setup",
+  "oauth_guide_url": "https://provider.example/oauth",
+  "next_actions_when_unconfigured": [
+    "Open provider setup portal.",
+    "Complete auth callback flow."
+  ],
+  "can_skip_setup": true,
+  "can_retry_setup": true,
+  "experimental": true,
+  "experimental_flag": "DP_ENABLE_EXPERIMENTAL_FUTURE_PROVIDER"
+}
+```
+
+### Readiness/Diagnostics Expectations
+
+Future providers should map cleanly onto these readiness states:
+
+- `ready`: provider can be used for its declared capabilities.
+- `degraded`: provider is listed but needs setup/auth/retry.
+- `unavailable`: provider is disabled or not installable in the current environment.
+
+And these standard support surfaces:
+
+- `degraded_reasons` populated with machine-readable causes such as `unauthenticated`, `not_configured`, `disabled`, `backend_not_installed`, `addon_unavailable`.
+- `next_actions` populated with short user-facing setup or recovery steps.
+- `status_message` populated with a concise human-readable status summary.
+
+### Test Harness
+
+Use `tests/test_provider_readiness_fake_harness.py` to validate new descriptors and readiness behavior before adding real SDK/API integrations.
