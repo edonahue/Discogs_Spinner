@@ -10,6 +10,13 @@ from discogs_player.services.sync_manager import MissingDiscogsTokenError
 runner = CliRunner()
 
 
+def test_cli_version_option_reports_installed_version(monkeypatch):
+    monkeypatch.setattr(commands, "_package_version", lambda: "9.9.9-test")
+    result = runner.invoke(commands.app, ["--version"])
+    assert result.exit_code == 0
+    assert "9.9.9-test" in result.output
+
+
 def test_sync_missing_discogs_token_exits_3(isolated_xdg, monkeypatch):
     def _raise_missing_token(**kwargs):
         _ = kwargs
@@ -366,6 +373,15 @@ def test_setup_json_output(monkeypatch):
         "onboarding_stage": "ready",
         "discogs": {"configured": True, "token_source": "environment"},
         "collection": {"release_count_active": 10, "release_count_total": 10},
+        "provider_readiness": {
+            "summary": {
+                "required_services_configured": True,
+                "optional_provider_count": 2,
+                "ready_provider_count": 2,
+                "degraded_mode": False,
+                "onboarding_state": "ready",
+            }
+        },
         "spotify": {
             "addon_available": True,
             "configured": True,
@@ -385,6 +401,15 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
     expected = {
         "profile": "plus",
         "onboarding_stage": "needs_spotify_auth",
+        "provider_readiness": {
+            "summary": {
+                "required_services_configured": True,
+                "optional_provider_count": 2,
+                "ready_provider_count": 0,
+                "degraded_mode": True,
+                "onboarding_state": "core_ready_optional_pending",
+            }
+        },
         "discogs": {
             "configured": True,
             "token_source": "environment",
@@ -417,6 +442,8 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
     assert "spotify_dashboard_url" in result.output
     assert "spotify_oauth_guide_url" in result.output
     assert "links_discogs_token_url" in result.output
+    assert "provider_readiness_state" in result.output
+    assert "provider_optional_ready_count" in result.output
 
 
 def test_diagnostics_json_output(monkeypatch):
