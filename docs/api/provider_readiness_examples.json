@@ -1,0 +1,749 @@
+{
+  "degraded_mode_optional_pending": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [
+      "Run `dplayer auth spotify-doctor`.",
+      "Run `dplayer auth spotify --open-browser`.",
+      "Setup: https://developer.spotify.com/dashboard",
+      "Guide: https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+      "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to enable provider scaffolding."
+    ],
+    "providers": [
+      {
+        "action_label": "Connect Spotify",
+        "addon_available": true,
+        "auth_required": true,
+        "auth_state": "unauthenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "unauthenticated"
+        ],
+        "display_name": "Spotify",
+        "docs_url": null,
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": true,
+        "listed": true,
+        "next_actions": [
+          "Run `dplayer auth spotify-doctor`.",
+          "Run `dplayer auth spotify --open-browser`.",
+          "Setup: https://developer.spotify.com/dashboard",
+          "Guide: https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "degraded",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify addon is installed but not configured.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      },
+      {
+        "action_label": "Planned",
+        "addon_available": false,
+        "auth_required": false,
+        "auth_state": "not_required",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "disabled",
+          "backend_not_installed"
+        ],
+        "display_name": "YouTube Music",
+        "docs_url": null,
+        "enabled": false,
+        "experimental": true,
+        "experimental_flag": "DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC",
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to enable provider scaffolding."
+        ],
+        "oauth_guide_url": null,
+        "optional": true,
+        "provider_id": "youtube_music",
+        "readiness": "unavailable",
+        "required": false,
+        "setup_url": "https://music.youtube.com/",
+        "status_message": "Provider listed but disabled.",
+        "supported_capabilities": [
+          "playback",
+          "catalog_matching",
+          "browser_playback"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": true,
+      "degraded_mode": true,
+      "next_actions": [
+        "Run `dplayer auth spotify-doctor`.",
+        "Run `dplayer auth spotify --open-browser`.",
+        "Setup: https://developer.spotify.com/dashboard",
+        "Guide: https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to enable provider scaffolding."
+      ],
+      "onboarding_state": "core_ready_optional_pending",
+      "optional_provider_count": 2,
+      "ready_provider_count": 0,
+      "required_services_configured": true
+    }
+  },
+  "discogs_configured_needs_initial_sync": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [
+      "Run `dplayer auth spotify-doctor`.",
+      "Run `dplayer auth spotify --open-browser`."
+    ],
+    "providers": [
+      {
+        "action_label": "Spotify Ready",
+        "addon_available": false,
+        "auth_required": true,
+        "auth_state": "unauthenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "unauthenticated"
+        ],
+        "display_name": "Spotify",
+        "docs_url": "https://developer.spotify.com/dashboard",
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Run `dplayer auth spotify-doctor`.",
+          "Run `dplayer auth spotify --open-browser`."
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "degraded",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify playback and matching are available.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": false,
+      "degraded_mode": true,
+      "next_actions": [
+        "Run `dplayer auth spotify-doctor`.",
+        "Run `dplayer auth spotify --open-browser`."
+      ],
+      "onboarding_state": "needs_initial_sync",
+      "optional_provider_count": 1,
+      "ready_provider_count": 0,
+      "required_services_configured": true
+    }
+  },
+  "discogs_ready_optional_skipped": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [],
+    "providers": [],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": true,
+      "degraded_mode": false,
+      "next_actions": [],
+      "onboarding_state": "ready",
+      "optional_provider_count": 0,
+      "ready_provider_count": 0,
+      "required_services_configured": true
+    }
+  },
+  "experimental_youtube_music_disabled": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [
+      "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to enable provider scaffolding.",
+      "Run `dplayer auth spotify-doctor`.",
+      "Run `dplayer auth spotify --open-browser`."
+    ],
+    "providers": [
+      {
+        "action_label": "Planned",
+        "addon_available": false,
+        "auth_required": false,
+        "auth_state": "not_required",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "disabled",
+          "backend_not_installed"
+        ],
+        "display_name": "YouTube Music",
+        "docs_url": null,
+        "enabled": false,
+        "experimental": true,
+        "experimental_flag": "DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC",
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to enable provider scaffolding."
+        ],
+        "oauth_guide_url": null,
+        "optional": true,
+        "provider_id": "youtube_music",
+        "readiness": "unavailable",
+        "required": false,
+        "setup_url": "https://music.youtube.com/",
+        "status_message": "Provider listed but disabled.",
+        "supported_capabilities": [
+          "playback",
+          "catalog_matching",
+          "browser_playback"
+        ]
+      },
+      {
+        "action_label": "Spotify Ready",
+        "addon_available": false,
+        "auth_required": true,
+        "auth_state": "unauthenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "unauthenticated"
+        ],
+        "display_name": "Spotify",
+        "docs_url": "https://developer.spotify.com/dashboard",
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Run `dplayer auth spotify-doctor`.",
+          "Run `dplayer auth spotify --open-browser`."
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "degraded",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify playback and matching are available.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": true,
+      "degraded_mode": true,
+      "next_actions": [
+        "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to enable provider scaffolding.",
+        "Run `dplayer auth spotify-doctor`.",
+        "Run `dplayer auth spotify --open-browser`."
+      ],
+      "onboarding_state": "core_ready_optional_pending",
+      "optional_provider_count": 2,
+      "ready_provider_count": 0,
+      "required_services_configured": true
+    }
+  },
+  "missing_discogs_token": {
+    "core_service": {
+      "action_label": "Configure Discogs",
+      "auth_required": true,
+      "auth_state": "unauthenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": false,
+      "degraded_reasons": [
+        "core_not_configured"
+      ],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Open token page: https://www.discogs.com/settings/developers",
+        "Set token via environment: export DISCOGS_TOKEN=\"your_discogs_personal_token\"",
+        "Or run: dplayer config set discogs_token <token>"
+      ],
+      "optional": false,
+      "readiness": "blocked",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token missing.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [
+      "Open token page: https://www.discogs.com/settings/developers",
+      "Set token via environment: export DISCOGS_TOKEN=\"your_discogs_personal_token\"",
+      "Or run: dplayer config set discogs_token <token>",
+      "Run `dplayer auth spotify-doctor`.",
+      "Run `dplayer auth spotify --open-browser`."
+    ],
+    "providers": [
+      {
+        "action_label": "Enable Spotify (optional)",
+        "addon_available": false,
+        "auth_required": true,
+        "auth_state": "unauthenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "unauthenticated"
+        ],
+        "display_name": "Spotify",
+        "docs_url": "https://developer.spotify.com/dashboard",
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Run `dplayer auth spotify-doctor`.",
+          "Run `dplayer auth spotify --open-browser`."
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "degraded",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify addon unavailable.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": false,
+      "degraded_mode": true,
+      "next_actions": [
+        "Open token page: https://www.discogs.com/settings/developers",
+        "Set token via environment: export DISCOGS_TOKEN=\"your_discogs_personal_token\"",
+        "Or run: dplayer config set discogs_token <token>",
+        "Run `dplayer auth spotify-doctor`.",
+        "Run `dplayer auth spotify --open-browser`."
+      ],
+      "onboarding_state": "needs_required_setup",
+      "optional_provider_count": 1,
+      "ready_provider_count": 0,
+      "required_services_configured": false
+    }
+  },
+  "provider_unauthenticated": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [
+      "Run `dplayer auth spotify-doctor`.",
+      "Run `dplayer auth spotify --open-browser`.",
+      "Setup: https://developer.spotify.com/dashboard",
+      "Guide: https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
+    ],
+    "providers": [
+      {
+        "action_label": "Connect Spotify",
+        "addon_available": true,
+        "auth_required": true,
+        "auth_state": "unauthenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "unauthenticated"
+        ],
+        "display_name": "Spotify",
+        "docs_url": null,
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": true,
+        "listed": true,
+        "next_actions": [
+          "Run `dplayer auth spotify-doctor`.",
+          "Run `dplayer auth spotify --open-browser`.",
+          "Setup: https://developer.spotify.com/dashboard",
+          "Guide: https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "degraded",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify addon is installed but not configured.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": true,
+      "degraded_mode": true,
+      "next_actions": [
+        "Run `dplayer auth spotify-doctor`.",
+        "Run `dplayer auth spotify --open-browser`.",
+        "Setup: https://developer.spotify.com/dashboard",
+        "Guide: https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
+      ],
+      "onboarding_state": "core_ready_optional_pending",
+      "optional_provider_count": 1,
+      "ready_provider_count": 0,
+      "required_services_configured": true
+    }
+  },
+  "provider_unavailable": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [
+      "Install provider dependencies before enabling this provider.",
+      "Run `dplayer auth spotify-doctor`.",
+      "Run `dplayer auth spotify --open-browser`."
+    ],
+    "providers": [
+      {
+        "action_label": "Unavailable",
+        "addon_available": false,
+        "auth_required": false,
+        "auth_state": "not_required",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "backend_not_installed"
+        ],
+        "display_name": "Alt Provider",
+        "docs_url": null,
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Install provider dependencies before enabling this provider."
+        ],
+        "oauth_guide_url": null,
+        "optional": true,
+        "provider_id": "alt_provider",
+        "readiness": "unavailable",
+        "required": false,
+        "setup_url": null,
+        "status_message": "Provider backend is not installed.",
+        "supported_capabilities": []
+      },
+      {
+        "action_label": "Spotify Ready",
+        "addon_available": false,
+        "auth_required": true,
+        "auth_state": "unauthenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": false,
+        "degraded_reasons": [
+          "unauthenticated"
+        ],
+        "display_name": "Spotify",
+        "docs_url": "https://developer.spotify.com/dashboard",
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": false,
+        "listed": true,
+        "next_actions": [
+          "Run `dplayer auth spotify-doctor`.",
+          "Run `dplayer auth spotify --open-browser`."
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "degraded",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify playback and matching are available.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": true,
+      "degraded_mode": true,
+      "next_actions": [
+        "Install provider dependencies before enabling this provider.",
+        "Run `dplayer auth spotify-doctor`.",
+        "Run `dplayer auth spotify --open-browser`."
+      ],
+      "onboarding_state": "core_ready_optional_pending",
+      "optional_provider_count": 2,
+      "ready_provider_count": 0,
+      "required_services_configured": true
+    }
+  },
+  "spotify_ready": {
+    "core_service": {
+      "action_label": "Configured",
+      "auth_required": true,
+      "auth_state": "authenticated",
+      "can_retry_setup": true,
+      "can_skip_setup": false,
+      "configured": true,
+      "degraded_reasons": [],
+      "display_name": "Discogs",
+      "next_actions": [
+        "Discogs core service is configured."
+      ],
+      "optional": false,
+      "readiness": "ready",
+      "required": true,
+      "service_id": "discogs",
+      "setup_url": "https://www.discogs.com/settings/developers",
+      "status_message": "Discogs token configured.",
+      "supported_capabilities": [
+        "collection_sync",
+        "wantlist_sync",
+        "market_value",
+        "tracklist_cache"
+      ]
+    },
+    "next_actions": [],
+    "providers": [
+      {
+        "action_label": "Ready",
+        "addon_available": true,
+        "auth_required": true,
+        "auth_state": "authenticated",
+        "can_retry_setup": true,
+        "can_skip_setup": true,
+        "configured": true,
+        "degraded_reasons": [],
+        "display_name": "Spotify",
+        "docs_url": null,
+        "enabled": true,
+        "experimental": false,
+        "experimental_flag": null,
+        "installed": true,
+        "listed": true,
+        "next_actions": [
+          "Provider is ready for playback and matching."
+        ],
+        "oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        "optional": true,
+        "provider_id": "spotify",
+        "readiness": "ready",
+        "required": false,
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "status_message": "Spotify provider is ready.",
+        "supported_capabilities": [
+          "playback",
+          "device_selection",
+          "catalog_matching",
+          "oauth_login",
+          "auth_diagnostics"
+        ]
+      }
+    ],
+    "schema_version": 2,
+    "summary": {
+      "can_skip_optional_setup": true,
+      "collection_synced": true,
+      "degraded_mode": false,
+      "next_actions": [],
+      "onboarding_state": "ready",
+      "optional_provider_count": 1,
+      "ready_provider_count": 1,
+      "required_services_configured": true
+    }
+  }
+}

@@ -1,107 +1,85 @@
 from __future__ import annotations
 
-from discogs_player.use_cases.provider_readiness import build_provider_readiness_contract
-from tests.provider_readiness_fixtures import make_capabilities, make_provider
+import json
+from pathlib import Path
+
+from tests.provider_readiness_examples import build_provider_readiness_examples
 
 
 def test_readiness_example_missing_discogs_token():
-    caps = make_capabilities(
-        spotify_addon_available=False,
-        spotify_configured=False,
-        spotify_action_label="Enable Spotify (optional)",
-        spotify_status_message="Spotify addon unavailable.",
-        providers=(),
-    )
-    contract = build_provider_readiness_contract(
-        app_capabilities=caps,
-        discogs_configured=False,
-        collection_synced=False,
-    )
+    contract = build_provider_readiness_examples()["missing_discogs_token"]
     assert contract["summary"]["onboarding_state"] == "needs_required_setup"
     assert contract["core_service"]["required"] is True
     assert contract["core_service"]["configured"] is False
     assert contract["summary"]["required_services_configured"] is False
 
 
-def test_readiness_example_discogs_configured_optional_not_ready():
-    caps = make_capabilities(
-        spotify_addon_available=False,
-        spotify_configured=False,
-        spotify_action_label="Enable Spotify (optional)",
-        spotify_status_message="Spotify addon unavailable.",
-        providers=(
-            make_provider(
-                provider_id="spotify",
-                display_name="Spotify",
-                importable=False,
-                addon_available=False,
-                configured=False,
-                action_label="Unavailable",
-                status_message="Spotify addon unavailable.",
-            ),
-        ),
-    )
-    contract = build_provider_readiness_contract(
-        app_capabilities=caps,
-        discogs_configured=True,
-        collection_synced=True,
-    )
-    assert contract["summary"]["onboarding_state"] == "core_ready_optional_pending"
-    assert contract["summary"]["degraded_mode"] is True
+def test_readiness_example_discogs_configured_needs_initial_sync():
+    contract = build_provider_readiness_examples()[
+        "discogs_configured_needs_initial_sync"
+    ]
+    assert contract["summary"]["required_services_configured"] is True
+    assert contract["summary"]["collection_synced"] is False
+    assert contract["summary"]["onboarding_state"] == "needs_initial_sync"
+
+
+def test_readiness_example_discogs_ready_optional_skipped():
+    contract = build_provider_readiness_examples()["discogs_ready_optional_skipped"]
+    assert contract["summary"]["required_services_configured"] is True
+    assert contract["summary"]["optional_provider_count"] == 0
     assert contract["summary"]["ready_provider_count"] == 0
+    assert contract["summary"]["onboarding_state"] == "ready"
+    assert contract["summary"]["degraded_mode"] is False
 
 
 def test_readiness_example_spotify_ready():
-    caps = make_capabilities(
-        spotify_addon_available=True,
-        spotify_configured=True,
-        providers=(
-            make_provider(
-                provider_id="spotify",
-                display_name="Spotify",
-                importable=True,
-                addon_available=True,
-                configured=True,
-                action_label="Ready",
-                status_message="Spotify provider is ready.",
-            ),
-        ),
-    )
-    contract = build_provider_readiness_contract(
-        app_capabilities=caps,
-        discogs_configured=True,
-        collection_synced=True,
-    )
+    contract = build_provider_readiness_examples()["spotify_ready"]
     assert contract["summary"]["onboarding_state"] == "ready"
     assert contract["summary"]["ready_provider_count"] == 1
+    assert contract["providers"][0]["provider_id"] == "spotify"
     assert contract["providers"][0]["readiness"] == "ready"
 
 
-def test_readiness_example_optional_provider_disabled():
-    caps = make_capabilities(
-        spotify_addon_available=False,
-        spotify_configured=False,
-        providers=(
-            make_provider(
-                provider_id="youtube_music",
-                display_name="YouTube Music",
-                enabled=False,
-                importable=False,
-                addon_available=False,
-                configured=False,
-                action_label="Planned",
-                status_message="Provider listed but disabled.",
-                experimental=True,
-                experimental_flag="DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC",
-            ),
-        ),
-    )
-    contract = build_provider_readiness_contract(
-        app_capabilities=caps,
-        discogs_configured=True,
-        collection_synced=True,
-    )
+def test_readiness_example_experimental_provider_disabled():
+    contract = build_provider_readiness_examples()["experimental_youtube_music_disabled"]
     provider = contract["providers"][0]
     assert provider["provider_id"] == "youtube_music"
     assert provider["readiness"] == "unavailable"
     assert "disabled" in provider["degraded_reasons"]
+
+
+def test_readiness_example_provider_unavailable():
+    contract = build_provider_readiness_examples()["provider_unavailable"]
+    provider = contract["providers"][0]
+    assert provider["provider_id"] == "alt_provider"
+    assert provider["readiness"] == "unavailable"
+    assert "backend_not_installed" in provider["degraded_reasons"]
+
+
+def test_readiness_example_provider_unauthenticated():
+    contract = build_provider_readiness_examples()["provider_unauthenticated"]
+    provider = contract["providers"][0]
+    assert provider["provider_id"] == "spotify"
+    assert provider["readiness"] == "degraded"
+    assert provider["auth_state"] == "unauthenticated"
+    assert "unauthenticated" in provider["degraded_reasons"]
+
+
+def test_readiness_example_degraded_mode():
+    contract = build_provider_readiness_examples()["degraded_mode_optional_pending"]
+    assert contract["summary"]["required_services_configured"] is True
+    assert contract["summary"]["degraded_mode"] is True
+    assert contract["summary"]["onboarding_state"] == "core_ready_optional_pending"
+    assert contract["summary"]["ready_provider_count"] == 0
+
+
+def test_provider_readiness_examples_doc_payload_matches_generated_contracts():
+    docs_path = (
+        Path(__file__).parent.parent
+        / "docs"
+        / "api"
+        / "provider_readiness_examples.json"
+    )
+    docs_examples = json.loads(docs_path.read_text())
+    assert docs_examples == build_provider_readiness_examples()
+

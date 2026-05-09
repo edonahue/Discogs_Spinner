@@ -162,6 +162,37 @@ This document defines the additive `provider_readiness` contract used by setup, 
 }
 ```
 
+## Canonical API Example Payloads
+
+Canonical multi-scenario payloads live in:
+
+- `docs/api/provider_readiness_examples.json`
+
+The file includes these scenarios:
+
+- `missing_discogs_token`
+- `discogs_configured_needs_initial_sync`
+- `discogs_ready_optional_skipped`
+- `spotify_ready`
+- `experimental_youtube_music_disabled`
+- `provider_unavailable`
+- `provider_unauthenticated`
+- `degraded_mode_optional_pending`
+
+Contract tests assert this JSON file matches generated fixture contracts in `tests/provider_readiness_examples.py`.
+
+## Versioning and Deprecation Policy
+
+- `provider_readiness` is additive-first and intended to be stable for API, CLI, web, GTK, and future mobile clients.
+- `schema_version` increments only for intentional contract evolution that may require client adaptation.
+- New fields may be added without a schema bump when existing fields and semantics are preserved.
+- Existing keys in the current contract shape are treated as stability commitments.
+- Legacy Spotify-shaped fields (`spotify`, `spotify_capability`, `spotify_*`) remain available for backward compatibility during migration.
+- Deprecation should follow this path:
+  - introduce replacement fields and fixtures first
+  - update adapters/tests to consume replacement fields
+  - document deprecation window before any removal
+
 ## Guidance for Future Providers
 
 Future provider integration should expose descriptor metadata through the backend/registry seam:
