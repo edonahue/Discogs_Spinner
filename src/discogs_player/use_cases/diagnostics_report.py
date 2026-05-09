@@ -10,6 +10,7 @@ from importlib.metadata import PackageNotFoundError, version
 from discogs_player.capabilities import get_capabilities, get_player_backend
 from discogs_player.core.paths import cache_dir, config_dir, data_dir, db_path
 from discogs_player.core.settings import list_settings
+from discogs_player.use_cases.cover_cache import run_cover_cache_stats
 from discogs_player.use_cases.setup_report import run_setup_report
 from discogs_player.use_cases.status_report import get_status_report
 
@@ -102,6 +103,7 @@ def run_diagnostics_report() -> dict[str, object]:
             "db_path": str(db_path()),
             "db_exists": db_path().exists(),
         },
+        "cache_stats": run_cover_cache_stats(),
         "env_presence": _env_presence_snapshot(),
         "settings_presence": _settings_presence_snapshot(),
         "capabilities": {

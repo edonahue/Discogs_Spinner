@@ -69,6 +69,8 @@ def test_setup_report_requires_discogs_token_and_spotify_addon(
         report["links"]["spotify_dashboard_url"]
         == "https://developer.spotify.com/dashboard"
     )
+    assert isinstance(report["daily_use_actions"], list)
+    assert report["daily_use_actions"]
     assert 'export DISCOGS_TOKEN="your_discogs_personal_token"' in report["next_steps"]
     assert 'pip install -e ".[spotify]"' in report["next_steps"]
 
@@ -117,6 +119,7 @@ def test_setup_report_ready_when_discogs_and_spotify_are_configured(
     assert checklist["spotify_configured"] is True
     assert checklist["ready_for_daily_use"] is True
     assert report["spotify"]["dashboard_url"] == "https://developer.spotify.com/dashboard"
+    assert any("dplayer spin" in str(step) for step in report["daily_use_actions"])
     assert "dplayer devices --json" in report["next_steps"]
 
 
@@ -172,6 +175,7 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
         report["spotify"]["oauth_guide_url"]
         == "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
     )
+    assert any("Optional: connect Spotify" in str(step) for step in report["daily_use_actions"])
     assert "dplayer auth spotify-doctor" in report["next_steps"]
 
 

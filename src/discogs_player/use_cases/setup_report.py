@@ -73,6 +73,7 @@ def run_setup_report() -> dict[str, object]:
 
     next_steps: list[str] = []
     first_run_actions: list[str] = []
+    daily_use_actions: list[str] = []
     if not discogs_configured:
         first_run_actions.extend(
             [
@@ -82,14 +83,26 @@ def run_setup_report() -> dict[str, object]:
         )
         next_steps.append(f"Discogs token page: {_DISCOGS_TOKEN_URL}")
         next_steps.append('export DISCOGS_TOKEN="your_discogs_personal_token"')
+        daily_use_actions.extend(
+            [
+                "Add your Discogs token, then rerun setup.",
+                "After setup, run first sync to unlock browsing and spin flows.",
+            ]
+        )
     if release_count_active <= 0:
         first_run_actions.append("Run first Discogs sync.")
         next_steps.append("dplayer sync")
         next_steps.append("dplayer status")
         next_steps.append("dplayer list --limit 10")
+        daily_use_actions.append(
+            "Run `dplayer sync` and wait for collection import before daily browsing."
+        )
     if not capabilities.addon_available:
         first_run_actions.append("Optionally enable Spotify addon.")
         next_steps.append('pip install -e ".[spotify]"')
+        daily_use_actions.append(
+            "Optional: install Spotify addon later; Discogs browsing and discovery work without it."
+        )
     elif not capabilities.configured:
         first_run_actions.extend(
             [
@@ -106,6 +119,9 @@ def run_setup_report() -> dict[str, object]:
         next_steps.append(
             "dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765"
         )
+        daily_use_actions.append(
+            "Optional: connect Spotify after sync to enable direct playback handoff."
+        )
     else:
         first_run_actions.extend(
             [
@@ -116,6 +132,13 @@ def run_setup_report() -> dict[str, object]:
         next_steps.append("dplayer devices --json")
         next_steps.append("./scripts/spotify_live_smoke.sh")
         next_steps.append("dplayer play --last-spin --open")
+        daily_use_actions.extend(
+            [
+                "Run `dplayer spin` to pick something quickly from your collection.",
+                "Use `dplayer play --last-spin --open` to hand off the last pick to playback.",
+                "Check `dplayer value gems` weekly for overlooked high-signal records.",
+            ]
+        )
 
     discogs_message = "Discogs token configured."
     if not discogs_configured:
@@ -185,5 +208,6 @@ def run_setup_report() -> dict[str, object]:
         },
         "first_run_checklist": first_run_checklist,
         "first_run_actions": first_run_actions,
+        "daily_use_actions": list(dict.fromkeys(daily_use_actions)),
         "next_steps": next_steps,
     }

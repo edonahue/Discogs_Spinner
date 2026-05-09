@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 
 from discogs_player.capabilities import get_capabilities
 from discogs_player.use_cases.collection_analytics import run_collection_analytics
+from discogs_player.use_cases.collector_insights import run_collector_insights
 from discogs_player.use_cases.provider_readiness import (
     build_provider_readiness_contract,
 )
@@ -68,3 +69,18 @@ def api_capabilities() -> dict[str, object]:
         return payload
 
     return run_use_case(_payload)
+
+
+@router.get("/insights")
+def api_insights(
+    gems_limit: int = Query(default=5, ge=1),
+    queue_limit: int = Query(default=10, ge=1),
+    min_median: float = Query(default=25.0, ge=0.0),
+) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_collector_insights(
+            gems_limit=int(gems_limit),
+            queue_limit=int(queue_limit),
+            min_median=float(min_median),
+        )
+    )

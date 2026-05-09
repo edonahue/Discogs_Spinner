@@ -77,6 +77,7 @@ from discogs_player.use_cases.setup_report import run_setup_report
 from discogs_player.use_cases.diagnostics_report import run_diagnostics_report
 from discogs_player.use_cases.high_res_art_refresh import run_refresh_high_res_art
 from discogs_player.use_cases.sync_wantlist import run_sync_wantlist
+from discogs_player.use_cases.collector_insights import run_collector_insights
 from discogs_player.use_cases.value_missing import (
     run_market_value_missing,
     write_market_value_missing_csv,
@@ -395,10 +396,22 @@ def _render_setup_table(report: dict[str, object]) -> None:
 
     next_steps = _as_object_list(report.get("next_steps"))
     if not next_steps:
+        daily_use_actions = _as_object_list(report.get("daily_use_actions"))
+        if not daily_use_actions:
+            return
+        console.print("[bold]Daily Use Actions[/bold]")
+        for index, action in enumerate(daily_use_actions, start=1):
+            console.print(f"{index}. [cyan]{action}[/cyan]")
         return
     console.print("[bold]Next Steps[/bold]")
     for index, step in enumerate(next_steps, start=1):
         console.print(f"{index}. [cyan]{step}[/cyan]")
+
+    daily_use_actions = _as_object_list(report.get("daily_use_actions"))
+    if daily_use_actions:
+        console.print("[bold]Daily Use Actions[/bold]")
+        for index, action in enumerate(daily_use_actions, start=1):
+            console.print(f"{index}. [cyan]{action}[/cyan]")
 
 
 def _render_diagnostics_table(report: dict[str, object]) -> None:
@@ -409,6 +422,7 @@ def _render_diagnostics_table(report: dict[str, object]) -> None:
     app = _as_dict(report.get("app"))
     runtime = _as_dict(report.get("runtime"))
     paths = _as_dict(report.get("paths"))
+    cache_stats = _as_dict(report.get("cache_stats"))
 
     table.add_row("app_name", str(app.get("name") or ""))
     table.add_row("app_version", str(app.get("version") or ""))
@@ -417,6 +431,13 @@ def _render_diagnostics_table(report: dict[str, object]) -> None:
     table.add_row("data_dir", str(paths.get("data_dir") or ""))
     table.add_row("db_path", str(paths.get("db_path") or ""))
     table.add_row("db_exists", str(paths.get("db_exists")))
+    if cache_stats:
+        table.add_row("cover_cache_item_count", str(cache_stats.get("item_count") or 0))
+        table.add_row("cover_cache_total_bytes", str(cache_stats.get("total_bytes") or 0))
+        table.add_row(
+            "cover_cache_newest_entry_mtime",
+            str(cache_stats.get("newest_entry_mtime")),
+        )
     provider_readiness = _as_dict(report.get("provider_readiness"))
     readiness_summary = _as_dict(provider_readiness.get("summary"))
     if readiness_summary:
@@ -499,6 +520,80 @@ def _render_providers_table(payload: dict[str, object]) -> None:
         )
 
     console.print(providers_table)
+
+
+def _render_insights_table(report: dict[str, object]) -> None:
+    summary = _as_dict(report.get("summary"))
+    table = Table(title="collector insights")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("onboarding_state", str(summary.get("onboarding_state") or ""))
+    table.add_row("ready_for_daily_use", str(bool(summary.get("ready_for_daily_use"))))
+    table.add_row("release_count_active", str(summary.get("release_count_active") or 0))
+    table.add_row("mapped_count", str(summary.get("mapped_count") or 0))
+    table.add_row("unmatched_count", str(summary.get("unmatched_count") or 0))
+    table.add_row("wantlist_count", str(summary.get("wantlist_count") or 0))
+    table.add_row("health_score", str(summary.get("health_score") or 0))
+    table.add_row("hidden_gems_count", str(summary.get("hidden_gems_count") or 0))
+    table.add_row("refresh_queue_count", str(summary.get("refresh_queue_count") or 0))
+    table.add_row(
+        "market_value_last_updated",
+        str(summary.get("market_value_last_updated")),
+    )
+    table.add_row("last_sync_time", str(summary.get("last_sync_time")))
+    console.print(table)
+
+    highlights = _as_dict_list(report.get("highlights"))
+    if highlights:
+        highlights_table = Table(title="highlights")
+        highlights_table.add_column("Kind", style="cyan")
+        highlights_table.add_column("Title", style="white")
+        highlights_table.add_column("Message", style="white")
+        highlights_table.add_column("Command", style="yellow")
+        for item in highlights:
+            highlights_table.add_row(
+                str(item.get("kind") or ""),
+                str(item.get("title") or ""),
+                str(item.get("message") or ""),
+                str(item.get("command_hint") or ""),
+            )
+        console.print(highlights_table)
+
+    gems = _as_dict_list(report.get("top_hidden_gems"))
+    if gems:
+        gems_table = Table(title=f"top hidden gems ({len(gems)})")
+        gems_table.add_column("Discogs ID", style="cyan", justify="right")
+        gems_table.add_column("Artist", style="white")
+        gems_table.add_column("Title", style="white")
+        gems_table.add_column("Median", style="yellow", justify="right")
+        gems_table.add_column("For Sale", style="yellow", justify="right")
+        gems_table.add_column("Why", style="magenta")
+        for row in gems:
+            median = row.get("market_median")
+            currency = str(row.get("market_currency") or "").strip()
+            if isinstance(median, (int, float)):
+                if currency:
+                    median_text = f"{float(median):.2f} {currency}"
+                else:
+                    median_text = f"{float(median):.2f}"
+            else:
+                median_text = ""
+            reasons = _as_object_list(row.get("reasons"))
+            gems_table.add_row(
+                str(row.get("discogs_release_id") or ""),
+                str(row.get("artist") or ""),
+                str(row.get("title") or ""),
+                median_text,
+                str(row.get("num_for_sale") if row.get("num_for_sale") is not None else ""),
+                ", ".join(str(item) for item in reasons),
+            )
+        console.print(gems_table)
+
+    actions = _as_object_list(report.get("daily_use_actions"))
+    if actions:
+        console.print("[bold]Daily Use Actions[/bold]")
+        for index, action in enumerate(actions, start=1):
+            console.print(f"{index}. [cyan]{action}[/cyan]")
 
 
 def _render_spotify_auth_doctor_table(report: dict[str, object]) -> None:
@@ -1127,6 +1222,31 @@ def providers(
         _emit_json(payload)
         return
     _render_providers_table(payload)
+
+
+@app.command("insights")
+def insights(
+    gems_limit: int = typer.Option(
+        5, "--gems-limit", min=1, help="Max hidden gems to include"
+    ),
+    queue_limit: int = typer.Option(
+        10, "--queue-limit", min=1, help="Max value queue entries to include"
+    ),
+    min_median: float = typer.Option(
+        25.0, "--min-median", min=0.0, help="Minimum median value for hidden gems"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show a daily-use collector insights summary from local data."""
+    report = run_collector_insights(
+        gems_limit=gems_limit,
+        queue_limit=queue_limit,
+        min_median=min_median,
+    )
+    if json_output:
+        _emit_json(report)
+        return
+    _render_insights_table(report)
 
 
 @app.command("analytics")

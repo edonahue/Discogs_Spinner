@@ -431,6 +431,10 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
             "spotify_dashboard_url": "https://developer.spotify.com/dashboard",
             "spotify_oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
         },
+        "daily_use_actions": [
+            "Run dplayer spin",
+            "Run dplayer value gems --limit 10",
+        ],
         "next_steps": ["dplayer auth spotify-doctor"],
     }
     monkeypatch.setattr(commands, "run_setup_report", lambda: expected)
@@ -444,6 +448,7 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
     assert "links_discogs_token_url" in result.output
     assert "provider_readiness_state" in result.output
     assert "provider_optional_ready_count" in result.output
+    assert "Daily Use Actions" in result.output
 
 
 def test_diagnostics_json_output(monkeypatch):
@@ -580,6 +585,93 @@ def test_providers_table_output(monkeypatch):
     assert "schema_version" in result.output
     assert "core_ready_optional_pending" in result.output
     assert "Spotify" in result.output
+
+
+def test_insights_json_output(monkeypatch):
+    expected = {
+        "summary": {
+            "onboarding_state": "ready",
+            "health_score": 87,
+            "hidden_gems_count": 3,
+            "refresh_queue_count": 4,
+            "ready_for_daily_use": True,
+        },
+        "highlights": [
+            {
+                "kind": "discovery",
+                "title": "Tonight's hidden gem",
+                "message": "Artist - Album",
+                "command_hint": "dplayer value gems --limit 10 --json",
+            }
+        ],
+        "daily_use_actions": ["Run dplayer spin", "Run dplayer play --last-spin --open"],
+        "top_hidden_gems": [],
+        "refresh_queue_preview": [],
+        "legacy_spotify_compatibility": {
+            "status_report_has_spotify_capability": True,
+            "setup_report_has_spotify_block": True,
+        },
+    }
+    captured: dict[str, object] = {}
+
+    def _fake_run_collector_insights(**kwargs):
+        captured.update(kwargs)
+        return expected
+
+    monkeypatch.setattr(commands, "run_collector_insights", _fake_run_collector_insights)
+    result = runner.invoke(
+        commands.app,
+        ["insights", "--gems-limit", "4", "--queue-limit", "6", "--min-median", "35", "--json"],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == expected
+    assert captured == {"gems_limit": 4, "queue_limit": 6, "min_median": 35.0}
+
+
+def test_insights_table_output(monkeypatch):
+    expected = {
+        "summary": {
+            "onboarding_state": "core_ready_optional_pending",
+            "ready_for_daily_use": True,
+            "release_count_active": 200,
+            "mapped_count": 150,
+            "unmatched_count": 50,
+            "wantlist_count": 22,
+            "health_score": 79,
+            "hidden_gems_count": 2,
+            "refresh_queue_count": 9,
+            "market_value_last_updated": "2026-05-09T00:00:00Z",
+            "last_sync_time": "2026-05-09T00:00:00Z",
+        },
+        "highlights": [
+            {
+                "kind": "value",
+                "title": "Price refresh backlog",
+                "message": "9 releases are queued.",
+                "command_hint": "dplayer value queue --limit 25 --stale-days 30",
+            }
+        ],
+        "top_hidden_gems": [
+            {
+                "discogs_release_id": 99,
+                "artist": "Artist",
+                "title": "Album",
+                "market_median": 42.5,
+                "market_currency": "USD",
+                "num_for_sale": 2,
+                "reasons": ["high-value"],
+            }
+        ],
+        "daily_use_actions": ["Run dplayer spin"],
+    }
+    monkeypatch.setattr(commands, "run_collector_insights", lambda **kwargs: expected)
+    result = runner.invoke(commands.app, ["insights"])
+    assert result.exit_code == 0
+    assert "collector insights" in result.output
+    assert "highlights" in result.output
+    assert "top hidden gems" in result.output
+    assert "Daily Use Actions" in result.output
 
 
 def test_analytics_json_output(monkeypatch):

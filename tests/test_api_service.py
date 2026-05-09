@@ -70,6 +70,34 @@ def test_api_analytics_returns_envelope(monkeypatch):
     assert body["data"] == stub
 
 
+def test_api_insights_returns_envelope(monkeypatch):
+    expected = {
+        "summary": {
+            "onboarding_state": "ready",
+            "health_score": 91,
+            "hidden_gems_count": 2,
+        },
+        "highlights": [],
+        "daily_use_actions": ["Run dplayer spin"],
+        "top_hidden_gems": [],
+        "refresh_queue_preview": [],
+    }
+
+    def _fake_run_collector_insights(**kwargs):
+        assert kwargs["gems_limit"] == 4
+        assert kwargs["queue_limit"] == 6
+        assert kwargs["min_median"] == 35.0
+        return expected
+
+    monkeypatch.setattr(status, "run_collector_insights", _fake_run_collector_insights)
+    client = TestClient(create_app())
+    response = client.get("/api/v1/insights?gems_limit=4&queue_limit=6&min_median=35")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"] == expected
+
+
 # ---------------------------------------------------------------------------
 # Tracklist
 # ---------------------------------------------------------------------------
