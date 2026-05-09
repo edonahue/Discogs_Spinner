@@ -93,6 +93,15 @@ def test_wizard_consumes_provider_readiness_contract():
     )
 
 
+def test_wizard_uses_readiness_summary_next_actions_for_optional_pending_state():
+    assert "core_ready_optional_pending" in _WIZARD_SOURCE, (
+        "SetupWizard should use provider_readiness.summary onboarding state"
+    )
+    assert "Use CLI/Web setup" in _WIZARD_SOURCE, (
+        "SetupWizard should provide a non-Spotify fallback message for optional providers"
+    )
+
+
 def test_wizard_hooks_close_request_for_executor_cleanup():
     assert "close-request" in _WIZARD_SOURCE, (
         "SetupWizard must connect to close-request to shut down executor on X-close"

@@ -307,6 +307,14 @@ class SetupWizard(Adw.Window):
         except Exception:
             report = {}
         readiness = report.get("provider_readiness")
+        summary = readiness.get("summary") if isinstance(readiness, dict) else {}
+        summary_next_actions: list[str] = []
+        if isinstance(summary, dict):
+            raw_actions = summary.get("next_actions")
+            if isinstance(raw_actions, list):
+                summary_next_actions = [
+                    str(item).strip() for item in raw_actions if str(item).strip()
+                ]
         providers = readiness.get("providers") if isinstance(readiness, dict) else []
         spotify_row: dict[str, object] | None = None
         if isinstance(providers, list):
@@ -341,7 +349,28 @@ class SetupWizard(Adw.Window):
             self._connect_spotify_btn.set_sensitive(can_retry_setup)
             return
 
+        optional_provider_count = 0
+        onboarding_state = ""
+        if isinstance(summary, dict):
+            optional_provider_count = int(summary.get("optional_provider_count") or 0)
+            onboarding_state = str(summary.get("onboarding_state") or "").strip()
+        if optional_provider_count > 0 and onboarding_state == "core_ready_optional_pending":
+            message = (
+                "Optional providers are pending. Spotify is not currently listed as "
+                "connectable in this GTK step."
+            )
+            if summary_next_actions:
+                message = f"{message} Next: {summary_next_actions[0]}"
+            self._spotify_status_label.set_text(message)
+            self._connect_spotify_btn.set_label("Use CLI/Web setup")
+            self._connect_spotify_btn.set_sensitive(False)
+            return
+
         self._spotify_status_label.set_text(caps.spotify.status_message)
+        if summary_next_actions:
+            self._spotify_status_label.set_text(
+                f"{self._spotify_status_label.get_text()} Next: {summary_next_actions[0]}"
+            )
         already_configured = caps.spotify.configured
         self._connect_spotify_btn.set_sensitive(not already_configured)
         if already_configured:
