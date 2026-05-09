@@ -259,6 +259,12 @@ def test_startup_timing_clears_t0_after_first_load():
     )
 
 
+def test_setup_commands_window_includes_providers_and_insights_shortcuts():
+    src = _src()
+    assert "dplayer providers --json" in src
+    assert "dplayer insights --json" in src
+
+
 # ---------------------------------------------------------------------------
 # Item 3 (new): Last-synced-at indicator — source-level assertions
 # ---------------------------------------------------------------------------

@@ -2970,11 +2970,19 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Core setup:",
                 "  dplayer setup",
                 "  dplayer sync",
+                "  dplayer status --json",
+                "  dplayer providers --json",
                 "",
                 "Spotify setup:",
                 "  dplayer auth spotify-doctor",
                 "  dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765",
                 "  dplayer devices --json",
+                "",
+                "Collector daily-use:",
+                "  dplayer spin",
+                "  dplayer play --last-spin --open",
+                "  dplayer insights --json",
+                "  dplayer value gems --limit 10",
                 "",
                 "Useful URLs:",
                 f"  Discogs token page: {_DISCOGS_TOKEN_URL}",
@@ -4127,10 +4135,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 if last_sync is None:
                     status_msg = (
                         "No releases synced yet. Click \"Sync Collection\" to import"
-                        " your Discogs collection for the first time."
+                        " your Discogs collection for the first time, then try Spin."
                     )
                     self._browse_empty_label.set_text(
-                        "Sync your collection to get started."
+                        "Sync your collection to get started, then open collector insights."
                     )
                 else:
                     status_msg = "No releases match the current filters."
