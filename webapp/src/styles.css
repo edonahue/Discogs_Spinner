@@ -246,6 +246,48 @@ button:disabled,
   font-size: 0.9rem;
 }
 
+.app-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.app-summary-card {
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(251, 247, 240, 0.96)),
+    radial-gradient(circle at top right, rgba(12, 93, 124, 0.08), transparent 45%);
+}
+
+.app-summary-card__label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-summary-card__value {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.app-summary-card__value--small {
+  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+  line-height: 1.2;
+}
+
+.app-summary-card__meta {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
 .app-toolbar,
 .app-inline-actions,
 .app-inline-summary,
@@ -278,6 +320,13 @@ button:disabled,
 .app-toolbar__field--compact {
   flex: 0 1 110px;
   max-width: 140px;
+}
+
+.app-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
 }
 
 .app-input,

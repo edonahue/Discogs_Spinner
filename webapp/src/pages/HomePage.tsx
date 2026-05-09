@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { getJson, SyncSummary, syncCollection, syncWantlist } from "../api";
+import {
+  getJson,
+  ProviderReadinessContract,
+  SyncSummary,
+  syncCollection,
+  syncWantlist,
+} from "../api";
 
 type StatusPayload = {
   release_count_total: number;
@@ -14,6 +20,7 @@ type StatusPayload = {
     configured: boolean;
     action_label: string;
   };
+  provider_readiness?: ProviderReadinessContract;
 };
 
 type SyncState = "idle" | "syncing" | "done" | "error";
@@ -140,6 +147,40 @@ export function HomePage() {
               </p>
             </article>
           ) : null}
+          {status.provider_readiness ? (
+            <article className="app-surface app-stat-card">
+              <p className="app-stat-card__label">Provider Readiness</p>
+              <p className="app-stat-card__value" style={{ fontSize: "1.2rem" }}>
+                {status.provider_readiness.summary.onboarding_state}
+              </p>
+              <p className="app-stat-card__meta">
+                Optional ready {status.provider_readiness.summary.ready_provider_count}/
+                {status.provider_readiness.summary.optional_provider_count}
+              </p>
+            </article>
+          ) : null}
+        </section>
+      ) : null}
+      {status?.provider_readiness ? (
+        <section className="app-surface app-card" style={{ marginTop: "1.25rem" }}>
+          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Setup Guidance</h2>
+          <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
+            {status.provider_readiness.summary.required_services_configured
+              ? "Discogs required setup is complete."
+              : "Discogs required setup is incomplete."}
+          </p>
+          {status.provider_readiness.summary.degraded_mode ? (
+            <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
+              Degraded mode: collection browsing still works without optional playback providers.
+            </p>
+          ) : null}
+          <ul className="app-list">
+            {status.provider_readiness.providers.map((provider) => (
+              <li key={provider.provider_id}>
+                <strong>{provider.display_name}</strong>: {provider.readiness} — {provider.status_message}
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

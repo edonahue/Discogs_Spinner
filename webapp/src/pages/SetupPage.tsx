@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { postJson } from "../api";
+import { getJson, postJson, ProviderReadinessContract } from "../api";
 
 type SetupResponse = {
   onboarding_stage: string;
   discogs: { configured: boolean };
+  provider_readiness?: ProviderReadinessContract;
 };
 
 export function SetupPage() {
@@ -12,6 +13,19 @@ export function SetupPage() {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [setupState, setSetupState] = useState<SetupResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getJson<SetupResponse>("/setup")
+      .then((payload) => {
+        if (!cancelled) setSetupState(payload.data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,12 +46,29 @@ export function SetupPage() {
       <section className="app-surface app-card" style={{ marginTop: "2.5rem" }}>
       <h1 className="app-page__title">Welcome to Discogs Spinner</h1>
       <p className="app-page__subtitle" style={{ marginBottom: "1.25rem" }}>
-        Enter your Discogs personal access token to get started. You can find it at{" "}
+        Discogs setup is required. Playback providers are optional and can be connected later.
+      </p>
+      <p className="app-page__subtitle" style={{ marginBottom: "1.25rem" }}>
+        Enter your Discogs personal access token to continue. You can find it at{" "}
         <a href="https://www.discogs.com/settings/developers" target="_blank" rel="noreferrer">
           discogs.com/settings/developers
         </a>
         .
       </p>
+      {setupState?.provider_readiness ? (
+        <div className="app-message app-message--subtle" style={{ marginBottom: "1rem" }}>
+          <div>
+            Onboarding state: {setupState.provider_readiness.summary.onboarding_state}
+          </div>
+          <div>
+            Optional providers ready: {setupState.provider_readiness.summary.ready_provider_count}/
+            {setupState.provider_readiness.summary.optional_provider_count}
+          </div>
+          {setupState.provider_readiness.summary.degraded_mode ? (
+            <div>Degraded mode is available: collection browsing still works without optional providers.</div>
+          ) : null}
+        </div>
+      ) : null}
       <form onSubmit={(e) => { void handleSubmit(e); }}>
         <div style={{ marginBottom: "1rem" }}>
           <label htmlFor="token" className="app-stack-label">
