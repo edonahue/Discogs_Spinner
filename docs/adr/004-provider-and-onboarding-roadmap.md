@@ -64,6 +64,10 @@ Introduce the smallest safe provider-neutral seam:
 2. Keep legacy Spotify-shaped fields as aliases for backward compatibility.
 3. Avoid flow rewrites and avoid behavioral changes to Spotify/YouTube paths.
 
+Stage 1 status:
+
+- Completed: provider-neutral mapping aliases are now emitted additively (`provider_id`, `provider_release_id`) while preserving legacy Spotify-shaped fields.
+
 ### Stage 2
 
 Normalize data/API contracts around provider-neutral mapping and capability discovery:
@@ -72,6 +76,18 @@ Normalize data/API contracts around provider-neutral mapping and capability disc
 2. Expand capability contracts for adapter-driven setup/readiness/degraded states.
 3. Maintain compatibility shims until clients migrate.
 
+Stage 2 foundation status:
+
+- Completed (foundation): a shared provider readiness contract now exists for setup/status/capability surfaces, with additive backward-compatible exposure.
+- Included contract fields now cover:
+  - provider identity and display name
+  - required vs optional
+  - installed/addon/configured/auth readiness states
+  - supported capability hints
+  - degraded-mode reasons
+  - retry/skip affordances
+  - user-facing next actions
+
 ### Stage 3
 
 Onboarding and FTUX modernization:
@@ -79,6 +95,11 @@ Onboarding and FTUX modernization:
 1. Keep Discogs as required setup.
 2. Make providers explicitly optional, independently connectable, and skippable.
 3. Drive setup UX from capability state rather than provider hardcoding.
+
+Stage 3 status:
+
+- In progress (early): CLI setup/status now exposes provider readiness summary fields additively.
+- Remaining: broader UI/web onboarding flows should consume the readiness contract more deeply without breaking existing behavior.
 
 ### Stage 4
 
@@ -98,11 +119,11 @@ Future platform/commercial readiness seams (design-only in this roadmap):
 
 ## Smallest Safe Next Implementation Slice
 
-After this ADR, implement only a narrow Stage 1 slice:
+After Stage 1 + early Stage 2/3 foundation, the next safe slice is:
 
-1. Add canonical provider-neutral mapping fields to shared DTOs/API responses.
-2. Preserve legacy Spotify-shaped fields as adapter-level aliases.
-3. Ship with focused compatibility tests and zero functional behavior change.
+1. Add provider-readiness contract consumption in web/local onboarding views (safe additive rendering only).
+2. Preserve existing onboarding and Spotify-specific command behavior while adding generic required/optional setup messaging.
+3. Add focused cross-surface tests (API + CLI + onboarding flow) for readiness-state transitions.
 
 ## Validation Commands for Future Implementation Work
 
