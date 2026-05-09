@@ -104,6 +104,9 @@ def test_setup_report_ready_when_discogs_and_spotify_are_configured(
     assert report["discogs"]["token_source"] == "environment"
     assert report["collection"]["release_count_active"] == 1
     assert report["spotify"]["configured"] is True
+    assert "addon_available" in report["spotify"]
+    assert "action_label" in report["spotify"]
+    assert "status_message" in report["spotify"]
     readiness = report["provider_readiness"]
     assert readiness["summary"]["required_services_configured"] is True
     assert readiness["summary"]["collection_synced"] is True
@@ -145,6 +148,9 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
     assert report["profile"] == "plus"
     assert report["onboarding_stage"] == "needs_spotify_auth"
     assert report["spotify"]["configured"] is False
+    assert "addon_available" in report["spotify"]
+    assert "action_label" in report["spotify"]
+    assert "status_message" in report["spotify"]
     readiness = report["provider_readiness"]
     assert isinstance(readiness.get("providers"), list)
     assert readiness["summary"]["ready_provider_count"] == 0

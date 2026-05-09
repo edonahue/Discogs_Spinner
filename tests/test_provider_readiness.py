@@ -3,6 +3,71 @@ from __future__ import annotations
 from discogs_player.capabilities import AppCapabilities, ProviderCapability, SpotifyCapabilities
 from discogs_player.use_cases.provider_readiness import build_provider_readiness_contract
 
+_CONTRACT_KEYS = {
+    "schema_version",
+    "core_service",
+    "providers",
+    "next_actions",
+    "summary",
+}
+
+_CORE_SERVICE_KEYS = {
+    "service_id",
+    "display_name",
+    "required",
+    "optional",
+    "configured",
+    "auth_required",
+    "auth_state",
+    "readiness",
+    "degraded_reasons",
+    "supported_capabilities",
+    "next_actions",
+    "can_skip_setup",
+    "can_retry_setup",
+    "setup_url",
+    "status_message",
+    "action_label",
+}
+
+_PROVIDER_KEYS = {
+    "provider_id",
+    "display_name",
+    "required",
+    "optional",
+    "listed",
+    "enabled",
+    "installed",
+    "addon_available",
+    "configured",
+    "auth_required",
+    "auth_state",
+    "readiness",
+    "degraded_reasons",
+    "supported_capabilities",
+    "next_actions",
+    "can_skip_setup",
+    "can_retry_setup",
+    "setup_url",
+    "docs_url",
+    "oauth_guide_url",
+    "experimental",
+    "experimental_flag",
+    "status_message",
+    "action_label",
+}
+
+_SUMMARY_KEYS = {
+    "required_services_configured",
+    "optional_provider_count",
+    "ready_provider_count",
+    "degraded_mode",
+    "onboarding_state",
+    "collection_synced",
+    "next_actions",
+    "can_skip_optional_setup",
+}
+
 
 def _provider(
     *,
@@ -182,20 +247,36 @@ def test_provider_readiness_contract_stability_keys():
         discogs_configured=False,
         collection_synced=False,
     )
-    assert set(contract.keys()) == {
-        "schema_version",
-        "core_service",
-        "providers",
-        "next_actions",
-        "summary",
-    }
-    assert set(contract["summary"].keys()) == {
-        "required_services_configured",
-        "optional_provider_count",
-        "ready_provider_count",
-        "degraded_mode",
-        "onboarding_state",
-        "collection_synced",
-        "next_actions",
-        "can_skip_optional_setup",
-    }
+    assert set(contract.keys()) == _CONTRACT_KEYS
+    assert set(contract["summary"].keys()) == _SUMMARY_KEYS
+    assert set(contract["core_service"].keys()) == _CORE_SERVICE_KEYS
+
+
+def test_provider_readiness_contract_provider_field_stability():
+    caps = AppCapabilities(
+        spotify=SpotifyCapabilities(
+            addon_available=True,
+            configured=False,
+            action_label="Connect Spotify",
+            status_message="Spotify addon is installed but not configured.",
+        ),
+        providers=(
+            _provider(
+                provider_id="spotify",
+                display_name="Spotify",
+                addon_available=True,
+                configured=False,
+                action_label="Connect Spotify",
+                status_message="Spotify addon is installed but not configured.",
+            ),
+        ),
+    )
+    contract = build_provider_readiness_contract(
+        app_capabilities=caps,
+        discogs_configured=True,
+        collection_synced=True,
+    )
+    providers = contract["providers"]
+    assert isinstance(providers, list)
+    assert providers
+    assert set(providers[0].keys()) == _PROVIDER_KEYS
