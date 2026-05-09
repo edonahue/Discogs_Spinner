@@ -505,6 +505,7 @@ def test_diagnostics_table_output(monkeypatch):
 def test_providers_json_output(monkeypatch):
     status_payload = {
         "provider_readiness": {
+            "schema_version": 2,
             "summary": {
                 "required_services_configured": True,
                 "optional_provider_count": 2,
@@ -540,6 +541,7 @@ def test_providers_json_output(monkeypatch):
 
     assert result.exit_code == 0
     parsed = json.loads(result.output)
+    assert parsed["schema_version"] == 2
     assert parsed["summary"]["onboarding_state"] == "core_ready_optional_pending"
     assert len(parsed["providers"]) == 2
     assert parsed["providers"][0]["provider_id"] == "spotify"
@@ -548,6 +550,7 @@ def test_providers_json_output(monkeypatch):
 def test_providers_table_output(monkeypatch):
     status_payload = {
         "provider_readiness": {
+            "schema_version": 2,
             "summary": {
                 "required_services_configured": True,
                 "optional_provider_count": 1,
@@ -574,6 +577,7 @@ def test_providers_table_output(monkeypatch):
 
     assert result.exit_code == 0
     assert "provider readiness summary" in result.output
+    assert "schema_version" in result.output
     assert "core_ready_optional_pending" in result.output
     assert "Spotify" in result.output
 

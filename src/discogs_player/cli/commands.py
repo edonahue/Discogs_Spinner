@@ -444,6 +444,9 @@ def _render_providers_table(payload: dict[str, object]) -> None:
     summary_table = Table(title="provider readiness summary")
     summary_table.add_column("Field", style="cyan")
     summary_table.add_column("Value", style="white")
+    schema_version = payload.get("schema_version")
+    if schema_version is not None:
+        summary_table.add_row("schema_version", str(schema_version))
     summary_table.add_row(
         "required_services_configured",
         str(bool(summary.get("required_services_configured"))),
@@ -1116,6 +1119,7 @@ def providers(
     report = get_status_report()
     readiness = _as_dict(report.get("provider_readiness"))
     payload = {
+        "schema_version": readiness.get("schema_version"),
         "summary": _as_dict(readiness.get("summary")),
         "providers": _as_dict_list(readiness.get("providers")),
     }
