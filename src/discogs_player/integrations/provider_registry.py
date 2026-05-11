@@ -6,7 +6,10 @@ import os
 from importlib import import_module
 
 from discogs_player.integrations.null_backend import NullPlayerBackend
-from discogs_player.integrations.player_backend import PlayerBackend
+from discogs_player.integrations.player_backend import (
+    PlayerBackend,
+    ProviderDescriptor,
+)
 
 # Provider-id -> (module path, backend class name)
 _BACKEND_SPECS: dict[str, tuple[str, str]] = {
@@ -29,6 +32,44 @@ _PROVIDER_DOCS_URLS: dict[str, str] = {
 
 _EXPERIMENTAL_PROVIDER_FLAGS: dict[str, str] = {
     "youtube_music": "DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC",
+}
+
+_PROVIDER_DESCRIPTORS: dict[str, ProviderDescriptor] = {
+    "spotify": {
+        "auth_required": True,
+        "supported_capabilities": [
+            "playback",
+            "device_selection",
+            "catalog_matching",
+            "oauth_login",
+            "auth_diagnostics",
+        ],
+        "setup_url": "https://developer.spotify.com/dashboard",
+        "oauth_guide_url": (
+            "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
+        ),
+        "next_actions_when_unconfigured": [
+            "Run `dplayer auth spotify-doctor`.",
+            "Run `dplayer auth spotify --open-browser`.",
+        ],
+        "can_skip_setup": True,
+        "can_retry_setup": True,
+    },
+    "youtube_music": {
+        "auth_required": False,
+        "supported_capabilities": [
+            "playback",
+            "catalog_matching",
+            "browser_playback",
+        ],
+        "setup_url": "https://music.youtube.com/",
+        "next_actions_when_unconfigured": [
+            "Set DP_ENABLE_EXPERIMENTAL_YOUTUBE_MUSIC=1 to expose the provider.",
+            "Install optional addon dependencies for this provider.",
+        ],
+        "can_skip_setup": True,
+        "can_retry_setup": True,
+    },
 }
 
 
@@ -75,6 +116,21 @@ def provider_metadata(provider_id: str) -> dict[str, object] | None:
         "experimental_flag": flag,
         "enabled": is_provider_enabled(provider_id),
     }
+
+
+def provider_descriptor(provider_id: str) -> ProviderDescriptor:
+    """Return readiness descriptor for one listed provider id."""
+    base: ProviderDescriptor = dict(_PROVIDER_DESCRIPTORS.get(provider_id, {}))
+    backend_cls = get_backend_type(provider_id)
+    if backend_cls is None:
+        return base
+
+    dynamic = backend_cls.provider_descriptor()
+    if not isinstance(dynamic, dict):
+        return base
+    merged: ProviderDescriptor = dict(base)
+    merged.update(dynamic)
+    return merged
 
 
 def get_backend_type(provider_id: str) -> type[PlayerBackend] | None:

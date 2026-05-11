@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchValueDashboard, fetchValueQueue, postJson, ValueDashboard, ValueRefreshQueue } from "../api";
+import {
+  fetchHiddenGems,
+  fetchValueDashboard,
+  fetchValueQueue,
+  HiddenGemsPayload,
+  postJson,
+  ValueDashboard,
+  ValueRefreshQueue,
+} from "../api";
+import { usePageVisible } from "../hooks/usePageVisible";
 
 function formatCurrency(value: number | null, currency: string): string {
   if (value == null) return "—";
@@ -18,29 +27,53 @@ function formatCurrency(value: number | null, currency: string): string {
 export function ValuePage() {
   const [dashboard, setDashboard] = useState<ValueDashboard | null>(null);
   const [queue, setQueue] = useState<ValueRefreshQueue | null>(null);
+  const [gems, setGems] = useState<HiddenGemsPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [gemsError, setGemsError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState("");
+  const pageVisible = usePageVisible();
 
-  function loadDashboard() {
+  function loadDashboard(signal?: AbortSignal) {
     setLoading(true);
     setError("");
+    setGemsError("");
+
     Promise.all([
-      fetchValueDashboard({ top_limit: 10 }),
-      fetchValueQueue({ limit: 25, stale_days: 30 }),
+      fetchValueDashboard({ top_limit: 10 }, { signal }),
+      fetchValueQueue({ limit: 25, stale_days: 30 }, { signal }),
     ])
       .then(([dashPayload, queuePayload]) => {
         setDashboard(dashPayload.data);
         setQueue(queuePayload.data);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load value dashboard."))
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Failed to load value dashboard.");
+      })
+      .finally(() => {
+        if (!signal?.aborted) setLoading(false);
+      });
+
+    fetchHiddenGems({ min_median: 25, limit: 10 }, { signal })
+      .then((gemsPayload) => {
+        setGems(gemsPayload.data);
+        setGemsError("");
+      })
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setGems(null);
+        setGemsError(err instanceof Error ? err.message : "Failed to load hidden gems.");
+      });
   }
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (!pageVisible) return;
+    const controller = new AbortController();
+    loadDashboard(controller.signal);
+    return () => controller.abort();
+  }, [pageVisible]);
 
   function handleRefresh() {
     setRefreshing(true);
@@ -50,6 +83,7 @@ export function ValuePage() {
         setRefreshMsg("Refresh started. Reloading data…");
         setTimeout(() => {
           setRefreshMsg("");
+          if (document.hidden) return;
           loadDashboard();
         }, 3000);
       })
@@ -132,6 +166,64 @@ export function ValuePage() {
             </table>
           </div>
         </section>
+      ) : null}
+
+      {gems && gems.gems.length > 0 ? (
+        <section className="app-surface app-table-shell" style={{ marginTop: "1rem" }}>
+          <div className="app-page__header" style={{ marginBottom: "0.5rem" }}>
+            <div>
+              <h2 className="app-page__section-title">Hidden Gems</h2>
+              <p className="app-page__subtitle">
+                Owned releases that are quietly valuable AND hard to find on the Discogs marketplace right now.
+              </p>
+            </div>
+          </div>
+          <div className="app-table-wrap">
+            <table className="app-table app-table--compact responsive-stack">
+              <thead>
+                <tr>
+                  <th>Artist</th>
+                  <th>Title</th>
+                  <th>Year</th>
+                  <th className="is-right">Median</th>
+                  <th className="is-right">For Sale</th>
+                  <th>Why</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gems.gems.map((gem) => (
+                  <tr key={gem.discogs_release_id}>
+                    <td data-label="Artist">{gem.artist ?? "—"}</td>
+                    <td data-label="Title">{gem.title ?? "—"}</td>
+                    <td data-label="Year">{gem.year ?? "—"}</td>
+                    <td data-label="Median" className="is-right">
+                      {formatCurrency(gem.market_median, gem.market_currency ?? "USD")}
+                    </td>
+                    <td data-label="For Sale" className="is-right">
+                      {gem.num_for_sale == null ? "—" : gem.num_for_sale}
+                    </td>
+                    <td data-label="Why">{gem.reasons.join(" · ") || "—"}</td>
+                    <td data-label="Action">
+                      <Link
+                        className="app-link-button app-link-button--ghost"
+                        to={`/collection?focus=${gem.discogs_release_id}`}
+                      >
+                        View in Collection
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {gemsError ? (
+        <p className="app-message app-message--subtle">
+          Hidden Gems are temporarily unavailable: {gemsError}
+        </p>
       ) : null}
 
       <section className="app-surface app-table-shell" style={{ marginTop: "1rem" }}>

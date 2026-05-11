@@ -3,7 +3,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TypedDict
+
+
+class ProviderDescriptor(TypedDict, total=False):
+    """Provider metadata surfaced through readiness contracts."""
+
+    auth_required: bool
+    supported_capabilities: list[str]
+    setup_url: str
+    oauth_guide_url: str
+    next_actions_when_unconfigured: list[str]
+    can_skip_setup: bool
+    can_retry_setup: bool
 
 
 class PlayerBackendError(RuntimeError):
@@ -68,3 +80,8 @@ class PlayerBackend(ABC):
     @abstractmethod
     def auth_diagnostics(self, *, conn=None, **kwargs: object) -> dict[str, object]:
         """Return backend-specific auth diagnostics safe for CLI/UI display."""
+
+    @classmethod
+    def provider_descriptor(cls) -> ProviderDescriptor:
+        """Return additive provider capability metadata for readiness surfaces."""
+        return {}

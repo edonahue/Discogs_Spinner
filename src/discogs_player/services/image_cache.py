@@ -5,12 +5,14 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
 from discogs_player.core.paths import cover_cache_dir
+from discogs_player.performance import cover_worker_count
 
 DEFAULT_TIMEOUT_SECONDS = 20.0
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
@@ -57,6 +59,17 @@ _KNOWN_IMAGE_EXTENSIONS: tuple[str, ...] = (
     ".heic",
     ".heif",
 )
+_fetch_locks_guard = threading.Lock()
+_fetch_locks: dict[str, threading.Lock] = {}
+
+
+def _lock_for_url(url: str) -> threading.Lock:
+    with _fetch_locks_guard:
+        lock = _fetch_locks.get(url)
+        if lock is None:
+            lock = threading.Lock()
+            _fetch_locks[url] = lock
+        return lock
 
 
 def _request_headers_for_url(url: str) -> dict[str, str]:
@@ -261,36 +274,46 @@ def get_or_fetch_cover_path(
         migrated = _maybe_migrate_legacy_cache_path(existing, cover_url=normalized_url)
         return str(migrated)
 
-    request = urllib.request.Request(
-        normalized_url,
-        headers=_request_headers_for_url(normalized_url),
-    )
+    fetch_lock = _lock_for_url(normalized_url)
+    with fetch_lock:
+        existing = _find_existing_cache_path(digest, cache_dir=cache_dir)
+        if existing is not None:
+            migrated = _maybe_migrate_legacy_cache_path(
+                existing,
+                cover_url=normalized_url,
+            )
+            return str(migrated)
 
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
-            content_type = str(response.headers.get("Content-Type") or "").lower()
-            if content_type and not content_type.startswith("image/"):
-                return None
+        request = urllib.request.Request(
+            normalized_url,
+            headers=_request_headers_for_url(normalized_url),
+        )
 
-            data = response.read(max_image_bytes + 1)
-            if not data or len(data) > max_image_bytes:
-                return None
-    except (urllib.error.URLError, TimeoutError, ValueError, OSError):
-        return None
+        try:
+            with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+                content_type = str(response.headers.get("Content-Type") or "").lower()
+                if content_type and not content_type.startswith("image/"):
+                    return None
 
-    extension = _choose_cache_extension(
-        cover_url=normalized_url,
-        content_type=content_type,
-        data=data,
-    )
-    target = _cache_path_for_digest(digest, extension, cache_dir=cache_dir)
-    _write_cache_file(target=target, data=data, cache_dir=cache_dir)
-    _cleanup_legacy_cache_file(
-        digest=digest,
-        current_target=target,
-        cache_dir=cache_dir,
-    )
-    return str(target)
+                data = response.read(max_image_bytes + 1)
+                if not data or len(data) > max_image_bytes:
+                    return None
+        except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+            return None
+
+        extension = _choose_cache_extension(
+            cover_url=normalized_url,
+            content_type=content_type,
+            data=data,
+        )
+        target = _cache_path_for_digest(digest, extension, cache_dir=cache_dir)
+        _write_cache_file(target=target, data=data, cache_dir=cache_dir)
+        _cleanup_legacy_cache_file(
+            digest=digest,
+            current_target=target,
+            cache_dir=cache_dir,
+        )
+        return str(target)
 
 
 # Performance optimization: async image fetching with connection pooling
@@ -307,7 +330,7 @@ def get_image_executor() -> ThreadPoolExecutor:
     global _image_executor
     if _image_executor is None:
         _image_executor = ThreadPoolExecutor(
-            max_workers=4,  # Optimal for I/O bound operations
+            max_workers=cover_worker_count(),
             thread_name_prefix="image-cache",
         )
     return _image_executor

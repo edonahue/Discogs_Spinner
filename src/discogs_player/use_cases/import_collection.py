@@ -82,6 +82,22 @@ def _to_bool(value: Any, *, default: bool = False) -> bool:
     return default
 
 
+def _to_optional_bool(value: Any) -> bool | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return value != 0
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"1", "true", "yes", "y", "on"}:
+            return True
+        if text in {"0", "false", "no", "n", "off"}:
+            return False
+    return None
+
+
 def _to_str_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
@@ -116,6 +132,8 @@ def _normalize_release(raw: Any, *, idx: int) -> dict[str, object]:
         "cover_url": _to_optional_str(raw.get("cover_url")),
         "added_at": _to_optional_str(raw.get("added_at")),
         "last_synced_at": _to_optional_str(raw.get("last_synced_at")),
+        "has_lp": _to_optional_bool(raw.get("has_lp")),
+        "has_45": _to_optional_bool(raw.get("has_45")),
         "is_active": 1 if _to_bool(raw.get("is_active"), default=True) else 0,
     }
 

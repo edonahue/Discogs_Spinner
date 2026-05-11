@@ -31,7 +31,42 @@ export const STUB_RELEASES = [
   },
 ];
 
-export const STUB_SETUP = envelope({ onboarding_stage: "complete" });
+export const STUB_SETUP = envelope({
+  onboarding_stage: "ready",
+  provider_readiness: {
+    schema_version: 2,
+    core_service: {
+      service_id: "discogs",
+      display_name: "Discogs",
+      required: true,
+      optional: false,
+      configured: true,
+      auth_required: true,
+      auth_state: "authenticated",
+      readiness: "ready",
+      degraded_reasons: [],
+      status_message: "Discogs token configured.",
+      action_label: "Configured",
+      supported_capabilities: ["collection_sync"],
+      can_skip_setup: false,
+      can_retry_setup: true,
+      next_actions: [],
+      setup_url: "https://www.discogs.com/settings/developers",
+    },
+    providers: [],
+    next_actions: [],
+    summary: {
+      required_services_configured: true,
+      optional_provider_count: 0,
+      ready_provider_count: 0,
+      degraded_mode: false,
+      onboarding_state: "ready",
+      collection_synced: true,
+      next_actions: [],
+      can_skip_optional_setup: true,
+    },
+  },
+});
 
 export const STUB_STATUS = envelope({
   release_count_total: 3,
@@ -46,9 +81,99 @@ export const STUB_STATUS = envelope({
     configured: false,
     action_label: "Unavailable",
   },
+  provider_readiness: {
+    schema_version: 2,
+    core_service: {
+      service_id: "discogs",
+      display_name: "Discogs",
+      required: true,
+      optional: false,
+      configured: true,
+      auth_required: true,
+      auth_state: "authenticated",
+      readiness: "ready",
+      degraded_reasons: [],
+      status_message: "Discogs token configured.",
+      action_label: "Configured",
+      supported_capabilities: ["collection_sync"],
+      can_skip_setup: false,
+      can_retry_setup: true,
+      next_actions: [],
+      setup_url: "https://www.discogs.com/settings/developers",
+    },
+    providers: [
+      {
+        provider_id: "spotify",
+        display_name: "Spotify",
+        required: false,
+        optional: true,
+        listed: true,
+        enabled: true,
+        installed: false,
+        addon_available: false,
+        configured: false,
+        auth_required: true,
+        auth_state: "unauthenticated",
+        readiness: "unavailable",
+        degraded_reasons: ["addon_unavailable"],
+        status_message: "Spotify addon is unavailable.",
+        action_label: "Enable Spotify (optional)",
+        supported_capabilities: ["playback", "catalog_matching"],
+        can_skip_setup: true,
+        can_retry_setup: true,
+        next_actions: ["Install optional addon dependencies for this provider."],
+        docs_url: "https://developer.spotify.com/documentation/web-api",
+        setup_url: "https://developer.spotify.com/dashboard",
+        oauth_guide_url: "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
+        experimental: false,
+        experimental_flag: null,
+      },
+    ],
+    next_actions: ["Install optional addon dependencies for this provider."],
+    summary: {
+      required_services_configured: true,
+      optional_provider_count: 1,
+      ready_provider_count: 0,
+      degraded_mode: true,
+      onboarding_state: "core_ready_optional_pending",
+      collection_synced: true,
+      next_actions: ["Install optional addon dependencies for this provider."],
+      can_skip_optional_setup: true,
+    },
+  },
 });
 
 export const STUB_COLLECTION = envelope(STUB_RELEASES);
+
+export const STUB_COLLECTION_SUMMARY = envelope({
+  release_count: 3,
+  lp_count: 2,
+  rpm45_count: 1,
+  format_counts_ready: true,
+  priced_release_count: 2,
+  total_median: 55.49,
+  median_currency: "USD",
+  mixed_currencies: false,
+  most_recent_added_at: "2026-04-18T14:00:00Z",
+  most_recent_release_id: 3,
+  most_recent_release_artist: "Talking Heads",
+  most_recent_release_title: "Remain in Light",
+});
+
+export const STUB_COLLECTION_SUMMARY_AFTER_SYNC = envelope({
+  release_count: 4,
+  lp_count: 3,
+  rpm45_count: 1,
+  format_counts_ready: true,
+  priced_release_count: 3,
+  total_median: 88.49,
+  median_currency: "USD",
+  mixed_currencies: false,
+  most_recent_added_at: "2026-04-18T14:00:00Z",
+  most_recent_release_id: 4,
+  most_recent_release_artist: "Erykah Badu",
+  most_recent_release_title: "Baduizm",
+});
 
 export const STUB_COLLECTION_AFTER_SYNC = envelope([
   ...STUB_RELEASES,
@@ -191,6 +316,26 @@ export const STUB_VALUE_QUEUE = envelope({
       title: "Innervisions",
       market_need_reason: "missing",
       market_median: null,
+    },
+  ],
+});
+
+export const STUB_HIDDEN_GEMS = envelope({
+  ok: true,
+  min_median: 25,
+  limit: 10,
+  count: 1,
+  gems: [
+    {
+      discogs_release_id: 2,
+      artist: "Stevie Wonder",
+      title: "Innervisions",
+      year: 1973,
+      market_median: 64.5,
+      market_currency: "USD",
+      num_for_sale: 1,
+      gem_score: 32.25,
+      reasons: ["scarce-now", "high-value"],
     },
   ],
 });

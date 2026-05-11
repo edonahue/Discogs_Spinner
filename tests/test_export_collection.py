@@ -11,7 +11,13 @@ from discogs_player.data.repo import upsert_market_price, upsert_releases
 from discogs_player.use_cases.export_collection import run_export_collection
 
 
-def _release(release_id: int, *, is_active: int = 1) -> dict[str, object]:
+def _release(
+    release_id: int,
+    *,
+    is_active: int = 1,
+    has_lp: bool | None = None,
+    has_45: bool | None = None,
+) -> dict[str, object]:
     return {
         "discogs_release_id": release_id,
         "artist": "Artist",
@@ -23,6 +29,8 @@ def _release(release_id: int, *, is_active: int = 1) -> dict[str, object]:
         "cover_url": None,
         "added_at": "2026-01-01T00:00:00Z",
         "last_synced_at": "2026-01-01T00:00:00Z",
+        "has_lp": has_lp,
+        "has_45": has_45,
         "is_active": is_active,
     }
 
@@ -68,6 +76,8 @@ def test_export_collection_json_snapshot(isolated_xdg, tmp_path):
 
     releases = payload["releases"]
     release_11 = next(item for item in releases if item["discogs_release_id"] == 11)
+    assert release_11["has_lp"] is None
+    assert release_11["has_45"] is None
     assert release_11["spotify_album_id"] == "album-11"
     assert release_11["spotify_confidence"] == 0.88
     assert release_11["spotify_is_override"] is False
@@ -81,7 +91,10 @@ def test_export_collection_json_snapshot(isolated_xdg, tmp_path):
 def test_export_collection_csv_active_only(isolated_xdg, tmp_path):
     conn = get_connection()
     try:
-        upsert_releases(conn, [_release(1), _release(2, is_active=0)])
+        upsert_releases(
+            conn,
+            [_release(1, has_lp=True, has_45=False), _release(2, is_active=0)],
+        )
     finally:
         conn.close()
 
@@ -99,6 +112,8 @@ def test_export_collection_csv_active_only(isolated_xdg, tmp_path):
     assert len(rows) == 1
     assert rows[0]["discogs_release_id"] == "1"
     assert rows[0]["is_active"] == "1"
+    assert rows[0]["has_lp"] == "1"
+    assert rows[0]["has_45"] == "0"
     assert rows[0]["genres"] == '["Rock"]'
     assert rows[0]["market_lowest"] == ""
     assert rows[0]["market_currency"] == ""

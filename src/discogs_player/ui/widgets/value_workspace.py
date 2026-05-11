@@ -17,6 +17,7 @@ from discogs_player.ui.utils.formatting import (
     format_market_summary,
     format_price,
 )
+from discogs_player.ui.widgets.hidden_gems_card import HiddenGemsCard
 from discogs_player.ui.widgets.value_dashboard import ValueDashboard
 
 _WORKSPACE_STACK_BREAKPOINT = 920
@@ -43,6 +44,14 @@ def _as_int(value: object | None) -> int:
         return value
     if isinstance(value, float):
         return int(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return 0
+        try:
+            return int(text)
+        except ValueError:
+            return 0
     return 0
 
 
@@ -140,6 +149,11 @@ class ValueWorkspace(Gtk.Box):
         self.dashboard.add_css_class("ipod-panel")
         self.dashboard.add_css_class("ipod-value-dashboard-shell")
         self.append(self.dashboard)
+
+        self.hidden_gems = HiddenGemsCard(
+            on_release_selected=on_dashboard_release_selected,
+        )
+        self.append(self.hidden_gems)
 
         self.connect("notify::width", self._handle_workspace_width_change)
         self._apply_workspace_layout(width_hint=0)
@@ -483,7 +497,7 @@ class ValueWorkspace(Gtk.Box):
 
         if unresolved_release_id is not None:
             self._search_status.set_text(
-                f"Release {int(unresolved_release_id)} is not available in the synced library."
+                f"Release {_as_int(unresolved_release_id)} is not available in the synced library."
             )
             self._unsynced_label.set_text(
                 "Paste a synced release ID or sync the matching record into collection "

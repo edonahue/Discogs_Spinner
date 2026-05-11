@@ -25,6 +25,8 @@ def test_run_match_action_reports_matched_candidate(monkeypatch):
 
     assert payload["matched"] is True
     assert payload["spotify_album_id"] == "album-123"
+    assert payload["provider_release_id"] == "album-123"
+    assert payload["provider_id"] == "spotify"
     assert "Matched release 7 to album-123" in str(payload["status_message"])
     assert payload["candidate_summary"] == "Nevermind - Nirvana - 1991-09-24"
 
@@ -101,6 +103,8 @@ def test_run_override_action_reports_saved_mapping(monkeypatch):
 
     payload = match_play_flow.run_override_action(22, "spotify:album:override-1")
     assert payload["spotify_album_id"] == "override-1"
+    assert payload["provider_release_id"] == "override-1"
+    assert payload["provider_id"] == "spotify"
     assert payload["is_override"] is True
     assert "Override saved for release 22" in str(payload["status_message"])
 
@@ -130,6 +134,8 @@ def test_run_play_action_starts_playback(monkeypatch):
         "open_fallback": True,
     }
     assert payload["playback_started"] is True
+    assert payload["provider_release_id"] == "album-44"
+    assert payload["provider_id"] == "spotify"
     assert "Playback started on Desk: album-44" == payload["status_message"]
 
 

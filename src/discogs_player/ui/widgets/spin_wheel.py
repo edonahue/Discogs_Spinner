@@ -103,6 +103,7 @@ class SpinWheel(Gtk.Box):
         self._spin_tick = 0
         self._spin_payload: dict[str, object] | None = None
         self._spin_complete_callback: Callable[[dict[str, object]], None] | None = None
+        self._background_suspended = False
 
     def set_spotify_capability(self, *, playback_available: bool) -> None:
         if playback_available:
@@ -133,6 +134,17 @@ class SpinWheel(Gtk.Box):
 
     def set_controls_enabled(self, enabled: bool) -> None:
         self._set_controls_enabled(bool(enabled))
+
+    def set_background_suspended(self, suspended: bool) -> None:
+        self._background_suspended = bool(suspended)
+        if self._background_suspended:
+            self._cancel_spin_animation()
+
+    def idle_debug_state(self) -> dict[str, object]:
+        return {
+            "background_suspended": self._background_suspended,
+            "spin_active": self._spin_source_id is not None,
+        }
 
     def set_compact_layout(self, stacked: bool) -> None:
         if not self._compact:
@@ -167,6 +179,8 @@ class SpinWheel(Gtk.Box):
         *,
         on_complete: Callable[[dict[str, object]], None] | None = None,
     ) -> None:
+        if self._background_suspended:
+            return
         self._cancel_spin_animation()
         self._spin_payload = None
         self._spin_complete_callback = on_complete

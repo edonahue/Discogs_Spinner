@@ -39,6 +39,9 @@ def test_ipod_theme_selectors_exist_in_main_window():
         ".ipod-value-ops-label",
         ".ipod-value-ops-spin",
         ".ipod-value-ops-status",
+        ".ipod-collection-summary",
+        ".ipod-collection-card",
+        ".ipod-collection-card-accent",
         ".ipod-value-detector-group",
         ".ipod-status",
     ):
@@ -49,6 +52,8 @@ def test_ipod_panel_classes_are_applied_to_major_sections():
     source = _source_text("src/discogs_player/ui/main_window.py")
     for marker in (
         'self._filters.add_css_class("ipod-panel")',
+        'self._collection_summary = CollectionSummaryWidget()',
+        'self._collection_summary.add_css_class("ipod-panel")',
         'self._wantlist_filters.add_css_class("ipod-panel")',
         'self._album_detail.add_css_class("ipod-panel")',
         'self._wantlist_detail.add_css_class("ipod-panel")',
@@ -69,6 +74,18 @@ def test_main_window_exposes_wantlist_tab():
         "from discogs_player.ui.widgets.wantlist_detail import WantlistDetail",
     ):
         assert marker in source
+
+
+def test_main_window_does_not_expose_queue_as_a_top_level_tab():
+    source = _source_text("src/discogs_player/ui/main_window.py")
+    for marker in (
+        'self._main_stack.add_titled(\n            self._value_queue_scroll, "queue", "Queue"\n        )',
+        'self._main_stack.add_titled(self._value_queue_scroll, "queue", "Queue")',
+        'elif active_view == "queue":',
+        'self._set_status("Switched to Queue view")',
+        "from discogs_player.ui.widgets.value_queue import ValueQueueWidget",
+    ):
+        assert marker not in source
 
 
 def test_main_window_exposes_gallery_mode_for_browse_and_wantlist():
@@ -182,6 +199,7 @@ def test_main_window_resize_fallbacks_are_present():
     source = _source_text("src/discogs_player/ui/main_window.py")
     for marker in (
         "self._filters_scroll = Gtk.ScrolledWindow()",
+        "browse_page.append(self._collection_summary)",
         "self._filters_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER)",
         "content.set_shrink_start_child(True)",
         "content.set_shrink_end_child(False)",

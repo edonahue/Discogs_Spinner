@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-APP_NAME="Discogs Player"
+APP_NAME="Discogs Spinner"
 DESKTOP_ID="discogs-player.desktop"
 ICON_NAME="discogs-player"
 LAUNCHER_NAME="discogs-player-gui"
@@ -62,7 +62,7 @@ log_line() {
 notify_failure() {
   local message="$1"
   if command -v notify-send >/dev/null 2>&1; then
-    notify-send "Discogs Player" "${message}" || true
+    notify-send "Discogs Spinner" "${message}" || true
   fi
 }
 
@@ -78,6 +78,7 @@ PY
 
 export PYTHONPATH="${REPO_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DP_PERF_PROFILE="${DP_PERF_PROFILE:-game}"
 
 run_with_python() {
   local py_bin="$1"
@@ -89,7 +90,7 @@ run_with_python() {
     return 1
   fi
 
-  log_line "Launching Discogs Player with ${label} runtime (${py_bin})"
+  log_line "Launching Discogs Spinner with ${label} runtime (${py_bin})"
   local rc=0
   if ensure_log_writable; then
     if "${py_bin}" -m discogs_player.ui_main "$@" >>"${LOG_PATH}" 2>&1; then
@@ -106,11 +107,11 @@ run_with_python() {
   fi
 
   if [ "${rc}" -eq 0 ]; then
-    log_line "Discogs Player exited cleanly via ${label} runtime"
+    log_line "Discogs Spinner exited cleanly via ${label} runtime"
     return 0
   fi
 
-  log_line "Discogs Player exited with rc=${rc} via ${label} runtime"
+  log_line "Discogs Spinner exited with rc=${rc} via ${label} runtime"
   return "${rc}"
 }
 
@@ -136,7 +137,7 @@ if command -v python3 >/dev/null 2>&1; then
   fi
 fi
 
-echo "Discogs Player launcher failed. See ${LOG_PATH}" >&2
+echo "Discogs Spinner launcher failed. See ${LOG_PATH}" >&2
 echo "GTK4/libadwaita Python bindings are not available." >&2
 echo "Install on Pop!_OS with:" >&2
 echo "  ${APT_GUI_CMD}" >&2

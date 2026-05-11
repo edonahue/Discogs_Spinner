@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sys
 import importlib
+from importlib.metadata import PackageNotFoundError, version
 from typing import Protocol, cast
 
 import typer
@@ -87,6 +88,7 @@ from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.use_cases.value_status import run_market_value_status
 from discogs_player.use_cases.value_trend import run_market_value_trend
 from discogs_player.use_cases.value_refresh_queue import run_value_refresh_queue
+from discogs_player.use_cases.hidden_gems import run_hidden_gems
 from discogs_player.use_cases.collection_health import run_collection_health
 from discogs_player.use_cases.tracklist_refresh import run_refresh_release_tracklists
 from discogs_player.use_cases.tracklist_show import run_release_tracklist_show
@@ -99,7 +101,7 @@ APT_INSTALL_CMD = (
     "build-essential python3-dev"
 )
 
-app = typer.Typer(help="Discogs Player CLI")
+app = typer.Typer(help="Discogs Spinner CLI")
 device_app = typer.Typer(help="Manage default playback device (Spotify addon)")
 config_app = typer.Typer(help="Manage local app settings")
 auth_app = typer.Typer(help="Authenticate with external services")
@@ -131,6 +133,27 @@ SpotifyDependencyError = PlayerDependencyError
 SpotifyAuthError = PlayerAuthError
 SpotifyApiError = PlayerApiError
 SpotifyPlaybackError = PlayerPlaybackError
+
+
+def _package_version() -> str:
+    try:
+        return version("discogs_player")
+    except PackageNotFoundError:
+        return "0.0.0+local"
+
+
+@app.callback(invoke_without_command=True)
+def cli_root(
+    version_flag: bool = typer.Option(
+        False,
+        "--version",
+        help="Show the installed Discogs Spinner version and exit.",
+        is_eager=True,
+    ),
+) -> None:
+    if version_flag:
+        console.print(_package_version())
+        raise typer.Exit()
 
 
 def run_spotify_oauth_login(**kwargs: object) -> dict[str, object]:
@@ -255,6 +278,23 @@ def _render_status_table(report: dict[str, object]) -> None:
     table.add_row(
         "wantlist_unmatched_count", str(report.get("wantlist_unmatched_count") or 0)
     )
+    provider_readiness = _as_dict(report.get("provider_readiness"))
+    readiness_summary = _as_dict(provider_readiness.get("summary"))
+    if readiness_summary:
+        ready_count = readiness_summary.get("ready_provider_count")
+        optional_count = readiness_summary.get("optional_provider_count")
+        table.add_row(
+            "provider_readiness_state",
+            str(readiness_summary.get("onboarding_state") or ""),
+        )
+        table.add_row(
+            "provider_ready_count",
+            f"{ready_count}/{optional_count}",
+        )
+        table.add_row(
+            "provider_degraded_mode",
+            str(bool(readiness_summary.get("degraded_mode"))),
+        )
 
     console.print(table)
 
@@ -287,6 +327,29 @@ def _render_setup_table(report: dict[str, object]) -> None:
     table.add_row("spotify_dashboard_url", str(spotify.get("dashboard_url") or ""))
     table.add_row("spotify_oauth_guide_url", str(spotify.get("oauth_guide_url") or ""))
     table.add_row("spotify_redirect_uri", str(spotify.get("redirect_uri") or ""))
+
+    provider_readiness = _as_dict(report.get("provider_readiness"))
+    readiness_summary = _as_dict(provider_readiness.get("summary"))
+    if readiness_summary:
+        table.add_row(
+            "provider_readiness_state",
+            str(readiness_summary.get("onboarding_state") or ""),
+        )
+        table.add_row(
+            "provider_required_configured",
+            str(bool(readiness_summary.get("required_services_configured"))),
+        )
+        table.add_row(
+            "provider_optional_ready_count",
+            "{}/{}".format(
+                readiness_summary.get("ready_provider_count", 0),
+                readiness_summary.get("optional_provider_count", 0),
+            ),
+        )
+        table.add_row(
+            "provider_degraded_mode",
+            str(bool(readiness_summary.get("degraded_mode"))),
+        )
 
     links = _as_dict(report.get("links"))
     if links:
@@ -354,8 +417,88 @@ def _render_diagnostics_table(report: dict[str, object]) -> None:
     table.add_row("data_dir", str(paths.get("data_dir") or ""))
     table.add_row("db_path", str(paths.get("db_path") or ""))
     table.add_row("db_exists", str(paths.get("db_exists")))
+    provider_readiness = _as_dict(report.get("provider_readiness"))
+    readiness_summary = _as_dict(provider_readiness.get("summary"))
+    if readiness_summary:
+        table.add_row(
+            "provider_readiness_state",
+            str(readiness_summary.get("onboarding_state") or ""),
+        )
+        table.add_row(
+            "provider_optional_ready_count",
+            "{}/{}".format(
+                readiness_summary.get("ready_provider_count", 0),
+                readiness_summary.get("optional_provider_count", 0),
+            ),
+        )
+        table.add_row(
+            "provider_degraded_mode",
+            str(bool(readiness_summary.get("degraded_mode"))),
+        )
     table.add_row("command_hint", str(report.get("command_hint") or ""))
     console.print(table)
+
+
+def _render_providers_table(payload: dict[str, object]) -> None:
+    summary = _as_dict(payload.get("summary"))
+    summary_table = Table(title="provider readiness summary")
+    summary_table.add_column("Field", style="cyan")
+    summary_table.add_column("Value", style="white")
+    schema_version = payload.get("schema_version")
+    if schema_version is not None:
+        summary_table.add_row("schema_version", str(schema_version))
+    summary_table.add_row(
+        "required_services_configured",
+        str(bool(summary.get("required_services_configured"))),
+    )
+    summary_table.add_row(
+        "onboarding_state",
+        str(summary.get("onboarding_state") or ""),
+    )
+    summary_table.add_row(
+        "optional_provider_count",
+        str(summary.get("optional_provider_count") or 0),
+    )
+    summary_table.add_row(
+        "ready_provider_count",
+        str(summary.get("ready_provider_count") or 0),
+    )
+    summary_table.add_row(
+        "degraded_mode",
+        str(bool(summary.get("degraded_mode"))),
+    )
+    console.print(summary_table)
+
+    providers = _as_dict_list(payload.get("providers"))
+    if not providers:
+        return
+
+    providers_table = Table(title="providers")
+    providers_table.add_column("ID", style="cyan")
+    providers_table.add_column("Name", style="white")
+    providers_table.add_column("Readiness", style="magenta")
+    providers_table.add_column("Auth", style="yellow")
+    providers_table.add_column("Configured", justify="center")
+    providers_table.add_column("Capabilities", style="green")
+    providers_table.add_column("Status", style="white")
+
+    for row in providers:
+        capabilities = ", ".join(
+            str(item).strip()
+            for item in _as_object_list(row.get("supported_capabilities"))
+            if str(item).strip()
+        )
+        providers_table.add_row(
+            str(row.get("provider_id") or ""),
+            str(row.get("display_name") or ""),
+            str(row.get("readiness") or ""),
+            str(row.get("auth_state") or ""),
+            "yes" if row.get("configured") else "no",
+            capabilities,
+            str(row.get("status_message") or ""),
+        )
+
+    console.print(providers_table)
 
 
 def _render_spotify_auth_doctor_table(report: dict[str, object]) -> None:
@@ -968,6 +1111,24 @@ def diagnostics(
     _render_diagnostics_table(report)
 
 
+@app.command("providers")
+def providers(
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show provider readiness rows and summary."""
+    report = get_status_report()
+    readiness = _as_dict(report.get("provider_readiness"))
+    payload = {
+        "schema_version": readiness.get("schema_version"),
+        "summary": _as_dict(readiness.get("summary")),
+        "providers": _as_dict_list(readiness.get("providers")),
+    }
+    if json_output:
+        _emit_json(payload)
+        return
+    _render_providers_table(payload)
+
+
 @app.command("analytics")
 def analytics(
     limit: int = typer.Option(
@@ -1419,6 +1580,67 @@ def value_queue(
             str(item.get("title") or ""),
             median_str,
             updated_str,
+        )
+
+    console.print(table)
+
+
+@value_app.command("gems")
+def value_gems(
+    min_median: float = typer.Option(
+        25.0, "--min-median", min=0.0, help="Minimum median value to consider (USD-ish)"
+    ),
+    limit: int = typer.Option(
+        25, "--limit", min=1, help="Max number of hidden gems to return"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """Show owned releases that are quietly valuable and hard to find right now."""
+    try:
+        result = run_hidden_gems(min_median=min_median, limit=limit)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2) from exc
+
+    if json_output:
+        _emit_json(result)
+        return
+
+    gems = _as_dict_list(result.get("gems"))
+    console.print(
+        f"Hidden gems: [bold]{len(gems)}[/bold] match "
+        f"(min median=[green]${_to_float(result.get('min_median')):.2f}[/green])"
+    )
+    if not gems:
+        console.print("[dim]No hidden gems found. Try lowering --min-median.[/dim]")
+        return
+
+    table = Table(title=f"Top {len(gems)} hidden gems")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Artist", style="cyan")
+    table.add_column("Title")
+    table.add_column("Year", style="dim", width=6)
+    table.add_column("Median", style="green", width=10)
+    table.add_column("N4S", style="yellow", width=6)
+    table.add_column("Why", style="magenta")
+
+    for i, item in enumerate(gems, 1):
+        median_raw = item.get("market_median")
+        median_str = f"${_to_float(median_raw):.2f}" if median_raw is not None else "—"
+        n4s_raw = item.get("num_for_sale")
+        n4s_str = "—" if n4s_raw is None else str(_to_int(n4s_raw))
+        reasons = item.get("reasons")
+        reason_str = ", ".join(reasons) if isinstance(reasons, list) else ""
+        year_raw = item.get("year")
+        year_str = "" if not year_raw else str(_to_int(year_raw))
+        table.add_row(
+            str(i),
+            str(item.get("artist") or ""),
+            str(item.get("title") or ""),
+            year_str,
+            median_str,
+            n4s_str,
+            reason_str,
         )
 
     console.print(table)

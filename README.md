@@ -18,6 +18,8 @@
 Native Discogs collector app for vinyl fans who want to stop juggling browser tabs. Install on Linux, Windows, or macOS, sync your collection with a personal token, spin a random pick, and see value, wantlist, and playback context in one place.
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
+>
+> **Release note:** The download links below point to the latest stable public release, `v0.2.0`. The `main` branch may describe unreleased improvements that will ship after the next packaging pass.
 
 ---
 
@@ -33,13 +35,24 @@ account. Just your collection on your machine.
 
 ## What You Get
 
-- **Browse & Spin** — gallery, carousel, or text-menu view with a one-click random pick
+- **Browse & Spin** — gallery, carousel, or text-menu view with a one-click random pick that honors your current filters
+- **Collection Summary** — LP/45 counts, median collection value, and most-recently-added context on the browse surface
 - **Market Value Tracking** — price history, snapshot diffs, value movers, a refresh priority queue (`dplayer value queue`), and a market value dashboard
-- **Collection Health** — scored summary of mapping coverage and staleness (`dplayer health`)
+- **Value Workspace** — search synced releases, inspect selected-release value detail, and jump from Browse to Value with the selected release carried over
 - **Wantlist Management** — priority signals, opportunity comparisons, and filtered views
-- **Playback Control** *(optional)* — Spotify Connect or YouTube Music (open-in-browser)
+- **Tracklist at a Glance** — cached track lists in the detail panel and in a quick-view modal, no round trip to Discogs
+- **Playback Control** *(optional)* — Spotify Connect or YouTube Music (native album search with browser handoff)
 - **Setup Wizard** — first-run token configuration, no terminal required
 - **CLI-first & SSH-ready** — every workflow available from `dplayer` in a terminal
+
+### Power Tools
+
+- **Analytics & Recent pages** (web) — collection trends and a recently-added view
+- **Hidden Gems** — value + scarcity signals for owned releases that may deserve attention
+- **Cache management** — `dplayer cache stats | prune | warm` to inspect, trim, or pre-fetch cover art
+- **Share & export** — `dplayer share collection | value` emits CSV or Markdown for pasting into notes, issues, or spreadsheets
+- **Match audit & review queue** — `dplayer review` workflow for approving Spotify / YouTube Music album matches in bulk
+- **Collection Health scoring** — `dplayer health` to spot mapping gaps and staleness
 
 ---
 

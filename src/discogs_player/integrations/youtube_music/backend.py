@@ -5,7 +5,10 @@ from __future__ import annotations
 import importlib.util
 import webbrowser
 
-from discogs_player.integrations.player_backend import PlayerBackend
+from discogs_player.integrations.player_backend import (
+    PlayerBackend,
+    ProviderDescriptor,
+)
 from discogs_player.integrations.youtube_music.auth import get_youtube_music_auth_diagnostics
 from discogs_player.integrations.youtube_music.ytmusic_client import YouTubeMusicClient
 
@@ -30,6 +33,24 @@ class YouTubeMusicPlayerBackend(PlayerBackend):
     @classmethod
     def addon_available(cls) -> bool:
         return importlib.util.find_spec("ytmusicapi") is not None
+
+    @classmethod
+    def provider_descriptor(cls) -> ProviderDescriptor:
+        return {
+            "auth_required": False,
+            "supported_capabilities": [
+                "playback",
+                "catalog_matching",
+                "browser_playback",
+            ],
+            "setup_url": "https://music.youtube.com/",
+            "next_actions_when_unconfigured": [
+                "Enable provider in environment if experimental.",
+                "Install optional addon dependencies for this provider.",
+            ],
+            "can_skip_setup": True,
+            "can_retry_setup": True,
+        }
 
     def is_configured(self, *, conn=None) -> bool:
         return True

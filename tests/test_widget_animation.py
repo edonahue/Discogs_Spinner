@@ -292,6 +292,17 @@ def test_carousel_stop_clears_source_id(carousel):
     assert carousel._center_spin_source_id is None
 
 
+def test_carousel_background_suspension_blocks_idle_work(carousel):
+    carousel.start_center_spin_animation()
+    assert carousel._center_spin_source_id is not None
+    carousel._prefetch_inflight.add(123)
+    carousel.set_background_suspended(True)
+    assert carousel._center_spin_source_id is None
+    assert carousel._prefetch_inflight == set()
+    carousel._queue_cover_prefetch(0)
+    assert carousel._prefetch_inflight == set()
+
+
 def test_carousel_spin_skipped_for_single_item():
     """Single-item carousel must skip the animation (no source registered)."""
     c = CoverCarousel()

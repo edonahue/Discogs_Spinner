@@ -13,6 +13,7 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk
 
 from discogs_player.capabilities import get_capabilities
 from discogs_player.use_cases.config_management import run_config_set
+from discogs_player.use_cases.setup_report import run_setup_report
 from discogs_player.use_cases.sync_collection import run_sync_collection
 
 
@@ -51,7 +52,7 @@ class SetupWizard(Adw.Window):
     }
 
     def __init__(self, parent: Gtk.Window) -> None:
-        super().__init__(title="Discogs Player Setup")
+        super().__init__(title="Discogs Spinner Setup")
         self.set_transient_for(parent)
         self.set_modal(True)
         self.set_default_size(440, 500)
@@ -247,10 +248,21 @@ class SetupWizard(Adw.Window):
 
     def _on_step2_next(self, _btn: Gtk.Button | None) -> None:
         caps = get_capabilities()
-        if caps.spotify.addon_available:
+        try:
+            report = run_setup_report()
+        except Exception:
+            report = {}
+        readiness = report.get("provider_readiness")
+        summary = readiness.get("summary") if isinstance(readiness, dict) else {}
+        optional_provider_count = 0
+        if isinstance(summary, dict):
+            optional_provider_count = int(summary.get("optional_provider_count") or 0)
+
+        if optional_provider_count > 0 or caps.spotify.addon_available:
             self._stack.set_visible_child_name("step3")
-        else:
-            self._finish()
+            self._refresh_step3_status()
+            return
+        self._finish()
 
     # ------------------------------------------------------------------ Step 3
 
@@ -290,7 +302,75 @@ class SetupWizard(Adw.Window):
 
     def _refresh_step3_status(self) -> None:
         caps = get_capabilities()
+        try:
+            report = run_setup_report()
+        except Exception:
+            report = {}
+        readiness = report.get("provider_readiness")
+        summary = readiness.get("summary") if isinstance(readiness, dict) else {}
+        summary_next_actions: list[str] = []
+        if isinstance(summary, dict):
+            raw_actions = summary.get("next_actions")
+            if isinstance(raw_actions, list):
+                summary_next_actions = [
+                    str(item).strip() for item in raw_actions if str(item).strip()
+                ]
+        providers = readiness.get("providers") if isinstance(readiness, dict) else []
+        spotify_row: dict[str, object] | None = None
+        if isinstance(providers, list):
+            for row in providers:
+                if isinstance(row, dict) and str(row.get("provider_id")) == "spotify":
+                    spotify_row = row
+                    break
+
+        if spotify_row is not None:
+            status_message = str(spotify_row.get("status_message") or "").strip()
+            if status_message:
+                self._spotify_status_label.set_text(status_message)
+            next_actions = spotify_row.get("next_actions")
+            if isinstance(next_actions, list) and next_actions:
+                first_action = str(next_actions[0]).strip()
+                if first_action:
+                    self._spotify_status_label.set_text(
+                        f"{self._spotify_status_label.get_text()} Next: {first_action}"
+                    )
+            readiness_state = str(spotify_row.get("readiness") or "").strip().lower()
+            configured = bool(spotify_row.get("configured"))
+            can_retry_setup = bool(spotify_row.get("can_retry_setup", True))
+            if configured:
+                self._connect_spotify_btn.set_label("Connected")
+                self._connect_spotify_btn.set_sensitive(False)
+                return
+            if readiness_state == "unavailable":
+                self._connect_spotify_btn.set_label("Optional provider unavailable")
+                self._connect_spotify_btn.set_sensitive(False)
+                return
+            self._connect_spotify_btn.set_label("Connect Spotify")
+            self._connect_spotify_btn.set_sensitive(can_retry_setup)
+            return
+
+        optional_provider_count = 0
+        onboarding_state = ""
+        if isinstance(summary, dict):
+            optional_provider_count = int(summary.get("optional_provider_count") or 0)
+            onboarding_state = str(summary.get("onboarding_state") or "").strip()
+        if optional_provider_count > 0 and onboarding_state == "core_ready_optional_pending":
+            message = (
+                "Optional providers are pending. Spotify is not currently listed as "
+                "connectable in this GTK step."
+            )
+            if summary_next_actions:
+                message = f"{message} Next: {summary_next_actions[0]}"
+            self._spotify_status_label.set_text(message)
+            self._connect_spotify_btn.set_label("Use CLI/Web setup")
+            self._connect_spotify_btn.set_sensitive(False)
+            return
+
         self._spotify_status_label.set_text(caps.spotify.status_message)
+        if summary_next_actions:
+            self._spotify_status_label.set_text(
+                f"{self._spotify_status_label.get_text()} Next: {summary_next_actions[0]}"
+            )
         already_configured = caps.spotify.configured
         self._connect_spotify_btn.set_sensitive(not already_configured)
         if already_configured:

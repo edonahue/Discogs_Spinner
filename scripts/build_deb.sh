@@ -134,6 +134,7 @@ chmod 0755 "${BIN_DIR}/dplayer-api"
 
 cat >"${BIN_DIR}/dplayer-gui" <<'SH'
 #!/bin/bash
+export DP_PERF_PROFILE="${DP_PERF_PROFILE:-quiet}"
 exec /opt/discogs-spinner/venv/bin/python -m discogs_player.ui_main "$@"
 SH
 chmod 0755 "${BIN_DIR}/dplayer-gui"

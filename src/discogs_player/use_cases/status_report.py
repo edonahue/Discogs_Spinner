@@ -11,10 +11,14 @@ from discogs_player.data.repo import (
     get_wantlist_counts,
     get_wantlist_count,
 )
+from discogs_player.use_cases.provider_readiness import (
+    build_provider_readiness_contract,
+)
 
 
 def get_status_report() -> dict[str, object]:
-    capabilities = get_capabilities().spotify
+    app_capabilities = get_capabilities()
+    capabilities = app_capabilities.spotify
     conn = get_connection()
     try:
         counts = get_release_counts(conn)
@@ -32,6 +36,10 @@ def get_status_report() -> dict[str, object]:
         **counts,
         **wantlist_counts,
         "last_sync_time": last_sync_time,
+        "provider_readiness": build_provider_readiness_contract(
+            app_capabilities=app_capabilities,
+            collection_synced=bool(int(counts.get("release_count_active") or 0) > 0),
+        ),
         "default_spotify_device": {
             "id": default_device_id,
             "name": default_device_name,

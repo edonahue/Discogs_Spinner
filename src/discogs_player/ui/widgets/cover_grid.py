@@ -9,6 +9,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk, Pango
 
+from discogs_player.performance import performance_profile
+
 _GRID_GAP = 12
 _GRID_MARGIN = 12
 _TARGET_VISIBLE_ROWS = 3
@@ -34,6 +36,10 @@ class CoverGrid(Gtk.Box):
         self._on_selection_changed = on_selection_changed
 
         self._items: list[dict[str, object]] = []
+        self._rendered_count = 0
+        self._pending_append_source_id: int | None = None
+        self._background_suspended = False
+        self._perf = performance_profile()
         self._selected_release_id: int | None = None
         self._button_to_item: dict[int, dict[str, object]] = {}
         self._buttons_by_id: dict[int, Gtk.Button] = {}
@@ -70,11 +76,34 @@ class CoverGrid(Gtk.Box):
         self._flow.set_valign(Gtk.Align.START)
         self._flow.add_css_class("ipod-gallery-grid")
         self._scroll.set_child(self._flow)
+        vadjustment = self._scroll.get_vadjustment()
+        if vadjustment is not None:
+            vadjustment.connect("value-changed", self._handle_scroll_position_changed)
 
         self.connect("notify::width", self._handle_size_change)
         self.connect("notify::height", self._handle_size_change)
         self.connect("destroy", self._handle_destroy)
         self._apply_responsive_layout()
+
+    def set_background_suspended(self, suspended: bool) -> None:
+        self._background_suspended = bool(suspended)
+        if self._background_suspended:
+            if self._pending_append_source_id is not None:
+                GLib.source_remove(self._pending_append_source_id)
+                self._pending_append_source_id = None
+            self._cancel_pending_responsive_layout()
+            return
+        if self._rendered_count < len(self._items):
+            self._schedule_append_next_chunk()
+
+    def idle_debug_state(self) -> dict[str, object]:
+        return {
+            "background_suspended": self._background_suspended,
+            "rendered_count": self._rendered_count,
+            "item_count": len(self._items),
+            "append_pending": self._pending_append_source_id is not None,
+            "layout_pending": self._pending_layout_source_id is not None,
+        }
 
     @staticmethod
     def _build_placeholder(
@@ -117,6 +146,9 @@ class CoverGrid(Gtk.Box):
         return self._build_placeholder(icon_size=icon_size, caption=placeholder_caption)
 
     def _clear(self) -> None:
+        if self._pending_append_source_id is not None:
+            GLib.source_remove(self._pending_append_source_id)
+            self._pending_append_source_id = None
         child = self._flow.get_first_child()
         while child is not None:
             next_child = child.get_next_sibling()
@@ -128,6 +160,63 @@ class CoverGrid(Gtk.Box):
         self._button_to_frame.clear()
         self._button_to_media.clear()
         self._selected_button_id = None
+        self._rendered_count = 0
+
+    def _append_items_until(self, target_count: int) -> None:
+        normalized_target = min(len(self._items), max(0, int(target_count)))
+        while self._rendered_count < normalized_target:
+            item = self._items[self._rendered_count]
+            self._flow.append(self._build_card(item))
+            self._rendered_count += 1
+
+    def _append_next_chunk(self) -> bool:
+        self._pending_append_source_id = None
+        if self._background_suspended:
+            return False
+        if self._rendered_count >= len(self._items):
+            return False
+        chunk_size = max(1, int(self._perf.gallery_chunk_items))
+        self._append_items_until(self._rendered_count + chunk_size)
+        self._apply_responsive_layout()
+        return False
+
+    def _schedule_append_next_chunk(self) -> None:
+        if self._background_suspended:
+            return
+        if self._pending_append_source_id is not None:
+            return
+        if self._rendered_count >= len(self._items):
+            return
+        self._pending_append_source_id = GLib.idle_add(self._append_next_chunk)
+
+    def _ensure_release_rendered(self, discogs_release_id: int) -> bool:
+        if int(discogs_release_id) in self._release_id_to_button:
+            return True
+        target_index: int | None = None
+        for index, item in enumerate(self._items):
+            if item.get("discogs_release_id") == int(discogs_release_id):
+                target_index = index
+                break
+        if target_index is None:
+            return False
+        self._append_items_until(target_index + 1)
+        self._apply_responsive_layout()
+        return int(discogs_release_id) in self._release_id_to_button
+
+    def _handle_scroll_position_changed(self, adjustment: object) -> None:
+        get_value = getattr(adjustment, "get_value", None)
+        get_page_size = getattr(adjustment, "get_page_size", None)
+        get_upper = getattr(adjustment, "get_upper", None)
+        if not callable(get_value) or not callable(get_page_size) or not callable(get_upper):
+            return
+        try:
+            value = float(get_value() or 0.0)
+            page_size = float(get_page_size() or 0.0)
+            upper = float(get_upper() or 0.0)
+        except (TypeError, ValueError):
+            return
+        if value + page_size >= max(0.0, upper - (page_size * 1.5)):
+            self._schedule_append_next_chunk()
 
     def _build_card(self, item: dict[str, object]) -> Gtk.FlowBoxChild:
         item_dict = dict(item)
@@ -231,6 +320,25 @@ class CoverGrid(Gtk.Box):
         if selected_button is not None:
             selected_button.add_css_class("is-selected")
 
+    def _scroll_to_selected(self) -> None:
+        if self._selected_button_id is None:
+            return
+        button = self._buttons_by_id.get(self._selected_button_id)
+        if button is None:
+            return
+        ok, rect = button.compute_bounds(self._flow)
+        if not ok:
+            return
+        adj = self._scroll.get_vadjustment()
+        page_size = adj.get_page_size()
+        current = adj.get_value()
+        top = float(rect.origin.y)
+        bottom = top + float(rect.size.height)
+        if top < current:
+            adj.set_value(max(0.0, top - 8.0))
+        elif bottom > current + page_size:
+            adj.set_value(min(adj.get_upper() - page_size, bottom - page_size + 8.0))
+
     def _select_item(self, item: dict[str, object] | None, *, emit: bool) -> None:
         if not isinstance(item, dict):
             self.clear_selection(emit=emit)
@@ -242,6 +350,7 @@ class CoverGrid(Gtk.Box):
         item_dict = dict(item)
         self._selected_release_id = int(release_id)
         self._set_card_selection(self._selected_release_id)
+        GLib.idle_add(self._scroll_to_selected)
         if self._on_selection_changed is not None and emit:
             self._on_selection_changed(item_dict)
 
@@ -250,8 +359,10 @@ class CoverGrid(Gtk.Box):
         self._items = [dict(item) for item in items]
         self._selected_release_id = None
         self._clear()
-        for item in self._items:
-            self._flow.append(self._build_card(item))
+        initial_count = max(1, int(self._perf.gallery_initial_items))
+        self._append_items_until(initial_count)
+        if self._rendered_count < len(self._items):
+            self._schedule_append_next_chunk()
         self._apply_responsive_layout()
         if isinstance(previous_selected, int):
             self.select_release(previous_selected)
@@ -269,6 +380,8 @@ class CoverGrid(Gtk.Box):
             self._on_selection_changed(None)
 
     def select_release(self, discogs_release_id: int) -> bool:
+        if not self._ensure_release_rendered(int(discogs_release_id)):
+            return False
         button = self._release_id_to_button.get(int(discogs_release_id))
         if button is None:
             return False
@@ -281,6 +394,11 @@ class CoverGrid(Gtk.Box):
     def set_release_spotify_album_id(
         self, discogs_release_id: int, spotify_album_id: object | None
     ) -> None:
+        normalized_album_id = str(spotify_album_id or "").strip()
+        for item in self._items:
+            if item.get("discogs_release_id") == int(discogs_release_id):
+                item["spotify_album_id"] = normalized_album_id or None
+                break
         button = self._release_id_to_button.get(int(discogs_release_id))
         if button is None:
             return
@@ -288,7 +406,6 @@ class CoverGrid(Gtk.Box):
         item = self._button_to_item.get(button_id)
         if not isinstance(item, dict):
             return
-        normalized_album_id = str(spotify_album_id or "").strip()
         item["spotify_album_id"] = normalized_album_id or None
         self._button_to_item[button_id] = item
 
@@ -375,3 +492,6 @@ class CoverGrid(Gtk.Box):
 
     def _handle_destroy(self, _widget: Gtk.Widget) -> None:
         self._cancel_pending_responsive_layout()
+        if self._pending_append_source_id is not None:
+            GLib.source_remove(self._pending_append_source_id)
+            self._pending_append_source_id = None

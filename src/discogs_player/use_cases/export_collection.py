@@ -23,6 +23,8 @@ CSV_COLUMNS: tuple[str, ...] = (
     "cover_url",
     "added_at",
     "last_synced_at",
+    "has_lp",
+    "has_45",
     "is_active",
     "spotify_album_id",
     "spotify_confidence",
