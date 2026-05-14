@@ -71,7 +71,10 @@ def _load_performance_module(monkeypatch):
     monkeypatch.setitem(
         sys.modules,
         "discogs_player.services.image_cache",
-        types.SimpleNamespace(get_or_fetch_cover_path=lambda _url: None),
+        types.SimpleNamespace(
+            get_or_fetch_cover_path=lambda _url: None,
+            ensure_cover_path_for_gtk=lambda cover_url, cover_path: cover_path,
+        ),
     )
     monkeypatch.delitem(sys.modules, "discogs_player.ui.performance", raising=False)
     return importlib.import_module("discogs_player.ui.performance")

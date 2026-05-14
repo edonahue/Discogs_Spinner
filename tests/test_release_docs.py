@@ -102,7 +102,7 @@ def test_release_notes_template_references_quickstarts_and_diagnostics():
 def test_readme_links_user_facing_docs_not_internal_runbooks():
     source = _read("README.md")
     for marker in (
-        "docs/releases/v0.2.0.md",
+        "docs/releases/v0.2.1.md",
         "docs/friend_trial.md",
         "docs/SUPPORT_MATRIX.md",
     ):
@@ -122,10 +122,10 @@ def test_readme_promotes_download_now_and_first_launch_value():
     for marker in (
         "## Download Now",
         "What first launch should feel like:",
-        "Discogs.Spinner_0.2.0_x64-setup.exe",
-        "Discogs.Spinner_0.2.0_aarch64.dmg",
-        "discogs-spinner-gtk4_0.2.0_amd64.deb",
-        "Discogs.Spinner_0.2.0_amd64.AppImage",
+        "Discogs.Spinner_0.2.1_x64-setup.exe",
+        "Discogs.Spinner_0.2.1_aarch64.dmg",
+        "discogs-spinner-gtk4_0.2.1_amd64.deb",
+        "Discogs.Spinner_0.2.1_amd64.AppImage",
         "docs/friend_trial.md",
     ):
         assert marker in source
@@ -143,7 +143,7 @@ def test_active_installer_docs_have_resolvable_local_links_and_assets():
             "docs/RELEASE_NOTES_TEMPLATE.md",
             "docs/START_HERE.md",
             "docs/friend_trial.md",
-            "docs/releases/v0.2.0.md",
+            "docs/releases/v0.2.1.md",
             "docs/quickstart_windows.md",
             "docs/quickstart_macos.md",
             "docs/quickstart_debian.md",
@@ -157,21 +157,21 @@ def test_start_here_and_friend_trial_are_installer_first():
 
     assert "A native Windows installer (Tauri app)" in start_here
     assert "A no-install browser fallback" in start_here
-    assert "Discogs.Spinner_0.2.0_x64-setup.exe" in friend_trial
-    assert "discogs-spinner-gtk4_0.2.0_amd64.deb" in friend_trial
+    assert "Discogs.Spinner_0.2.1_x64-setup.exe" in friend_trial
+    assert "discogs-spinner-gtk4_0.2.1_amd64.deb" in friend_trial
     assert "Discogs Spinner_*_x64-setup.exe" not in friend_trial
 
 
 def test_current_release_notes_pin_verified_stable_asset_links():
-    source = _read("docs/releases/v0.2.0.md")
+    source = _read("docs/releases/v0.2.1.md")
     for marker in (
-        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe",
-        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi",
-        "releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb",
-        "releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb",
-        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage",
-        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg",
-        "releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg",
-        "releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt",
+        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe",
+        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi",
+        "releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb",
+        "releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb",
+        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage",
+        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg",
+        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg",
+        "releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt",
     ):
         assert marker in source

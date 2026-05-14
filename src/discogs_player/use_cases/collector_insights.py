@@ -21,6 +21,17 @@ def _as_list(value: object) -> list[object]:
     return []
 
 
+def _to_int(value: object, *, default: int = 0) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float | str | bytes | bytearray):
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
+
+
 def run_collector_insights(
     *,
     gems_limit: int = 5,
@@ -117,6 +128,8 @@ def run_collector_insights(
 
     if gem_rows:
         top = gem_rows[0]
+        top_year = top.get("year")
+        top_year_suffix = f" ({top_year})" if isinstance(top_year, int) else ""
         highlights.append(
             {
                 "kind": "discovery",
@@ -124,18 +137,14 @@ def run_collector_insights(
                 "message": "{} - {}{}".format(
                     str(top.get("artist") or "Unknown Artist"),
                     str(top.get("title") or "Unknown Title"),
-                    (
-                        f" ({int(top.get('year'))})"
-                        if isinstance(top.get("year"), int)
-                        else ""
-                    ),
+                    top_year_suffix,
                 ),
                 "release_id": top.get("discogs_release_id"),
                 "command_hint": "dplayer value gems --limit 10 --json",
             }
         )
 
-    total_candidates = int(queue.get("total_candidates") or 0)
+    total_candidates = _to_int(queue.get("total_candidates"))
     if total_candidates > 0:
         highlights.append(
             {
@@ -143,15 +152,15 @@ def run_collector_insights(
                 "title": "Price refresh backlog",
                 "message": (
                     f"{total_candidates} releases are queued for price refresh "
-                    f"(missing={int(queue.get('missing_count') or 0)}, "
-                    f"unpriced={int(queue.get('unpriced_count') or 0)}, "
-                    f"stale={int(queue.get('stale_count') or 0)})."
+                    f"(missing={_to_int(queue.get('missing_count'))}, "
+                    f"unpriced={_to_int(queue.get('unpriced_count'))}, "
+                    f"stale={_to_int(queue.get('stale_count'))})."
                 ),
                 "command_hint": "dplayer value queue --limit 25 --stale-days 30",
             }
         )
 
-    score = int(health.get("score") or 0)
+    score = _to_int(health.get("score"))
     if score < 80:
         highlights.append(
             {
@@ -164,17 +173,17 @@ def run_collector_insights(
 
     return {
         "summary": {
-            "release_count_active": int(status.get("release_count_active") or 0),
-            "mapped_count": int(status.get("mapped_count") or 0),
-            "unmatched_count": int(status.get("unmatched_count") or 0),
-            "wantlist_count": int(status.get("wantlist_count") or 0),
+            "release_count_active": _to_int(status.get("release_count_active")),
+            "mapped_count": _to_int(status.get("mapped_count")),
+            "unmatched_count": _to_int(status.get("unmatched_count")),
+            "wantlist_count": _to_int(status.get("wantlist_count")),
             "market_value_last_updated": status.get("market_value_last_updated"),
             "last_sync_time": status.get("last_sync_time"),
             "last_spin_release_id": status.get("last_spin_release_id"),
             "onboarding_state": onboarding_state,
             "degraded_mode": bool(readiness_summary.get("degraded_mode")),
             "health_score": score,
-            "hidden_gems_count": int(gems.get("count") or 0),
+            "hidden_gems_count": _to_int(gems.get("count")),
             "refresh_queue_count": total_candidates,
             "ready_for_daily_use": bool(setup_checklist.get("ready_for_daily_use")),
         },
@@ -190,4 +199,3 @@ def run_collector_insights(
             "setup_report_has_spotify_block": isinstance(setup.get("spotify"), dict),
         },
     }
-

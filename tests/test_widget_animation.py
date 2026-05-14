@@ -157,7 +157,10 @@ sys.modules["gi.repository.Gdk"] = _gdk_mod
 sys.modules["gi.repository.Gio"] = _gio_mod
 
 # Services / utils pulled in by the widgets
-_img_cache = types.SimpleNamespace(get_or_fetch_cover_path=lambda url: None)
+_img_cache = types.SimpleNamespace(
+    get_or_fetch_cover_path=lambda url: None,
+    ensure_cover_path_for_gtk=lambda cover_url, cover_path: cover_path,
+)
 sys.modules["discogs_player.services.image_cache"] = _img_cache
 
 _fmt = types.SimpleNamespace(format_market_summary=lambda item: "n/a")
@@ -200,6 +203,7 @@ _glib_mod.source_remove = _mock_source_remove
 
 from discogs_player.ui.widgets.cover_carousel import CoverCarousel  # noqa: E402
 from discogs_player.ui.widgets.spin_wheel import SpinWheel  # noqa: E402
+import discogs_player.ui.widgets.cover_carousel as cover_carousel_module  # noqa: E402
 
 # ============================================================
 # Shared fixtures and helpers
@@ -310,6 +314,46 @@ def test_carousel_spin_skipped_for_single_item():
     c.start_center_spin_animation()
     assert c._center_spin_source_id is None
     c._prefetch_executor.shutdown(wait=False, cancel_futures=True)
+
+
+def test_carousel_cover_widget_recovers_when_initial_texture_decode_fails(
+    carousel, monkeypatch
+):
+    call_pairs: list[tuple[object, object]] = []
+
+    def _fake_ensure(cover_url, cover_path):
+        call_pairs.append((cover_url, cover_path))
+        if cover_path is None:
+            return "/tmp/recovered-cover.jpg"
+        return str(cover_path)
+
+    monkeypatch.setattr(cover_carousel_module, "ensure_cover_path_for_gtk", _fake_ensure)
+    state = {"calls": 0}
+
+    def _fake_get_cached_texture(path: str):
+        state["calls"] += 1
+        if str(path).endswith("original-cover.webp"):
+            return None
+        return _MockWidget()
+
+    carousel._get_cached_texture = _fake_get_cached_texture
+    item = {
+        "discogs_release_id": 88,
+        "cover_url": "https://example.test/cover-88.jpg",
+        "cover_path": "/tmp/original-cover.webp",
+    }
+
+    widget = carousel._build_cover_widget(
+        item,
+        width=180,
+        height=180,
+        placeholder_caption="",
+    )
+
+    assert widget is not None
+    assert item["cover_path"] == "/tmp/recovered-cover.jpg"
+    assert state["calls"] >= 2
+    assert ("https://example.test/cover-88.jpg", None) in call_pairs
 
 
 # ============================================================

@@ -19,7 +19,7 @@ Native Discogs collector app for vinyl fans who want to stop juggling browser ta
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
 >
-> **Release note:** The download links below point to the latest stable public release, `v0.2.0`. The `main` branch may describe unreleased improvements that will ship after the next packaging pass.
+> **Release note:** The download links below point to the latest stable public release, `v0.2.1`. The `main` branch may describe unreleased improvements that will ship after the next packaging pass.
 
 ---
 
@@ -123,12 +123,12 @@ You only lose direct playback control handoff until an optional provider is conn
 ## Download Now
 
 - [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-- Windows: use the guided installer first: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe). Use [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi) only if you specifically want MSI deployment tooling.
-- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg).
-- Debian/Ubuntu: start with the GTK desktop build: [discogs-spinner-gtk4_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb).
-- Linux portable fallback: [Discogs Spinner_0.2.0_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage).
-- Linux alternate desktop build: [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb).
-- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt).
+- Windows: use the guided installer first: [Discogs Spinner_0.2.1_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe). Use [Discogs Spinner_0.2.1_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi) only if you specifically want MSI deployment tooling.
+- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg).
+- Debian/Ubuntu: start with the GTK desktop build: [discogs-spinner-gtk4_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb).
+- Linux portable fallback: [Discogs Spinner_0.2.1_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage).
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb).
+- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt).
 
 What first launch should feel like:
 
@@ -196,7 +196,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 
 ## Help & Reference
 
-- [Release Notes (v0.2.0)](docs/releases/v0.2.0.md)
+- [Release Notes (v0.2.1)](docs/releases/v0.2.1.md)
 - [Support Matrix](docs/SUPPORT_MATRIX.md)
 - [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
 

@@ -16,6 +16,7 @@ import { test, expect, Page, Route } from "@playwright/test";
 import {
   STUB_SETUP,
   STUB_STATUS,
+  STUB_COLLECTOR_INSIGHTS,
   STUB_COLLECTION,
   STUB_COLLECTION_SUMMARY,
   STUB_COLLECTION_SUMMARY_AFTER_SYNC,
@@ -304,6 +305,7 @@ test("Home page sync buttons await completion and refresh status", async ({ page
   });
 
   await page.route("**/api/v1/status", (r) => fulfill(r, statusPayload));
+  await page.route("**/api/v1/insights**", (r) => fulfill(r, STUB_COLLECTOR_INSIGHTS));
   await page.route("**/api/v1/sync/collection", async (r) => {
     await collectionSyncGate;
     statusPayload = {

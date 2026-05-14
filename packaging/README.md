@@ -21,4 +21,4 @@ Related docs:
 - [Desktop shell README](../desktop_shell/README.md)
 - [Debian quickstart](../docs/quickstart_debian.md)
 - [Public release runbook](../docs/PUBLIC_RELEASE_RUNBOOK.md)
-- [Stable release notes](../docs/releases/v0.2.0.md)
+- [Stable release notes](../docs/releases/v0.2.1.md)

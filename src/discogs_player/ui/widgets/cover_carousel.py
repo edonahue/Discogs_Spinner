@@ -13,6 +13,7 @@ gi.require_version("Gdk", "4.0")
 from gi.repository import Gdk, GLib, Gio, Gtk
 
 from discogs_player.performance import performance_profile
+from discogs_player.services.image_cache import ensure_cover_path_for_gtk
 from discogs_player.services.image_cache import get_or_fetch_cover_path
 
 _CAROUSEL_PREFETCH_LOOKAHEAD = 12
@@ -386,17 +387,31 @@ class CoverCarousel(Gtk.Box):
         placeholder_caption: str,
     ) -> Gtk.Widget:
         if isinstance(item, dict):
-            cover_path = str(item.get("cover_path") or "").strip()
+            cover_url = str(item.get("cover_url") or "").strip() or None
+            current_cover_path = str(item.get("cover_path") or "").strip() or None
+            cover_path = ensure_cover_path_for_gtk(
+                cover_url,
+                current_cover_path,
+            )
+            if cover_path:
+                item["cover_path"] = cover_path
             if cover_path:
                 texture = self._get_cached_texture(cover_path)
+                if texture is None:
+                    recovered_path = ensure_cover_path_for_gtk(
+                        cover_url,
+                        None,
+                    )
+                    if recovered_path and recovered_path != cover_path:
+                        item["cover_path"] = recovered_path
+                        cover_path = recovered_path
+                        texture = self._get_cached_texture(cover_path)
                 if texture is not None:
                     picture = Gtk.Picture.new_for_paintable(texture)
-                else:
-                    picture = Gtk.Picture.new_for_filename(cover_path)
-                picture.set_can_shrink(True)
-                picture.set_size_request(width, height)
-                picture.set_content_fit(Gtk.ContentFit.COVER)
-                return picture
+                    picture.set_can_shrink(True)
+                    picture.set_size_request(width, height)
+                    picture.set_content_fit(Gtk.ContentFit.COVER)
+                    return picture
         icon_size = max(56, int(min(width, height) * 0.24))
         return self._build_cover_placeholder(placeholder_caption, icon_size=icon_size)
 

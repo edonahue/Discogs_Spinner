@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.abspath('../../src'))
 project = 'Discogs Player'
 copyright = '2026, Discogs Player Contributors'
 author = 'Discogs Player Contributors'
-release = '0.2.0'
-version = '0.2.0'
+release = '0.2.1'
+version = '0.2.1'
 
 # -- General configuration ---------------------------------------------------
 extensions = [

@@ -50,6 +50,12 @@ def _env_presence_snapshot() -> dict[str, bool]:
     }
 
 
+def _as_dict(value: object) -> dict[str, object]:
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
 def run_diagnostics_report() -> dict[str, object]:
     """Build a redacted diagnostics payload safe for issue reports."""
     capabilities = get_capabilities()
@@ -115,7 +121,7 @@ def run_diagnostics_report() -> dict[str, object]:
             },
             "providers": providers_payload,
         },
-        "provider_readiness": dict(status_payload.get("provider_readiness") or {}),
+        "provider_readiness": _as_dict(status_payload.get("provider_readiness")),
         "legacy_spotify_compatibility": {
             "status_report_has_spotify_capability": isinstance(
                 status_payload.get("spotify_capability"), dict

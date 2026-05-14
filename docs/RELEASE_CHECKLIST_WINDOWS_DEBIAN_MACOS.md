@@ -5,9 +5,9 @@ Owner: Engineering
 
 This checklist is optimized for a public installer release centered on native installs and first-run success across all three operating systems.
 
-## Current Stable Baseline (`v0.2.0`)
+## Target Stable Baseline (`v0.2.1`)
 
-- `Installer Build` is green for the published stable tag and release assets.
+- `Installer Build` must be green for the published stable tag and release assets.
 - `Windows MSI Smoke` has passed on `main` and is available as the slower Windows confidence lane.
 - Remaining non-blocking launch polish: Windows signing, macOS signing/notarization, and first-user feedback triage.
 

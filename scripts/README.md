@@ -63,7 +63,7 @@ Utility scripts for building, releasing, testing, and operating Discogs Spinner.
 ## Related docs
 
 - [Public release runbook](../docs/PUBLIC_RELEASE_RUNBOOK.md)
-- [Stable release notes](../docs/releases/v0.2.0.md)
+- [Stable release notes](../docs/releases/v0.2.1.md)
 - [Windows quickstart](../docs/quickstart_windows.md)
 - [macOS quickstart](../docs/quickstart_macos.md)
 - [Debian quickstart](../docs/quickstart_debian.md)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from importlib import import_module
+from typing import cast
 
 from discogs_player.integrations.null_backend import NullPlayerBackend
 from discogs_player.integrations.player_backend import (
@@ -120,7 +121,7 @@ def provider_metadata(provider_id: str) -> dict[str, object] | None:
 
 def provider_descriptor(provider_id: str) -> ProviderDescriptor:
     """Return readiness descriptor for one listed provider id."""
-    base: ProviderDescriptor = dict(_PROVIDER_DESCRIPTORS.get(provider_id, {}))
+    base = cast(ProviderDescriptor, dict(_PROVIDER_DESCRIPTORS.get(provider_id, {})))
     backend_cls = get_backend_type(provider_id)
     if backend_cls is None:
         return base
@@ -128,8 +129,8 @@ def provider_descriptor(provider_id: str) -> ProviderDescriptor:
     dynamic = backend_cls.provider_descriptor()
     if not isinstance(dynamic, dict):
         return base
-    merged: ProviderDescriptor = dict(base)
-    merged.update(dynamic)
+    merged = cast(ProviderDescriptor, dict(base))
+    merged.update(cast(ProviderDescriptor, dynamic))
     return merged
 
 

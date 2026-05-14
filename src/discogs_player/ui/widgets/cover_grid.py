@@ -10,6 +10,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk, Pango
 
 from discogs_player.performance import performance_profile
+from discogs_player.services.image_cache import ensure_cover_path_for_gtk
 
 _GRID_GAP = 12
 _GRID_MARGIN = 12
@@ -135,7 +136,14 @@ class CoverGrid(Gtk.Box):
         size: int,
         placeholder_caption: str,
     ) -> Gtk.Widget:
-        cover_path = str(item.get("cover_path") or "").strip()
+        cover_url = str(item.get("cover_url") or "").strip() or None
+        current_cover_path = str(item.get("cover_path") or "").strip() or None
+        cover_path = ensure_cover_path_for_gtk(
+            cover_url,
+            current_cover_path,
+        )
+        if cover_path:
+            item["cover_path"] = cover_path
         if cover_path:
             picture = Gtk.Picture.new_for_filename(cover_path)
             picture.set_can_shrink(True)
@@ -403,11 +411,11 @@ class CoverGrid(Gtk.Box):
         if button is None:
             return
         button_id = id(button)
-        item = self._button_to_item.get(button_id)
-        if not isinstance(item, dict):
+        button_item = self._button_to_item.get(button_id)
+        if not isinstance(button_item, dict):
             return
-        item["spotify_album_id"] = normalized_album_id or None
-        self._button_to_item[button_id] = item
+        button_item["spotify_album_id"] = normalized_album_id or None
+        self._button_to_item[button_id] = button_item
 
     def _compute_columns(self, usable_width: int) -> int:
         for candidate in range(_MAX_COLUMNS, _MIN_COLUMNS - 1, -1):

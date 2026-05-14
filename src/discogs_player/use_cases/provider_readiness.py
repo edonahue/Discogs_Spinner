@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from collections import OrderedDict
-from typing import Any
 
 from discogs_player.capabilities import AppCapabilities, ProviderCapability, get_capabilities
 from discogs_player.core.settings import get_discogs_token
@@ -16,14 +16,16 @@ _SPOTIFY_OAUTH_GUIDE_URL = (
 _DISCOGS_TOKEN_URL = "https://www.discogs.com/settings/developers"
 
 
-def _provider_auth_required(provider: ProviderCapability, descriptor: dict[str, Any]) -> bool:
+def _provider_auth_required(
+    provider: ProviderCapability, descriptor: Mapping[str, object]
+) -> bool:
     raw = descriptor.get("auth_required")
     if isinstance(raw, bool):
         return raw
     return provider.provider_id == "spotify"
 
 
-def _provider_supported_capabilities(descriptor: dict[str, Any]) -> list[str]:
+def _provider_supported_capabilities(descriptor: Mapping[str, object]) -> list[str]:
     raw = descriptor.get("supported_capabilities")
     if isinstance(raw, list):
         return [str(item).strip() for item in raw if str(item).strip()]
@@ -33,7 +35,7 @@ def _provider_supported_capabilities(descriptor: dict[str, Any]) -> list[str]:
 def _provider_next_actions(
     provider: ProviderCapability,
     *,
-    descriptor: dict[str, Any],
+    descriptor: Mapping[str, object],
     auth_required: bool,
 ) -> list[str]:
     if not provider.enabled and provider.experimental_flag:
@@ -204,9 +206,15 @@ def build_provider_readiness_contract(
     if "spotify" not in provider_rows and spotify is not None:
         descriptor = provider_descriptor("spotify")
         supported_capabilities = _provider_supported_capabilities(descriptor)
-        next_actions = descriptor.get("next_actions_when_unconfigured")
-        if not isinstance(next_actions, list):
-            next_actions = [
+        spotify_next_actions_raw = descriptor.get("next_actions_when_unconfigured")
+        if isinstance(spotify_next_actions_raw, list):
+            spotify_next_actions = [
+                str(item).strip()
+                for item in spotify_next_actions_raw
+                if str(item).strip()
+            ]
+        else:
+            spotify_next_actions = [
                 "Run `dplayer auth spotify-doctor`.",
                 "Run `dplayer auth spotify --open-browser`.",
             ]
@@ -229,9 +237,7 @@ def build_provider_readiness_contract(
             "supported_capabilities": supported_capabilities,
             "can_skip_setup": True,
             "can_retry_setup": True,
-            "next_actions": [
-                str(item).strip() for item in next_actions if str(item).strip()
-            ],
+            "next_actions": spotify_next_actions,
             "docs_url": str(descriptor.get("setup_url") or _SPOTIFY_DASHBOARD_URL),
             "setup_url": str(descriptor.get("setup_url") or _SPOTIFY_DASHBOARD_URL),
             "oauth_guide_url": str(
@@ -255,9 +261,17 @@ def build_provider_readiness_contract(
     else:
         onboarding_state = "ready"
 
-    next_actions: list[str] = []
+    aggregated_next_actions: list[str] = []
     if not discogs_configured:
-        next_actions.extend(_discogs_contract_row(discogs_configured=False)["next_actions"])
+        discogs_next_actions = _discogs_contract_row(discogs_configured=False).get(
+            "next_actions"
+        )
+        if isinstance(discogs_next_actions, list):
+            aggregated_next_actions.extend(
+                str(action).strip()
+                for action in discogs_next_actions
+                if str(action).strip()
+            )
     if optional_provider_count > 0 and not any_provider_ready:
         for row in providers:
             if row.get("readiness") == "ready":
@@ -267,15 +281,15 @@ def build_provider_readiness_contract(
                 for action in row_actions:
                     text = str(action).strip()
                     if text:
-                        next_actions.append(text)
+                        aggregated_next_actions.append(text)
     # De-dupe while preserving order.
-    next_actions = list(dict.fromkeys(next_actions))
+    aggregated_next_actions = list(dict.fromkeys(aggregated_next_actions))
 
     return {
         "schema_version": 2,
         "core_service": _discogs_contract_row(discogs_configured=bool(discogs_configured)),
         "providers": providers,
-        "next_actions": next_actions,
+        "next_actions": aggregated_next_actions,
         "summary": {
             "required_services_configured": bool(discogs_configured),
             "optional_provider_count": optional_provider_count,
@@ -283,7 +297,7 @@ def build_provider_readiness_contract(
             "degraded_mode": bool(optional_provider_count > 0 and not any_provider_ready),
             "onboarding_state": onboarding_state,
             "collection_synced": collection_synced,
-            "next_actions": next_actions,
+            "next_actions": aggregated_next_actions,
             "can_skip_optional_setup": True,
         },
     }

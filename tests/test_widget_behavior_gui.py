@@ -184,7 +184,8 @@ def _seed_sys_modules() -> None:
     # image_cache service stub
     if "discogs_player.services.image_cache" not in sys.modules:
         sys.modules["discogs_player.services.image_cache"] = types.SimpleNamespace(  # type: ignore[assignment]
-            get_or_fetch_cover_path=lambda url: None
+            get_or_fetch_cover_path=lambda url: None,
+            ensure_cover_path_for_gtk=lambda cover_url, cover_path: cover_path,
         )
 
     # formatting stub — AlbumDetail needs all seven helpers

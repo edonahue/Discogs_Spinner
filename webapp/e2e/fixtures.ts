@@ -143,6 +143,47 @@ export const STUB_STATUS = envelope({
   },
 });
 
+export const STUB_COLLECTOR_INSIGHTS = envelope({
+  summary: {
+    release_count_active: 3,
+    mapped_count: 2,
+    unmatched_count: 1,
+    wantlist_count: 1,
+    market_value_last_updated: "2026-03-09T00:00:00",
+    last_sync_time: "2026-03-09T00:00:00",
+    last_spin_release_id: 1,
+    onboarding_state: "core_ready_optional_pending",
+    degraded_mode: true,
+    health_score: 86,
+    hidden_gems_count: 1,
+    refresh_queue_count: 2,
+    ready_for_daily_use: true,
+  },
+  highlights: [
+    {
+      kind: "discovery",
+      title: "Tonight's hidden gem",
+      message: "Miles Davis - Kind of Blue (1959)",
+      command_hint: "dplayer value gems --limit 10 --json",
+      release_id: 1,
+    },
+  ],
+  daily_use_actions: ["Run `dplayer sync` occasionally.", "Try `dplayer spin`."],
+  top_hidden_gems: [
+    {
+      discogs_release_id: 1,
+      artist: "Miles Davis",
+      title: "Kind of Blue",
+      year: 1959,
+      market_median: 24.99,
+      market_currency: "USD",
+      num_for_sale: 12,
+      gem_score: 72,
+      reasons: ["Valuable and scarce enough to revisit."],
+    },
+  ],
+});
+
 export const STUB_COLLECTION = envelope(STUB_RELEASES);
 
 export const STUB_COLLECTION_SUMMARY = envelope({

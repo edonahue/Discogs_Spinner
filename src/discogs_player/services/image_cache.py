@@ -22,6 +22,9 @@ USER_AGENT = (
 )
 LEGACY_CACHE_EXTENSION = ".img"
 _DISCOGS_IMAGE_HOSTS: frozenset[str] = frozenset({"i.discogs.com"})
+_GTK_INCOMPATIBLE_IMAGE_EXTENSIONS: frozenset[str] = frozenset(
+    {".avif", ".heic", ".heif"}
+)
 
 _CONTENT_TYPE_TO_EXTENSION: dict[str, str] = {
     "image/jpeg": ".jpg",
@@ -72,7 +75,9 @@ def _lock_for_url(url: str) -> threading.Lock:
         return lock
 
 
-def _request_headers_for_url(url: str) -> dict[str, str]:
+def _request_headers_for_url(
+    url: str, *, prefer_gtk_compatible: bool = False
+) -> dict[str, str]:
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": "image/*",
@@ -82,9 +87,16 @@ def _request_headers_for_url(url: str) -> dict[str, str]:
     except ValueError:
         host = ""
     if host in _DISCOGS_IMAGE_HOSTS:
+        discogs_accept = (
+            "image/webp,image/jpeg,image/png,image/apng,image/*,*/*;q=0.8"
+        )
+        if not prefer_gtk_compatible:
+            discogs_accept = (
+                "image/avif,image/webp,image/jpeg,image/png,image/apng,image/*,*/*;q=0.8"
+            )
         headers.update(
             {
-                "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+                "Accept": discogs_accept,
                 "Accept-Language": "en-US,en;q=0.9",
                 "Referer": "https://www.discogs.com/",
             }
@@ -251,11 +263,24 @@ def _cleanup_legacy_cache_file(
         pass
 
 
+def _is_gtk_compatible_cache_path(path: Path) -> bool:
+    suffix = path.suffix.strip().lower()
+    return suffix not in _GTK_INCOMPATIBLE_IMAGE_EXTENSIONS
+
+
+def _remove_cache_path_if_present(path: Path) -> None:
+    try:
+        path.unlink()
+    except OSError:
+        return
+
+
 def get_or_fetch_cover_path(
     cover_url: str | None,
     *,
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
     max_image_bytes: int = MAX_IMAGE_BYTES,
+    prefer_gtk_compatible: bool = False,
 ) -> str | None:
     """Return a local cached cover path, fetching once if needed."""
     if not cover_url:
@@ -270,9 +295,14 @@ def get_or_fetch_cover_path(
     digest = _digest_for_url(normalized_url)
 
     existing = _find_existing_cache_path(digest, cache_dir=cache_dir)
+    needs_compatibility_refetch = False
     if existing is not None:
         migrated = _maybe_migrate_legacy_cache_path(existing, cover_url=normalized_url)
-        return str(migrated)
+        if prefer_gtk_compatible and not _is_gtk_compatible_cache_path(migrated):
+            needs_compatibility_refetch = True
+            _remove_cache_path_if_present(migrated)
+        else:
+            return str(migrated)
 
     fetch_lock = _lock_for_url(normalized_url)
     with fetch_lock:
@@ -282,11 +312,20 @@ def get_or_fetch_cover_path(
                 existing,
                 cover_url=normalized_url,
             )
-            return str(migrated)
+            if prefer_gtk_compatible and not _is_gtk_compatible_cache_path(migrated):
+                needs_compatibility_refetch = True
+                _remove_cache_path_if_present(migrated)
+            else:
+                return str(migrated)
 
         request = urllib.request.Request(
             normalized_url,
-            headers=_request_headers_for_url(normalized_url),
+            headers=_request_headers_for_url(
+                normalized_url,
+                prefer_gtk_compatible=(
+                    prefer_gtk_compatible or needs_compatibility_refetch
+                ),
+            ),
         )
 
         try:
@@ -306,6 +345,8 @@ def get_or_fetch_cover_path(
             content_type=content_type,
             data=data,
         )
+        if prefer_gtk_compatible and extension in _GTK_INCOMPATIBLE_IMAGE_EXTENSIONS:
+            return None
         target = _cache_path_for_digest(digest, extension, cache_dir=cache_dir)
         _write_cache_file(target=target, data=data, cache_dir=cache_dir)
         _cleanup_legacy_cache_file(
@@ -314,6 +355,27 @@ def get_or_fetch_cover_path(
             cache_dir=cache_dir,
         )
         return str(target)
+
+
+def ensure_cover_path_for_gtk(
+    cover_url: str | None,
+    cover_path: str | None,
+) -> str | None:
+    normalized_cover_path = str(cover_path or "").strip()
+    if normalized_cover_path:
+        cached_path = Path(normalized_cover_path)
+        if (
+            cached_path.exists()
+            and cached_path.stat().st_size > 0
+            and _is_gtk_compatible_cache_path(cached_path)
+        ):
+            return str(cached_path)
+        if cached_path.exists() and not _is_gtk_compatible_cache_path(cached_path):
+            _remove_cache_path_if_present(cached_path)
+    return get_or_fetch_cover_path(
+        cover_url,
+        prefer_gtk_compatible=True,
+    )
 
 
 # Performance optimization: async image fetching with connection pooling
