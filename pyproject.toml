@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "discogs_player"
 version = "0.2.1"
-description = "CLI-first Discogs collection sync and playback helper"
+description = "Local-first vinyl collection companion for Discogs collectors"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

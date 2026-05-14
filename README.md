@@ -1,6 +1,6 @@
 # Discogs Spinner
 
-> Your vinyl collection, supercharged.
+> Pick what to play, rediscover your shelves, and understand what your records are worth.
 
 <p align="center">
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml/badge.svg"></a>
@@ -15,9 +15,11 @@
   <img src="docs/media/gif/product-demo.gif" alt="Discogs Spinner product demo" width="100%">
 </p>
 
-Native Discogs collector app for vinyl fans who want to stop juggling browser tabs. Install on Linux, Windows, or macOS, sync your collection with a personal token, spin a random pick, and see value, wantlist, and playback context in one place.
+Discogs Spinner is a local-first desktop companion for vinyl collectors who already keep a Discogs collection. Install it, connect your Discogs personal access token, sync once, then browse your shelf, spin a random record, inspect market value, and keep wantlist context close without living in browser tabs.
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
+>
+> **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
 >
 > **Release note:** The download links below point to the latest stable public release, `v0.2.1`. The `main` branch may describe unreleased improvements that will ship after the next packaging pass.
 
@@ -25,11 +27,15 @@ Native Discogs collector app for vinyl fans who want to stop juggling browser ta
 
 ## Why Discogs Spinner?
 
-Your Discogs collection probably lives in a browser tab today. You scroll it when you cannot decide
-what to spin, check market prices in another tab, and bounce into Spotify when you finally make a
-decision. Discogs Spinner turns that into one focused desktop experience: your collection, random
-picks, wantlist context, and market value in one local app. No subscription. No extra cloud
-account. Just your collection on your machine.
+Your Discogs collection probably lives in a browser tab today. You scroll when you cannot decide what to play, check market prices in another tab, and open yet another app when you finally choose. Discogs Spinner turns that daily collector loop into one focused utility: your collection, random picks, wantlist context, and market value in one local app. No subscription. No extra cloud account. Just your records on your machine.
+
+Use it when you want to:
+
+- choose tonight's record without scrolling forever
+- find neglected albums, hidden gems, and stale market values
+- see whether a wantlist item is worth chasing
+- keep a quick local dashboard of collection health and value
+- hand a selected release off to Spotify or YouTube Music when optional playback is configured
 
 ---
 
@@ -56,9 +62,25 @@ account. Just your collection on your machine.
 
 ---
 
+## First 10 Minutes
+
+Before launching, have this ready:
+
+- a Discogs account with a collection or wantlist
+- a Discogs personal access token from [Settings → Developers](https://www.discogs.com/settings/developers)
+- optional Spotify credentials only if you want playback control
+
+Your first run should look like this:
+
+1. Install the app for your OS.
+2. Open Discogs Spinner and paste your Discogs token into the setup wizard.
+3. Start the first sync.
+4. Browse your collection, hit **Spin**, and inspect the selected record.
+5. Check Value, Wantlist, or Insights when you want market and collection context.
+
 ## Daily Collector Loop
 
-For most users, the daily flow should be simple:
+After setup, the daily flow should stay simple:
 
 1. **Sync occasionally** (`dplayer sync`) to keep collection + wantlist fresh
 2. **Pick something quickly** (`dplayer spin` or native/web browse)
@@ -122,6 +144,8 @@ You only lose direct playback control handoff until an optional provider is conn
 
 ## Download Now
 
+These installers are meant to get a collector to value quickly: install, paste a Discogs token, sync, browse, and spin.
+
 - [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 - Windows: use the guided installer first: [Discogs Spinner_0.2.1_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe). Use [Discogs Spinner_0.2.1_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi) only if you specifically want MSI deployment tooling.
 - macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg).
@@ -134,7 +158,7 @@ What first launch should feel like:
 
 - The app opens into a simple setup wizard if no Discogs token is configured yet.
 - You paste your token once, start your first sync, and wait for the collection view to load.
-- A good first run ends with your collection visible in the app, not a blank screen or a terminal prompt.
+- A good first run ends with your records visible, a working **Spin** button, and clear next steps for optional playback.
 
 Quick install notes:
 

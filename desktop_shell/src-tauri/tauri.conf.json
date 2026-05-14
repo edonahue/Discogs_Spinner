@@ -35,8 +35,8 @@
     ],
     "externalBin": ["binaries/dplayer-api"],
     "category": "Music",
-    "shortDescription": "Browse your Discogs collection and control playback.",
-    "longDescription": "Discogs Spinner lets you browse your vinyl collection, discover wantlist picks, and control Spotify or YouTube Music playback — all from a single desktop app.",
+    "shortDescription": "Browse, spin, and value your Discogs vinyl collection.",
+    "longDescription": "Discogs Spinner is a local-first desktop companion for vinyl collectors. Connect a Discogs personal access token, sync your collection and wantlist, spin a random record, inspect market value, and optionally hand playback to Spotify or YouTube Music.",
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",

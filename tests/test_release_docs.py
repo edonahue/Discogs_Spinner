@@ -121,6 +121,9 @@ def test_readme_promotes_download_now_and_first_launch_value():
     source = _read("README.md")
     for marker in (
         "## Download Now",
+        "## First 10 Minutes",
+        "Discogs token required",
+        "install, paste a Discogs token, sync, browse, and spin",
         "What first launch should feel like:",
         "Discogs.Spinner_0.2.1_x64-setup.exe",
         "Discogs.Spinner_0.2.1_aarch64.dmg",
@@ -129,6 +132,34 @@ def test_readme_promotes_download_now_and_first_launch_value():
         "docs/friend_trial.md",
     ):
         assert marker in source
+
+
+def test_installer_metadata_sells_record_collector_value_and_token_setup():
+    tauri_config = _read("desktop_shell/src-tauri/tauri.conf.json")
+    desktop_entry = _read("packaging/deb/dplayer-gui.desktop")
+    postinst = _read("packaging/deb/postinst")
+
+    for marker in (
+        "Browse, spin, and value your Discogs vinyl collection.",
+        "Discogs personal access token",
+        "sync your collection and wantlist",
+        "spin a random record",
+    ):
+        assert marker in tauri_config
+
+    for marker in (
+        "Browse, spin, and value your Discogs vinyl collection",
+        "Records;Vinyl;Collection;Wantlist;Market Value",
+    ):
+        assert marker in desktop_entry
+
+    for marker in (
+        "First-time setup for vinyl collectors:",
+        "Discogs personal access token",
+        "paste the token",
+        "browse your records and use Spin",
+    ):
+        assert marker in postinst
 
 
 def test_active_installer_docs_have_resolvable_local_links_and_assets():
@@ -157,6 +188,8 @@ def test_start_here_and_friend_trial_are_installer_first():
 
     assert "A native Windows installer (Tauri app)" in start_here
     assert "A no-install browser fallback" in start_here
+    assert "Discogs account and personal access token" in start_here
+    assert "install, paste your Discogs token, sync once" in start_here
     assert "Discogs.Spinner_0.2.1_x64-setup.exe" in friend_trial
     assert "discogs-spinner-gtk4_0.2.1_amd64.deb" in friend_trial
     assert "Discogs Spinner_*_x64-setup.exe" not in friend_trial
@@ -173,5 +206,9 @@ def test_current_release_notes_pin_verified_stable_asset_links():
         "releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg",
         "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg",
         "releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt",
+        "Who This Is For",
+        "Discogs personal access token",
+        "Installer workflow: pass",
+        "Release asset verification: pass",
     ):
         assert marker in source

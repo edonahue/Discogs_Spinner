@@ -45,13 +45,18 @@ case "$1" in
         echo ""
         echo "Discogs Spinner installed."
         echo ""
-        echo "First-time setup:"
-        echo "  1. Get your Discogs token:"
+        echo "First-time setup for vinyl collectors:"
+        echo "  1. Get your Discogs personal access token:"
         echo "     https://www.discogs.com/settings/developers"
-        echo "  2. Store it:"
+        echo "  2. Launch Discogs Spinner from your app menu and paste the token"
+        echo "     into the setup wizard."
+        echo "  3. Sync once, then browse your records and use Spin when you"
+        echo "     want a quick pick from your shelf."
+        echo ""
+        echo "Terminal alternative:"
+        echo "  Store the token:"
         echo "       dplayer config set discogs_token <your_token>"
         echo "     or export DISCOGS_TOKEN=\"your_token\" in your shell profile."
-        echo "  3. Launch: search for 'Discogs Spinner' in your app launcher."
         ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
