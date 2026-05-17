@@ -155,12 +155,12 @@ cat > "${DESKTOP_PATH}" <<EOF
 Version=1.0
 Type=Application
 Name=${APP_NAME}
-Comment=Browse Discogs collection and control Spotify playback
+Comment=Browse, spin, and value your Discogs vinyl collection
 Exec=${LAUNCHER_PATH}
 Icon=${ICON_NAME}
 Terminal=false
 Categories=AudioVideo;Audio;Player;Music;
-Keywords=Discogs;Spotify;Collection;Music;
+Keywords=Discogs;Records;Vinyl;Collection;Wantlist;Market Value;Spotify;YouTube;Music;
 StartupNotify=true
 StartupWMClass=com.discogs_player.app
 EOF
@@ -173,14 +173,18 @@ echo "Installed launcher script: ${LAUNCHER_PATH}"
 echo "Installed desktop entry:  ${DESKTOP_PATH}"
 echo "Installed icon:           ${ICON_TARGET}"
 echo
-echo "First-time setup:"
-echo "  1. Get your Discogs token: https://www.discogs.com/settings/developers"
+echo "First-time setup for vinyl collectors:"
+echo "  1. Get your Discogs personal access token:"
+echo "     https://www.discogs.com/settings/developers"
 echo "     (Personal Access Tokens → Generate new token)"
-echo "  2. Store it permanently:"
+echo "  2. Launch Discogs Spinner and paste the token into the setup wizard."
+echo "  3. Sync once, then browse your records and use Spin for a quick pick."
+echo
+echo "Terminal alternative:"
+echo "  Store the token permanently:"
 echo "       dplayer config set discogs_token <your_token>"
 echo "     or set the environment variable in your shell profile:"
 echo "       export DISCOGS_TOKEN=\"your_discogs_token\""
-echo "  3. Launch the app and click 'Sync Collection' to import your records."
 echo
 echo "Open your app launcher and search for '${APP_NAME}'."
 echo "To add it to your dock, launch it once, then right-click its icon and choose Pin to Dock."

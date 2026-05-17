@@ -888,6 +888,12 @@ _WANTLIST_DETAIL_PANEL_MIN_WIDTH = 180
 _WANTLIST_DETAIL_PANEL_MAX_WIDTH = 300
 _STARTUP_WINDOW_DEFAULT_WIDTH = 1100
 _STARTUP_WINDOW_DEFAULT_HEIGHT = 760
+_STARTUP_WINDOW_WORKAREA_WIDTH_RATIO = 0.70
+_STARTUP_WINDOW_WORKAREA_HEIGHT_RATIO = 0.70
+_STARTUP_WINDOW_MAX_WIDTH = 2400
+_STARTUP_WINDOW_MAX_HEIGHT = 1100
+_STARTUP_WINDOW_WORKAREA_WIDTH_CAP_RATIO = 0.92
+_STARTUP_WINDOW_WORKAREA_HEIGHT_CAP_RATIO = 0.90
 _STARTUP_WINDOW_MIN_WIDTH = 820
 _STARTUP_WINDOW_MIN_HEIGHT = 620
 _SPLIT_ANIMATION_INTERVAL_MS = 14
@@ -986,9 +992,8 @@ class MainWindow(Gtk.ApplicationWindow):
     ) -> None:
         super().__init__(application=app, title="Discogs Spinner")
         self.add_css_class("ipod-shell")
-        self.set_default_size(
-            _STARTUP_WINDOW_DEFAULT_WIDTH, _STARTUP_WINDOW_DEFAULT_HEIGHT
-        )
+        target_width, target_height = self._startup_target_window_size()
+        self.set_default_size(target_width, target_height)
         self.set_size_request(_STARTUP_WINDOW_MIN_WIDTH, _STARTUP_WINDOW_MIN_HEIGHT)
         self.set_resizable(True)
         self.set_deletable(True)
@@ -1037,6 +1042,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self._split_animation_source_ids: dict[str, int] = {}
         self._layout_settle_source_ids: dict[str, int] = {}
         self._layout_settle_generation = 0
+        self._last_allocated_size: tuple[int, int] = (0, 0)
+        self._allocation_reflow_source_id: int | None = None
+        self._size_tick_callback_id: int | None = None
         self._background_suspended = False
         self._force_background_suspended = False
         self._idle_trim_source_id: int | None = None
@@ -1060,13 +1068,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self._spotify_capability = self._capabilities.spotify
 
         # Add window resize handling using notify signals (GTK4 compatible)
-        self.connect('notify::default-width', self._on_window_resize)
-        self.connect('notify::default-height', self._on_window_resize)
         self.connect('notify::width', self._on_window_resize)
         self.connect('notify::height', self._on_window_resize)
         self.connect('notify::maximized', self._on_window_state_change)
         self.connect('notify::fullscreened', self._on_window_state_change)
         self.connect("notify::is-active", self._on_window_active_changed)
+        self._size_tick_callback_id = self.add_tick_callback(self._handle_size_tick)
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ipod-root")
@@ -1562,6 +1569,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.refresh()
 
     def do_unroot(self) -> None:  # pragma: no cover - lifecycle callback
+        if self._size_tick_callback_id is not None:
+            self.remove_tick_callback(self._size_tick_callback_id)
+            self._size_tick_callback_id = None
+        self._cancel_allocation_reflow()
         self._cancel_visible_layout_settle()
         self._cancel_idle_trim()
         for source_id in self._split_animation_source_ids.values():
@@ -1573,6 +1584,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self._actions_executor.shutdown(wait=False, cancel_futures=True)
         self._value_ops_executor.shutdown(wait=False, cancel_futures=True)
         super().do_unroot()
+
+    def _handle_size_tick(self, _widget: Gtk.Widget, _frame_clock: object) -> bool:
+        allocated_size = (
+            max(1, int(self.get_width() or 0)),
+            max(1, int(self.get_height() or 0)),
+        )
+        if allocated_size == self._last_allocated_size:
+            return True
+        self._last_allocated_size = allocated_size
+        self._schedule_allocation_reflow()
+        return True
 
     def _refresh_from_filters(self) -> None:
         self.refresh()
@@ -2114,9 +2136,25 @@ class MainWindow(Gtk.ApplicationWindow):
             return _STARTUP_WINDOW_DEFAULT_WIDTH, _STARTUP_WINDOW_DEFAULT_HEIGHT
 
         workarea_width, workarea_height = workarea
+        width_cap = int(workarea_width * _STARTUP_WINDOW_WORKAREA_WIDTH_CAP_RATIO)
+        height_cap = int(workarea_height * _STARTUP_WINDOW_WORKAREA_HEIGHT_CAP_RATIO)
+        target_width = min(
+            _STARTUP_WINDOW_MAX_WIDTH,
+            max(
+                _STARTUP_WINDOW_DEFAULT_WIDTH,
+                int(workarea_width * _STARTUP_WINDOW_WORKAREA_WIDTH_RATIO),
+            ),
+        )
+        target_height = min(
+            _STARTUP_WINDOW_MAX_HEIGHT,
+            max(
+                _STARTUP_WINDOW_DEFAULT_HEIGHT,
+                int(workarea_height * _STARTUP_WINDOW_WORKAREA_HEIGHT_RATIO),
+            ),
+        )
         return (
-            max(1, min(_STARTUP_WINDOW_DEFAULT_WIDTH, int(workarea_width * 0.90))),
-            max(1, min(_STARTUP_WINDOW_DEFAULT_HEIGHT, int(workarea_height * 0.90))),
+            max(1, min(target_width, width_cap)),
+            max(1, min(target_height, height_cap)),
         )
 
     def _gallery_detail_visible(self, *, wantlist: bool) -> bool:
@@ -2183,10 +2221,31 @@ class MainWindow(Gtk.ApplicationWindow):
             return False
         self._startup_size_fitted = True
 
-        target_width, target_height = self._startup_target_window_size()
-        self.set_default_size(target_width, target_height)
-        self.queue_resize()
+        self._apply_split_layout_from_current_size()
         self._schedule_visible_layout_settle(reason="startup")
+        return False
+
+    def _cancel_allocation_reflow(self) -> None:
+        if self._allocation_reflow_source_id is None:
+            return
+        source_id = self._allocation_reflow_source_id
+        self._allocation_reflow_source_id = None
+        try:
+            GLib.source_remove(source_id)
+        except Exception:
+            pass
+
+    def _schedule_allocation_reflow(self) -> None:
+        if self._allocation_reflow_source_id is not None:
+            return
+        self._allocation_reflow_source_id = GLib.idle_add(
+            self._run_allocation_reflow
+        )
+
+    def _run_allocation_reflow(self) -> bool:
+        self._allocation_reflow_source_id = None
+        self._apply_split_layout_from_current_size()
+        self._schedule_visible_layout_settle(reason="window-allocation")
         return False
 
     def _cancel_idle_trim(self) -> None:
@@ -2469,13 +2528,15 @@ class MainWindow(Gtk.ApplicationWindow):
         source_id = GLib.timeout_add(_SPLIT_ANIMATION_INTERVAL_MS, _tick)
         self._split_animation_source_ids[key] = source_id
 
-    def _apply_split_layout(self, width: int) -> None:
+    def _apply_split_layout(self, width: int, *, prefer_width: bool = False) -> None:
         fallback_width = self._effective_layout_width(width)
 
         if hasattr(self, "_browse_content") and hasattr(self, "_sidebar_scroll"):
             browse_width = self._effective_layout_width(
                 self._browse_content.get_width() or fallback_width
             )
+            if prefer_width and fallback_width > 1:
+                browse_width = fallback_width
             browse_target_detail_width = self._compute_detail_panel_width(browse_width)
             browse_gallery_mode = (
                 hasattr(self, "_browse_stack")
@@ -2519,6 +2580,8 @@ class MainWindow(Gtk.ApplicationWindow):
             wantlist_width = self._effective_layout_width(
                 self._wantlist_content.get_width() or fallback_width
             )
+            if prefer_width and fallback_width > 1:
+                wantlist_width = fallback_width
             wantlist_target_detail_width = self._compute_detail_panel_width(
                 wantlist_width, wantlist=True
             )
@@ -2626,7 +2689,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 self._root.add_css_class("ipod-width-compact")
 
         self._apply_responsive_controls(width)
-        self._apply_split_layout(width)
+        self._apply_split_layout(width, prefer_width=True)
         self._schedule_visible_layout_settle(reason="window-resize")
 
     def _apply_responsive_controls(self, width: int) -> None:
@@ -2669,13 +2732,16 @@ class MainWindow(Gtk.ApplicationWindow):
     def _apply_split_layout_from_current_size(self) -> bool:
         width = max(1, int(self.get_width()))
         self._apply_responsive_controls(width)
-        self._apply_split_layout(width)
+        self._apply_split_layout(width, prefer_width=True)
         return False
 
     def _on_window_state_change(self, window, param) -> None:
         """Handle window state changes (maximized, fullscreen, etc.)."""
-        # Trigger resize handling when window state changes
+        # Trigger resize handling when window state changes. Wayland compositors
+        # can deliver the state notification before the final allocation lands,
+        # so also defer one pass to the next main-loop tick.
         self._on_window_resize(window, param)
+        GLib.idle_add(self._apply_split_layout_from_current_size)
         self._schedule_visible_layout_settle(reason="window-state")
 
     def _build_empty_state_box(

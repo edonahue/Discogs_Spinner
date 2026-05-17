@@ -57,8 +57,8 @@ def test_gallery_ux_smoke_script_emits_valid_json_when_gui_runtime_is_available(
     assert isinstance(browse, dict)
     assert isinstance(wantlist, dict)
 
-    assert 0 < int(startup.get("target_width") or 0) <= 1100
-    assert 0 < int(startup.get("target_height") or 0) <= 760
+    assert 0 < int(startup.get("target_width") or 0) <= 2400
+    assert 0 < int(startup.get("target_height") or 0) <= 1100
     assert int(startup.get("width") or 0) > 0
     assert int(startup.get("height") or 0) > 0
     assert 0 < int(startup.get("browse_carousel_detail_width") or 0) <= 360
