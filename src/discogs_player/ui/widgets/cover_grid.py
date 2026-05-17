@@ -153,6 +153,28 @@ class CoverGrid(Gtk.Box):
         icon_size = max(48, int(size * 0.24))
         return self._build_placeholder(icon_size=icon_size, caption=placeholder_caption)
 
+    def _current_card_dimensions(self) -> tuple[int, int, int]:
+        card_width = self._card_width if self._card_width > 0 else _CARD_MIN_WIDTH
+        cover_size = self._cover_size if self._cover_size > 0 else max(112, card_width - 16)
+        card_height = cover_size + _CARD_TEXT_HEIGHT
+        return card_width, cover_size, card_height
+
+    @staticmethod
+    def _apply_card_dimensions(
+        button: Gtk.Button,
+        frame: Gtk.Frame | None,
+        media: Gtk.Widget | None,
+        *,
+        card_width: int,
+        cover_size: int,
+        card_height: int,
+    ) -> None:
+        button.set_size_request(card_width, card_height)
+        if frame is not None:
+            frame.set_size_request(cover_size, cover_size)
+        if media is not None:
+            media.set_size_request(cover_size, cover_size)
+
     def _clear(self) -> None:
         if self._pending_append_source_id is not None:
             GLib.source_remove(self._pending_append_source_id)
@@ -228,6 +250,7 @@ class CoverGrid(Gtk.Box):
 
     def _build_card(self, item: dict[str, object]) -> Gtk.FlowBoxChild:
         item_dict = dict(item)
+        card_width, cover_size, card_height = self._current_card_dimensions()
         button = Gtk.Button()
         button.set_has_frame(False)
         button.add_css_class("ipod-gallery-card")
@@ -242,13 +265,12 @@ class CoverGrid(Gtk.Box):
         cover_frame = Gtk.Frame()
         cover_frame.add_css_class("ipod-gallery-cover-frame")
         cover_frame.set_halign(Gtk.Align.CENTER)
-        cover_frame.set_child(
-            self._build_cover_media(
-                item_dict,
-                size=max(_CARD_MIN_WIDTH - 16, 120),
-                placeholder_caption="",
-            )
+        media = self._build_cover_media(
+            item_dict,
+            size=cover_size,
+            placeholder_caption="",
         )
+        cover_frame.set_child(media)
         body.append(cover_frame)
 
         title = Gtk.Label(label=str(item_dict.get("title") or "Unknown Title"))
@@ -281,9 +303,15 @@ class CoverGrid(Gtk.Box):
         self._button_to_item[button_id] = item_dict
         self._buttons_by_id[button_id] = button
         self._button_to_frame[button_id] = cover_frame
-        media = cover_frame.get_child()
-        if media is not None:
-            self._button_to_media[button_id] = media
+        self._button_to_media[button_id] = media
+        self._apply_card_dimensions(
+            button,
+            cover_frame,
+            media,
+            card_width=card_width,
+            cover_size=cover_size,
+            card_height=card_height,
+        )
         release_id = item_dict.get("discogs_release_id")
         if isinstance(release_id, int):
             self._release_id_to_button[int(release_id)] = button
@@ -457,13 +485,14 @@ class CoverGrid(Gtk.Box):
         if layout_changed:
             for button in self._buttons_by_id.values():
                 button_id = id(button)
-                button.set_size_request(card_width, card_height)
-                frame = self._button_to_frame.get(button_id)
-                if frame is not None:
-                    frame.set_size_request(cover_size, cover_size)
-                media = self._button_to_media.get(button_id)
-                if isinstance(media, Gtk.Picture):
-                    media.set_size_request(cover_size, cover_size)
+                self._apply_card_dimensions(
+                    button,
+                    self._button_to_frame.get(button_id),
+                    self._button_to_media.get(button_id),
+                    card_width=card_width,
+                    cover_size=cover_size,
+                    card_height=card_height,
+                )
 
     def _schedule_responsive_layout(self) -> None:
         if self._pending_layout_source_id is not None:
