@@ -130,8 +130,15 @@ if [ -x "${VENV_PY}" ] && run_with_python "${VENV_PY}" "venv" "$@"; then
   exit 0
 fi
 
-if command -v python3 >/dev/null 2>&1; then
+if [ -x "/usr/bin/python3" ]; then
+  SYS_PYTHON="/usr/bin/python3"
+elif command -v python3 >/dev/null 2>&1; then
   SYS_PYTHON="$(command -v python3)"
+else
+  SYS_PYTHON=""
+fi
+
+if [ -n "${SYS_PYTHON}" ]; then
   if run_with_python "${SYS_PYTHON}" "system" "$@"; then
     exit 0
   fi
