@@ -18,9 +18,11 @@ def test_build_deb_script_bundles_offline_wheelhouse():
         "build_deb.sh must build the wheelhouse with Python 3.10",
         'WHEEL_DIR="${STAGING_DIR}${INSTALL_PREFIX}/wheels"',
         'METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"',
+        'cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"',
         'awk -F\'"\'',
         '"$PYTHON_BIN" -m pip wheel --wheel-dir "$WHEEL_DIR" \'.[web]\'',
         'cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.DiscogsSpinner.metainfo.xml"',
+        'Discogs Spinner Contributors <discogs_player+maintainer@users.noreply.github.com>',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.main "$@"',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.api_main "$@"',
         'export DP_PERF_PROFILE="${DP_PERF_PROFILE:-quiet}"',
@@ -92,6 +94,8 @@ def test_linux_packaging_metadata_is_validated_before_release():
         "python3 scripts/validate_linux_packaging_metadata.py",
         "Run GTK4 .deb lintian QA",
         "lintian --allow-root",
+        "allowed_lintian_errors",
+        "unexpected error-level GTK .deb issues",
     ):
         assert marker in workflow
 

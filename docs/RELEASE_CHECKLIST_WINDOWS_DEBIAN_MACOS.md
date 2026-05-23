@@ -57,7 +57,7 @@ This checklist is optimized for a public installer release centered on native in
 
 - [ ] Debian artifact installs on supported distro baseline.
 - [ ] GTK `.deb` includes AppStream metainfo at `/usr/share/metainfo/io.github.edonahue.DiscogsSpinner.metainfo.xml`.
-- [ ] `lintian` has run against the GTK `.deb` in CI and any error-level package issues are resolved.
+- [ ] `lintian` has run against the GTK `.deb` in CI and any unexpected error-level package issues are resolved.
 - [ ] Linux Tauri real bundle build passes (`bash ./scripts/validate_tauri_linux_real_build.sh --target-triple x86_64-unknown-linux-gnu` locally or equivalent CI run).
 - [ ] Linux Tauri `.deb` and `.AppImage` bundle validation passes and confirms the packaged `dplayer-api` sidecar is present.
 - [ ] GUI dependencies and CLI dependencies documented clearly.

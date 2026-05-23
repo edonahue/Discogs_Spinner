@@ -27,7 +27,8 @@ This runbook defines the exact process for creating and publishing a public inst
 5. Latest installer evidence is green:
    - `Installer Build` passes on Windows, Ubuntu, `macos-14`, and `macos-15-intel`
    - Debian Docker clean-install validation passes
-   - GTK `.deb` lintian QA runs in `Installer Build`
+   - GTK `.deb` lintian QA runs in `Installer Build`; only documented `/opt`
+     layout and empty extended-description findings are allowed for the bundled wheelhouse package
 6. Release notes exist at [`docs/releases/<tag>.md`](releases/v0.2.0.md).
 7. [`docs/RELEASE_NOTES_TEMPLATE.md`](RELEASE_NOTES_TEMPLATE.md) has been copied and tailored for the release.
 

@@ -159,6 +159,11 @@ else
     echo "Warning: icon not found at ${ICON_SOURCE}" >&2
 fi
 
+# Debian package metadata.
+DOC_DIR="${STAGING_DIR}/usr/share/doc/discogs-spinner"
+mkdir -p "$DOC_DIR"
+cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"
+
 # ---------------------------------------------------------------------------
 # Run fpm
 # ---------------------------------------------------------------------------
@@ -171,7 +176,7 @@ fpm \
     --name discogs-spinner \
     --version "$PACKAGE_VERSION" \
     --architecture "$ARCH" \
-    --maintainer "Discogs Spinner Contributors" \
+    --maintainer "Discogs Spinner Contributors <discogs_player+maintainer@users.noreply.github.com>" \
     --description "Browse your Discogs collection and control Spotify/YouTube Music playback." \
     --url "https://github.com/edonahue/Discogs_Spinner" \
     --license MIT \
