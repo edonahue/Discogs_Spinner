@@ -23,9 +23,11 @@ This runbook defines the exact process for creating and publishing a public inst
    - `venv/bin/python -m pytest -q`
    - `npm run build` in `webapp/`
    - `npm run test:e2e` in `webapp/`
+   - `python3 scripts/validate_linux_packaging_metadata.py`
 5. Latest installer evidence is green:
    - `Installer Build` passes on Windows, Ubuntu, `macos-14`, and `macos-15-intel`
    - Debian Docker clean-install validation passes
+   - GTK `.deb` lintian QA runs in `Installer Build`
 6. Release notes exist at [`docs/releases/<tag>.md`](releases/v0.2.0.md).
 7. [`docs/RELEASE_NOTES_TEMPLATE.md`](RELEASE_NOTES_TEMPLATE.md) has been copied and tailored for the release.
 
@@ -53,6 +55,7 @@ After workflow completion, verify GitHub Release assets include:
 - Linux `.AppImage`
 - GTK desktop `.deb`
 - `CHECKSUMS-INSTALLERS.txt`
+- `INSTALLER-MANIFEST.txt`
 
 Spot-check the checksum manifest after downloading assets:
 
@@ -73,6 +76,7 @@ The release body is loaded from [`docs/releases/<tag>.md`](releases/v0.2.0.md). 
 - installer asset summary
 - links to the [Windows quickstart](quickstart_windows.md), [Debian quickstart](quickstart_debian.md), and [macOS quickstart](quickstart_macos.md)
 - validation evidence from the current installer workflow
+- checksum and installer manifest references
 - known limitations and support/reporting guidance
 - structure aligned with [`docs/RELEASE_NOTES_TEMPLATE.md`](RELEASE_NOTES_TEMPLATE.md)
 

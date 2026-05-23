@@ -21,6 +21,8 @@ required_files=(
   "COMPLIANCE.md"
   "docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md"
   "docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md"
+  "packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"
+  "scripts/validate_linux_packaging_metadata.py"
 )
 
 echo "prepublish hygiene: verifying required policy/release docs..."
@@ -38,5 +40,8 @@ for marker in ".env" "*.db" "exports/" "*.log"; do
     exit 1
   fi
 done
+
+echo "prepublish hygiene: validating Linux desktop metadata..."
+python3 scripts/validate_linux_packaging_metadata.py
 
 echo "prepublish hygiene: PASS"

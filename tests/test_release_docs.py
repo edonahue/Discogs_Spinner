@@ -175,6 +175,7 @@ def test_active_installer_docs_have_resolvable_local_links_and_assets():
             "docs/START_HERE.md",
             "docs/friend_trial.md",
             "docs/releases/v0.2.1.md",
+            "docs/releases/v0.2.2.md",
             "docs/quickstart_windows.md",
             "docs/quickstart_macos.md",
             "docs/quickstart_debian.md",
@@ -210,5 +211,37 @@ def test_current_release_notes_pin_verified_stable_asset_links():
         "Discogs personal access token",
         "Installer workflow: pass",
         "Release asset verification: pass",
+    ):
+        assert marker in source
+
+
+def test_next_release_notes_prepare_packaging_refresh_assets_and_validation():
+    source = _read("docs/releases/v0.2.2.md")
+    for marker in (
+        "Tag: `v0.2.2`",
+        "COSMIC/GTK desktop launch sizing",
+        "GTK launcher Python fallback",
+        "lazy-loaded gallery album covers",
+        "Linux AppStream metadata",
+        "lintian",
+        "INSTALLER-MANIFEST.txt",
+        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe",
+        "releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb",
+        "scripts/validate_linux_packaging_metadata.py",
+        "Installer Build",
+    ):
+        assert marker in source
+
+
+def test_release_checklist_requires_package_qa_and_clean_first_run_proof():
+    source = _read("docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md")
+    for marker in (
+        "v0.2.2",
+        "validate_linux_packaging_metadata.py",
+        "AppStream metainfo",
+        "lintian",
+        "Discogs token setup and reaches the token prompt",
+        "first sync reaches the collection view or returns a diagnostic failure",
+        "INSTALLER-MANIFEST.txt",
     ):
         assert marker in source

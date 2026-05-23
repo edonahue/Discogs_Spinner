@@ -14,6 +14,7 @@ Utility scripts for building, releasing, testing, and operating Discogs Spinner.
 | `validate_tauri_windows_bundle.ps1` | Verifies Windows Tauri `.msi` and NSIS `.exe` bundles include the expected sidecar |
 | `build_deb.sh` | fpm-based Debian `.deb` package for GTK4 desktop app (build with Python 3.10) |
 | `build_artifacts.sh` | Aggregates all release artifacts after platform builds |
+| `validate_linux_packaging_metadata.py` | Validates GTK `.deb` desktop entry and AppStream metadata before release |
 
 ## Screenshots & media
 
@@ -63,7 +64,8 @@ Utility scripts for building, releasing, testing, and operating Discogs Spinner.
 ## Related docs
 
 - [Public release runbook](../docs/PUBLIC_RELEASE_RUNBOOK.md)
-- [Stable release notes](../docs/releases/v0.2.1.md)
+- [Current stable release notes](../docs/releases/v0.2.1.md)
+- [Next packaging refresh notes](../docs/releases/v0.2.2.md)
 - [Windows quickstart](../docs/quickstart_windows.md)
 - [macOS quickstart](../docs/quickstart_macos.md)
 - [Debian quickstart](../docs/quickstart_debian.md)

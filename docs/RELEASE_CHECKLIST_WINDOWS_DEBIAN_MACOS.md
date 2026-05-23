@@ -5,11 +5,12 @@ Owner: Engineering
 
 This checklist is optimized for a public installer release centered on native installs and first-run success across all three operating systems.
 
-## Target Stable Baseline (`v0.2.1`)
+## Current Stable Baseline (`v0.2.1`) And Next Packaging Refresh (`v0.2.2`)
 
 - `Installer Build` must be green for the published stable tag and release assets.
 - `Windows MSI Smoke` has passed on `main` and is available as the slower Windows confidence lane.
 - Remaining non-blocking launch polish: Windows signing, macOS signing/notarization, and first-user feedback triage.
+- `v0.2.2` should package the post-`v0.2.1` GTK desktop launch, resize, and gallery cover sizing fixes.
 
 ## Global Pre-Release Gate
 
@@ -21,6 +22,7 @@ This checklist is optimized for a public installer release centered on native in
 - [ ] `venv/bin/python -m pytest -q` passes.
 - [ ] `./scripts/gui_smoke_test.sh 12` passes.
 - [ ] `./scripts/gallery_ux_smoke.sh 12` passes.
+- [ ] `python3 scripts/validate_linux_packaging_metadata.py` passes.
 - [ ] `LICENSE`, `PRIVACY.md`, `TERMS.md`, `TRADEMARKS.md`, and `COMPLIANCE.md` reviewed.
 - [ ] No secrets or personal data in commits/artifacts (`.env`, `*.db`, exports, logs).
 - [ ] Release notes drafted (known limitations + setup steps + support boundaries).
@@ -38,7 +40,8 @@ This checklist is optimized for a public installer release centered on native in
 ### FTUX and Functional Checks
 
 - [ ] App launches without CLI prerequisite for normal user flow.
-- [ ] First-run setup clearly handles Discogs token setup.
+- [ ] First-run setup clearly handles Discogs token setup and reaches the token prompt.
+- [ ] After a valid Discogs token, first sync reaches the collection view or returns a diagnostic failure that can be filed.
 - [ ] Optional Spotify flow reaches auth diagnostics and device listing.
 - [ ] `status`, `sync`, `list`, `spin`, `play --open` verified.
 - Reference: [docs/validation/windows_tauri_ftux.md](validation/windows_tauri_ftux.md)
@@ -53,6 +56,8 @@ This checklist is optimized for a public installer release centered on native in
 ### Build and Artifact
 
 - [ ] Debian artifact installs on supported distro baseline.
+- [ ] GTK `.deb` includes AppStream metainfo at `/usr/share/metainfo/io.github.edonahue.DiscogsSpinner.metainfo.xml`.
+- [ ] `lintian` has run against the GTK `.deb` in CI and any error-level package issues are resolved.
 - [ ] Linux Tauri real bundle build passes (`bash ./scripts/validate_tauri_linux_real_build.sh --target-triple x86_64-unknown-linux-gnu` locally or equivalent CI run).
 - [ ] Linux Tauri `.deb` and `.AppImage` bundle validation passes and confirms the packaged `dplayer-api` sidecar is present.
 - [ ] GUI dependencies and CLI dependencies documented clearly.
@@ -78,6 +83,8 @@ This checklist is optimized for a public installer release centered on native in
 ### FTUX and Functional Checks
 
 - [ ] Onboarding flow and setup messaging are understandable for first-time users.
+- [ ] Launch reaches the setup wizard and Discogs token prompt on a clean profile.
+- [ ] After a valid Discogs token, first sync reaches the collection view or returns a diagnostic failure that can be filed.
 - [ ] Local data paths and permissions behave as documented.
 - [ ] Optional provider actions fail gracefully when unavailable.
 - Reference: [docs/validation/macos_installer_ftux.md](validation/macos_installer_ftux.md)
@@ -85,6 +92,7 @@ This checklist is optimized for a public installer release centered on native in
 ## Publish Gate
 
 - [ ] GitHub Release created with per-OS asset list and checksums.
+- [ ] `INSTALLER-MANIFEST.txt` is published next to `CHECKSUMS-INSTALLERS.txt`.
 - [ ] README `Download Now` section and OS quickstarts point to the live stable release path.
 - [ ] Install docs linked prominently from release notes.
 - [ ] Issue templates for install/auth/playback are available.
