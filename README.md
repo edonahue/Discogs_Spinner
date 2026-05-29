@@ -17,6 +17,8 @@
 
 Discogs Spinner is a local-first desktop companion for vinyl collectors who already keep a Discogs collection. Install it, connect your Discogs personal access token, sync once, then browse your shelf, spin a random record, inspect market value, and keep wantlist context close without living in browser tabs.
 
+_Part of my [Open Workbench](https://erichdonahue.com/workbench); featured on [erichdonahue.com/music](https://erichdonahue.com/music)._
+
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
 >
 > **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
