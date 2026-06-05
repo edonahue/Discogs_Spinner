@@ -1,0 +1,67 @@
+name: spinner-for-discogs
+base: core24
+version: "0.2.0"
+summary: Browse your Discogs vinyl collection and control music playback
+description: |
+  Spinner for Discogs is an unofficial third-party desktop client for Discogs.
+  Connect your Discogs account to browse your vinyl collection, spin a random
+  record, and control Spotify or YouTube Music playback — all from one app.
+
+  Features:
+  - Browse and search your Discogs collection and wantlist
+  - Spin the wheel to pick a random album to play
+  - Control Spotify playback directly from the app
+  - View release details, tracklists, and market prices
+  - Sync your collection in the background with progress feedback
+
+  A free Discogs Personal Access Token is required.
+
+grade: stable
+confinement: strict
+
+# Snap publication steps:
+#   snapcraft login
+#   snapcraft build
+#   snapcraft upload spinner-for-discogs_0.2.0_amd64.snap --release=stable
+
+layout:
+  /usr/lib/x86_64-linux-gnu/girepository-1.0:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/girepository-1.0
+  /usr/share/glib-2.0/schemas:
+    bind: $SNAP/usr/share/glib-2.0/schemas
+
+parts:
+  discogs-spinner:
+    plugin: python
+    source: .
+    python-packages:
+      - ".[web,spotify]"
+    stage-packages:
+      - python3-gi
+      - python3-gi-cairo
+      - gir1.2-gtk-4.0
+      - gir1.2-adw-1
+      - libadwaita-1-0
+      - gir1.2-gdkpixbuf-2.0
+      - libgtk-4-1
+      - libglib2.0-0
+      - adwaita-icon-theme
+
+apps:
+  spinner-for-discogs:
+    command: bin/dplayer-gui
+    desktop: usr/share/applications/discogs-spinner.desktop
+    extensions: [gnome]
+    plugs:
+      - network
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - home
+      - opengl
+      - unity7
+      - password-manager-service
+    environment:
+      GI_TYPELIB_PATH: $SNAP/usr/lib/x86_64-linux-gnu/girepository-1.0:$SNAP/usr/lib/aarch64-linux-gnu/girepository-1.0
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages
