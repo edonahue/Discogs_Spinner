@@ -51,6 +51,14 @@
   </screenshots>
 
   <releases>
+    <release version="0.2.2" date="2026-05-23">
+      <description>
+        <p>Packaging refresh: fixes COSMIC/GTK desktop launch sizing, hardens
+        the launcher Python fallback, keeps gallery cover art responsive while
+        scrolling, and adds Linux AppStream metadata for software-centre
+        discoverability.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-03-30">
       <description>
         <p>First public installer release for Linux, Windows, and macOS. Native

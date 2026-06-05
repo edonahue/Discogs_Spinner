@@ -1,6 +1,6 @@
 name: spinner-for-discogs
 base: core24
-version: "0.2.0"
+version: "0.2.2"
 summary: Browse your Discogs vinyl collection and control music playback
 description: |
   Spinner for Discogs is an unofficial third-party desktop client for Discogs.

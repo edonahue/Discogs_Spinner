@@ -1,14 +1,8 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 #
-# IMPORTANT: Before submitting a PR to microsoft/winget-pkgs, replace the
-# placeholder SHA256 values below with the actual checksums of the release
-# artifacts. Compute them with:
-#
-#   certutil -hashfile <file> SHA256   (Windows)
-#   sha256sum <file>                   (Linux/macOS)
-#
-# Release artifacts are at:
-#   https://github.com/edonahue/Discogs_Spinner/releases/tag/v0.2.0
+# NOTE: v0.2.0 release artifacts were superseded before WinGet submission.
+# Submit the 0.2.2 manifests instead (see ../0.2.2/ directory).
+# SHA256 placeholders below are intentionally unfilled for this version.
 #
 PackageIdentifier: EricDonahue.SpinnerforDiscogs
 PackageVersion: 0.2.0
