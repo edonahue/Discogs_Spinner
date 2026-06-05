@@ -2891,6 +2891,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def _check_first_run(self) -> None:
         """Show the setup wizard and FTUX surfaces if Discogs is not yet configured."""
         from discogs_player.use_cases.setup_report import run_setup_report
+        from discogs_player.core.settings import get_setting
 
         try:
             report = run_setup_report()
@@ -2900,6 +2901,10 @@ class MainWindow(Gtk.ApplicationWindow):
         stage = report.get("onboarding_stage")
         if stage == "needs_discogs_token":
             self._update_setup_state(token_missing=True)
+
+        # Re-open wizard if the user closed it mid-flow on a previous session.
+        wizard_step = get_setting("wizard_completed_step")
+        if stage == "needs_discogs_token" or wizard_step in ("1", "2"):
             self._open_setup_wizard()
 
     def _on_wizard_complete(self, _wizard: object) -> None:
@@ -3600,11 +3605,31 @@ class MainWindow(Gtk.ApplicationWindow):
         return self._selected_release_id
 
     def _friendly_error_message(self, exc: Exception) -> str:
+        msg = str(exc)
+        msg_lower = msg.lower()
+        # Provide actionable guidance for common failure patterns.
+        if isinstance(exc, (ConnectionError, TimeoutError)) or any(
+            kw in msg_lower for kw in ("connection", "timeout", "network", "unreachable")
+        ):
+            return "Network error — check your internet connection and try again."
+        if "redirect_uri" in msg_lower:
+            return (
+                "Redirect URI mismatch — add http://127.0.0.1:8765/callback "
+                "to your Spotify Developer Dashboard app."
+            )
+        if isinstance(exc, DiscogsAuthError) or "invalid token" in msg_lower:
+            return (
+                f"{msg} — check your token at discogs.com/settings/developers"
+            )
+        if isinstance(exc, MissingDiscogsTokenError):
+            return (
+                "Discogs token is not configured — visit discogs.com/settings/developers "
+                "to generate one, then add it in Settings."
+            )
         if isinstance(
             exc,
             (
                 DiscogsDependencyError,
-                DiscogsAuthError,
                 DiscogsApiError,
                 PlayerDependencyError,
                 PlayerAuthError,
@@ -3613,12 +3638,19 @@ class MainWindow(Gtk.ApplicationWindow):
                 MatchingDependencyError,
                 NoSpotifyDevicesError,
                 MissingLastSpinError,
-                MissingDiscogsTokenError,
                 ValueError,
             ),
         ):
-            return str(exc)
+            return msg
         return f"{type(exc).__name__}: {exc}"
+
+    def _notify_spotify_auth_expired(self) -> None:
+        """Surface a reconnect prompt when a play action fails with an auth error."""
+        if hasattr(self, "_device_picker"):
+            self._device_picker.set_capability_hint(
+                "Spotify session expired — use 'Connect Spotify' to reconnect.",
+                show_controls=False,
+            )
 
     def _spotify_playback_available(self) -> bool:
         return bool(
@@ -4509,8 +4541,11 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._selected_release_id, album_id
                     )
 
+        raw = payload.get("raw")
+        if isinstance(raw, dict) and raw.get("fallback_reason") == "auth_error":
+            self._notify_spotify_auth_expired()
+
         if not self._spotify_playback_available():
-            raw = payload.get("raw")
             if isinstance(raw, dict):
                 fallback_url = str(raw.get("fallback_open_url") or "").strip()
                 if fallback_url and self._open_spotify_url(fallback_url):

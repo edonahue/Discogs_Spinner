@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import statistics
+import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -161,6 +162,7 @@ class DiscogsClient:
         *,
         per_page: int = 100,
         progress_callback: ProgressCallback | None = None,
+        cancel_token: threading.Event | None = None,
     ) -> list[dict[str, object]]:
         releases: list[dict[str, object]] = []
         httpx_module = _httpx()
@@ -173,6 +175,9 @@ class DiscogsClient:
             pages = 1
 
             while page <= pages:
+                if cancel_token is not None and cancel_token.is_set():
+                    from discogs_player.services.sync_manager import SyncCancelledError
+                    raise SyncCancelledError("Sync cancelled by user.")
                 response = self._request_with_backoff(
                     client,
                     "GET",

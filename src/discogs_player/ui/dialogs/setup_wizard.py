@@ -4,16 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
+import threading
+import time
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from discogs_player.capabilities import get_capabilities
+from discogs_player.core.settings import get_setting, set_setting
 from discogs_player.use_cases.config_management import run_config_set
-from discogs_player.use_cases.sync_collection import run_sync_collection
+from discogs_player.use_cases.sync_collection import SyncCancelledError, run_sync_collection
 
 
 def _open_uri(uri: str) -> None:
@@ -58,6 +61,10 @@ class SetupWizard(Adw.Window):
         self.set_resizable(False)
 
         self._token_saved = False
+        self._sync_cancel_token: threading.Event | None = None
+        self._spotify_auth_url: str | None = None
+        self._oauth_countdown_source: int | None = None
+        self._oauth_countdown_end: float = 0.0
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="wizard")
         self.connect("close-request", self._on_close_request)
 
@@ -73,6 +80,15 @@ class SetupWizard(Adw.Window):
         self._stack.add_named(self._step1, "step1")
         self._stack.add_named(self._step2, "step2")
         self._stack.add_named(self._step3, "step3")
+
+        # Resume at the step where the user left off in a previous session.
+        resumed_step = get_setting("wizard_completed_step")
+        if resumed_step == "2":
+            self._stack.set_visible_child_name("step3")
+        elif resumed_step == "1":
+            self._token_saved = True
+            self._step1_next_btn.set_sensitive(True)
+            self._stack.set_visible_child_name("step2")
 
         header = Adw.HeaderBar()
         header.set_show_end_title_buttons(False)
@@ -155,11 +171,18 @@ class SetupWizard(Adw.Window):
             self._token_status.set_text("Token saved.")
             self._step1_next_btn.set_sensitive(True)
         except Exception as exc:
-            self._token_status.set_text(f"Error: {exc}")
+            msg = str(exc)
+            if "token" in msg.lower() or "auth" in msg.lower() or "401" in msg:
+                self._token_status.set_text(
+                    f"Token rejected — visit discogs.com/settings/developers to generate a valid token."
+                )
+            else:
+                self._token_status.set_text(f"Could not save token: {msg}")
         finally:
             self._save_token_btn.set_sensitive(True)
 
     def _on_step1_next(self, _btn: Gtk.Button) -> None:
+        set_setting("wizard_completed_step", "1")
         self._stack.set_visible_child_name("step2")
 
     # ------------------------------------------------------------------ Step 2
@@ -183,6 +206,12 @@ class SetupWizard(Adw.Window):
         self._sync_btn.set_halign(Gtk.Align.FILL)
         self._sync_btn.connect("clicked", self._on_sync_clicked)
         box.append(self._sync_btn)
+
+        self._sync_cancel_btn = Gtk.Button(label="Cancel sync")
+        self._sync_cancel_btn.set_halign(Gtk.Align.FILL)
+        self._sync_cancel_btn.set_visible(False)
+        self._sync_cancel_btn.connect("clicked", self._on_sync_cancel_clicked)
+        box.append(self._sync_cancel_btn)
 
         self._sync_status = Gtk.Label(label="")
         self._sync_status.set_wrap(True)
@@ -217,11 +246,15 @@ class SetupWizard(Adw.Window):
 
     def _on_sync_clicked(self, _btn: Gtk.Button) -> None:
         self._sync_btn.set_sensitive(False)
+        self._sync_cancel_btn.set_visible(True)
         self._sync_status.set_text("Starting sync…")
+        self._sync_cancel_token = threading.Event()
+        cancel_token = self._sync_cancel_token
 
         def _runner() -> dict[str, object]:
             return run_sync_collection(
-                progress_callback=self._make_sync_progress_callback()
+                progress_callback=self._make_sync_progress_callback(),
+                cancel_token=cancel_token,
             )
 
         future = self._executor.submit(_runner)
@@ -231,21 +264,41 @@ class SetupWizard(Adw.Window):
 
         future.add_done_callback(_on_done)
 
+    def _on_sync_cancel_clicked(self, _btn: Gtk.Button) -> None:
+        if self._sync_cancel_token is not None:
+            self._sync_cancel_token.set()
+
     def _apply_sync_result(self, future: Future[dict[str, object]]) -> bool:
         self._sync_btn.set_sensitive(True)
+        self._sync_cancel_btn.set_visible(False)
+        self._sync_cancel_token = None
         try:
             result = future.result()
-            total = result.get("upserted") or result.get("fetched") or 0
+            total = result.get("upserted_count") or result.get("fetched_count") or 0
             self._sync_status.set_text(f"Sync complete — {total} releases imported.")
             self._step2_next_btn.set_sensitive(True)
+        except SyncCancelledError:
+            self._sync_status.set_text("Sync cancelled. Click 'Sync now' to try again.")
         except Exception as exc:
-            self._sync_status.set_text(f"Sync failed: {exc}")
+            msg = str(exc)
+            msg_lower = msg.lower()
+            if "token" in msg_lower or "401" in msg or "unauthorized" in msg_lower:
+                self._sync_status.set_text(
+                    "Sync failed: token rejected — check your token at discogs.com/settings/developers."
+                )
+            elif "connection" in msg_lower or "timeout" in msg_lower or "network" in msg_lower:
+                self._sync_status.set_text(
+                    "Sync failed: network error — check your internet connection and try again."
+                )
+            else:
+                self._sync_status.set_text(f"Sync failed: {msg}")
         return False
 
     def _on_step2_skip(self, _btn: Gtk.Button) -> None:
         self._on_step2_next(None)
 
     def _on_step2_next(self, _btn: Gtk.Button | None) -> None:
+        set_setting("wizard_completed_step", "2")
         caps = get_capabilities()
         if caps.spotify.addon_available:
             self._stack.set_visible_child_name("step3")
@@ -274,6 +327,18 @@ class SetupWizard(Adw.Window):
         self._spotify_status_label.add_css_class("dim-label")
         box.append(self._spotify_status_label)
 
+        self._copy_link_btn = Gtk.Button(label="Copy link")
+        self._copy_link_btn.set_halign(Gtk.Align.CENTER)
+        self._copy_link_btn.set_visible(False)
+        self._copy_link_btn.connect("clicked", self._on_copy_link_clicked)
+        box.append(self._copy_link_btn)
+
+        self._oauth_countdown_label = Gtk.Label(label="")
+        self._oauth_countdown_label.set_xalign(0.5)
+        self._oauth_countdown_label.add_css_class("dim-label")
+        self._oauth_countdown_label.set_visible(False)
+        box.append(self._oauth_countdown_label)
+
         self._connect_spotify_btn = Gtk.Button(label="Connect Spotify")
         self._connect_spotify_btn.add_css_class("suggested-action")
         self._connect_spotify_btn.set_halign(Gtk.Align.FILL)
@@ -301,7 +366,7 @@ class SetupWizard(Adw.Window):
         self._spotify_status_label.set_text("Waiting for browser authentication…")
 
         def _on_auth_url(url: str) -> None:
-            GLib.idle_add(_open_uri, url)
+            GLib.idle_add(self._on_browser_opened, url)
 
         def _runner() -> dict[str, object]:
             from discogs_player.integrations.spotify.oauth import run_spotify_oauth_login
@@ -319,6 +384,15 @@ class SetupWizard(Adw.Window):
         future.add_done_callback(_on_done)
 
     def _apply_spotify_result(self, future: Future[dict[str, object]]) -> bool:
+        if self._oauth_countdown_source is not None:
+            GLib.source_remove(self._oauth_countdown_source)
+            self._oauth_countdown_source = None
+        self._copy_link_btn.set_visible(False)
+        self._oauth_countdown_label.set_visible(False)
+        self._spotify_auth_url = None
+
+        from discogs_player.integrations.spotify.oauth import SpotifyOAuthTimeoutError
+
         try:
             result = future.result()
             if result.get("ok"):
@@ -328,6 +402,11 @@ class SetupWizard(Adw.Window):
                 msg = str(result.get("message") or result.get("error") or "Unknown error.")
                 self._spotify_status_label.set_text(f"Connection failed: {msg}")
                 self._connect_spotify_btn.set_sensitive(True)
+        except SpotifyOAuthTimeoutError:
+            self._spotify_status_label.set_text(
+                "Authorization timed out. Click 'Connect Spotify' to try again."
+            )
+            self._connect_spotify_btn.set_sensitive(True)
         except Exception as exc:
             self._spotify_status_label.set_text(f"Connection error: {exc}")
             self._connect_spotify_btn.set_sensitive(True)
@@ -340,6 +419,45 @@ class SetupWizard(Adw.Window):
         self._executor.shutdown(wait=False)
         return False  # allow the close to proceed
 
+    def _on_browser_opened(self, url: str) -> bool:
+        self._spotify_auth_url = url
+        _open_uri(url)
+        self._spotify_status_label.set_text(
+            "Waiting for Spotify authorization… (browser opened).\n"
+            "If your browser didn't open, use 'Copy link' to open it manually."
+        )
+        self._copy_link_btn.set_visible(True)
+        self._start_countdown(180)
+        return False
+
+    def _start_countdown(self, seconds: int) -> None:
+        self._oauth_countdown_end = time.monotonic() + seconds
+        self._oauth_countdown_label.set_visible(True)
+        self._tick_countdown()
+        self._oauth_countdown_source = GLib.timeout_add(10_000, self._tick_countdown)
+
+    def _tick_countdown(self) -> bool:
+        remaining = max(0, int(self._oauth_countdown_end - time.monotonic()))
+        mins, secs = divmod(remaining, 60)
+        self._oauth_countdown_label.set_text(f"Authorization expires in {mins}:{secs:02d}…")
+        if remaining <= 0:
+            self._oauth_countdown_source = None
+            return False
+        return True
+
+    def _on_copy_link_clicked(self, btn: Gtk.Button) -> None:
+        if not self._spotify_auth_url:
+            return
+        try:
+            display = Gdk.Display.get_default()
+            if display is not None:
+                display.get_clipboard().set(self._spotify_auth_url)
+                btn.set_label("Copied!")
+                GLib.timeout_add(2000, lambda: btn.set_label("Copy link") or False)
+        except Exception:
+            pass
+
     def _finish(self) -> None:
+        set_setting("wizard_completed_step", None)
         self.emit("setup-complete")
         self.close()  # triggers _on_close_request which shuts down executor

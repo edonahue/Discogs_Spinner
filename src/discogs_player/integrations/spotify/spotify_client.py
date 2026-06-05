@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 import random
 import time
-from typing import Any
+from typing import Any, Callable
 
 from discogs_player.integrations.spotify.oauth import (
     SpotifyAuthError,
@@ -120,9 +120,13 @@ class SpotifyClient:
     )
     playback_rate_limit_max_retries: int = _env_int(
         "DP_SPOTIFY_PLAYBACK_API_MAX_RETRIES",
-        0,
+        1,
         minimum=0,
     )
+    # Optional callable that refreshes the access token and returns the new value.
+    # When provided, a single 401/403 triggers one silent refresh-and-retry before
+    # raising SpotifyAuthError to the caller.
+    token_refresher: Callable[[], str] | None = field(default=None, repr=False)
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -149,7 +153,9 @@ class SpotifyClient:
             else int(max_retries)
         )
         retry_budget = max(0, retry_budget)
-        for attempt in range(retry_budget + 1):
+        _auth_refreshed = False
+        attempt = 0
+        while attempt <= retry_budget:
             try:
                 response = httpx_module.request(
                     method,
@@ -165,6 +171,15 @@ class SpotifyClient:
                 raise
 
             if response.status_code in (401, 403):
+                if self.token_refresher is not None and not _auth_refreshed:
+                    _auth_refreshed = True
+                    try:
+                        self.access_token = self.token_refresher()
+                    except Exception:
+                        raise SpotifyAuthError(
+                            "Spotify auth failed. Re-authenticate or provide a valid access token."
+                        )
+                    continue  # retry same attempt with refreshed token
                 raise SpotifyAuthError(
                     "Spotify auth failed. Re-authenticate or provide a valid access token."
                 )
@@ -193,6 +208,7 @@ class SpotifyClient:
                     retry_after = min(float(self.rate_limit_max_sleep_seconds), retry_after)
                 if retry_after > 0:
                     time.sleep(retry_after)
+                attempt += 1
                 continue
 
             allowed = expected_statuses or {200}
