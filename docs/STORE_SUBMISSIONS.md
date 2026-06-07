@@ -144,14 +144,14 @@ Flathub review typically takes 1-4 weeks.
 
 **Prerequisites:** None (free Snapcraft account).
 
-**File:** `packaging/snap/snapcraft.yaml`
+**File:** `snap/snapcraft.yaml`
 
 **Recommended: GitHub-connected build service (no local tooling needed)**
 
 1. Create account at https://snapcraft.io/create-account
 2. Register snap name: snapcraft.io → My snaps → **New snap** → name: `spinner-for-discogs`
 3. In snap dashboard → **Builds** → "Connect a GitHub repo" →
-   repo: `edonahue/Discogs_Spinner`, manifest path: `packaging/snap/snapcraft.yaml`
+   repo: `edonahue/Discogs_Spinner`, manifest path: `snap/snapcraft.yaml`
 4. Click **Request build** — Snap Store builds and publishes to the `stable` track automatically
 5. Future versions: updating `version:` in `snapcraft.yaml` as part of the release commit
    auto-triggers a rebuild (no manual upload needed)
@@ -194,7 +194,7 @@ Run these steps for every new app version (substitute `0.3.0` with the actual ve
 
 # 2. Update store manifests that must be committed with the release
 #    a. Snap version
-sed -i 's/^version: ".*"/version: "0.3.0"/' packaging/snap/snapcraft.yaml
+sed -i 's/^version: ".*"/version: "0.3.0"/' snap/snapcraft.yaml
 
 #    b. AppStream metainfo — add a <release> entry for the new version
 #       Edit packaging/metainfo/com.discogs-spinner.app.metainfo.xml manually
@@ -225,7 +225,7 @@ git push origin main --tags
 | Store | File | What changes |
 |---|---|---|
 | All | `pyproject.toml`, `Cargo.toml`, `package.json` | `bump_version.sh` handles this |
-| Snap | `packaging/snap/snapcraft.yaml` | `version:` field |
+| Snap | `snap/snapcraft.yaml` | `version:` field |
 | AppStream | `packaging/metainfo/com.discogs-spinner.app.metainfo.xml` | Add `<release>` entry |
 | WinGet | `packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/<VERSION>/` | `update_winget_manifest.sh` handles this |
 | Homebrew | `packaging/homebrew/spinner-for-discogs.rb` | `version`, `sha256` for ARM + Intel |
