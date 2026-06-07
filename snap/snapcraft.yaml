@@ -47,6 +47,20 @@ parts:
       - libglib2.0-0
       - adwaita-icon-theme
 
+  desktop-assets:
+    plugin: dump
+    source: .
+    organize:
+      packaging/deb/dplayer-gui.desktop: usr/share/applications/discogs-spinner.desktop
+      assets/icons/discogs-player.svg: usr/share/icons/hicolor/scalable/apps/discogs-spinner.svg
+    stage:
+      - usr/share/applications/discogs-spinner.desktop
+      - usr/share/icons/hicolor/scalable/apps/discogs-spinner.svg
+    override-build: |
+      craftctl default
+      sed -i 's|^Exec=.*|Exec=spinner-for-discogs|' \
+        "${CRAFT_PART_INSTALL}/usr/share/applications/discogs-spinner.desktop"
+
 apps:
   spinner-for-discogs:
     command: bin/dplayer-gui
