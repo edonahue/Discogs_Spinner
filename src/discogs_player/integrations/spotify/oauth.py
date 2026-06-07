@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import secrets
 import threading
 import time
 import webbrowser
+
+logger = logging.getLogger(__name__)
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlencode, urlparse
@@ -72,6 +75,7 @@ def _keyring_module():
     except ModuleNotFoundError:
         return None
     except Exception:
+        logger.debug("keyring module import failed unexpectedly", exc_info=True)
         return None
     return keyring
 
@@ -83,6 +87,7 @@ def _keyring_get(name: str) -> str | None:
     try:
         value = keyring_module.get_password(SPOTIFY_KEYRING_SERVICE, name)
     except Exception:
+        logger.debug("keyring.get_password failed for %r", name, exc_info=True)
         return None
     if not isinstance(value, str):
         return None

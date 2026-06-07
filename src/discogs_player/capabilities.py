@@ -83,7 +83,14 @@ def get_capabilities(conn=None) -> AppCapabilities:
         )
     else:
         action_label = "Spotify Ready"
-        status_message = "Spotify playback and matching are available."
+        from discogs_player.integrations.spotify.oauth import _keyring_module
+        if _keyring_module() is not None:
+            status_message = "Spotify playback and matching are available."
+        else:
+            status_message = (
+                "Spotify playback and matching are available. "
+                "Note: system keyring is unavailable — credentials are stored in the local database."
+            )
 
     providers: list[ProviderCapability] = []
     for provider_id in listed_provider_ids():

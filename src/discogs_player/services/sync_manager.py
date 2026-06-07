@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import threading
 from typing import Callable
 
 from discogs_player.core.settings import (
@@ -28,6 +29,10 @@ class MissingDiscogsTokenError(RuntimeError):
     """Raised when Discogs token is not configured."""
 
 
+class SyncCancelledError(RuntimeError):
+    """Raised when a sync is cancelled via cancel_token."""
+
+
 def _extract_active_release_ids(items: list[dict[str, object]]) -> list[int]:
     release_ids: list[int] = []
     for item in items:
@@ -41,13 +46,17 @@ def sync_collection(
     *,
     progress_callback: ProgressCallback | None = None,
     allow_empty_deactivate: bool = False,
+    cancel_token: threading.Event | None = None,
 ) -> dict[str, object]:
     token = get_discogs_token()
     if not token:
         raise MissingDiscogsTokenError(discogs_token_missing_message())
 
     client = DiscogsClient(token=token)
-    releases = client.fetch_collection_releases(progress_callback=progress_callback)
+    releases = client.fetch_collection_releases(
+        progress_callback=progress_callback,
+        cancel_token=cancel_token,
+    )
 
     conn = get_connection()
     try:

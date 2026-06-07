@@ -285,7 +285,7 @@ def test_windows_msi_smoke_workflow_runs_manual_and_scheduled_windows_install_sm
 
 def test_tauri_config_uses_top_level_identifier_only():
     payload = json.loads(_read("desktop_shell/src-tauri/tauri.conf.json"))
-    assert payload["identifier"] == "com.discogs-spinner.desktop"
+    assert payload["identifier"] == "com.discogs-spinner.app"
     build = payload["build"]
     assert build["beforeBuildCommand"] == "cd ../webapp && npm run build"
     assert build["frontendDist"] == "../../webapp/dist"

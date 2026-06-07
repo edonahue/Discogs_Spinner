@@ -1,0 +1,69 @@
+---
+# Flatpak manifest for Spinner for Discogs (GTK4 native app)
+#
+# BEFORE SUBMITTING TO FLATHUB:
+# 1. Generate the Python dependency sources using flatpak-pip-generator:
+#      pip install flatpak-pip-generator
+#      flatpak-pip-generator --runtime org.gnome.Sdk//48 \
+#        httpx uvicorn fastapi starlette anyio h11 httpcore \
+#        typer rich python-dotenv ytmusicapi platformdirs \
+#        keyring rapidfuzz certifi idna sniffio \
+#        > python3-deps.json
+#    Then uncomment the "- python3-deps.json" include below.
+#
+# 2. Add screenshots to packaging/metainfo/ per Flathub requirements.
+#
+# 3. Submit a PR to https://github.com/flathub/flathub with this file
+#    (renamed to com.discogs-spinner.app.yml) and the generated deps JSON.
+#
+# 4. Flathub review typically takes 1-4 weeks.
+#
+app-id: com.discogs-spinner.app
+runtime: org.gnome.Platform
+runtime-version: "48"
+sdk: org.gnome.Sdk
+command: dplayer-gui
+
+finish-args:
+  # Network access for Discogs API, Spotify API, and Discogs OAuth callback
+  - --share=network
+  # Shared IPC namespace (required for X11 and some Wayland compositors)
+  - --share=ipc
+  # Display server support
+  - --socket=wayland
+  - --socket=fallback-x11
+  # GPU access for hardware-accelerated rendering
+  - --device=dri
+  # Collection database stored in XDG_DATA_HOME (~/.local/share)
+  - --filesystem=xdg-data
+  # App settings stored in XDG_CONFIG_HOME (~/.config)
+  - --filesystem=xdg-config
+  # Secret Service (system keyring) for Spotify OAuth token storage
+  - --talk-name=org.freedesktop.secrets
+  # Allow launching default browser for Spotify OAuth flow
+  - --talk-name=org.freedesktop.portal.OpenURI
+
+modules:
+  # Python runtime dependencies — generated via flatpak-pip-generator.
+  # Uncomment and regenerate when deps change.
+  # - python3-deps.json
+
+  - name: discogs-spinner
+    buildsystem: simple
+    build-commands:
+      # Install the package and runtime deps into the Flatpak prefix.
+      # The --no-build-isolation flag lets pip use the SDK's Python.
+      - pip3 install --prefix=/app --no-build-isolation --no-deps .
+      # Install the metainfo and desktop files
+      - install -Dm644 packaging/metainfo/com.discogs-spinner.app.metainfo.xml
+          /app/share/metainfo/com.discogs-spinner.app.metainfo.xml
+      - install -Dm644 packaging/deb/dplayer-gui.desktop
+          /app/share/applications/discogs-spinner.desktop
+      - install -Dm644 assets/icons/discogs-player.svg
+          /app/share/icons/hicolor/scalable/apps/com.discogs-spinner.app.svg
+    sources:
+      - type: git
+        url: https://github.com/edonahue/Discogs_Spinner.git
+        # Replace with the exact tag or commit SHA for each release
+        tag: v0.2.2
+        commit: PLACEHOLDER_COMMIT_SHA_REPLACE_BEFORE_SUBMISSION

@@ -381,20 +381,23 @@ def ensure_cover_path_for_gtk(
 # Performance optimization: async image fetching with connection pooling
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+import threading
 from typing import Dict
 
 # Global executor for image operations
 _image_executor: ThreadPoolExecutor | None = None
+_image_executor_lock = threading.Lock()
 _pending_requests: Dict[str, asyncio.Future] = {}
 
 def get_image_executor() -> ThreadPoolExecutor:
-    """Get or create global image executor for performance."""
     global _image_executor
     if _image_executor is None:
-        _image_executor = ThreadPoolExecutor(
-            max_workers=cover_worker_count(),
-            thread_name_prefix="image-cache",
-        )
+        with _image_executor_lock:
+            if _image_executor is None:
+                _image_executor = ThreadPoolExecutor(
+                    max_workers=cover_worker_count(),
+                    thread_name_prefix="image-cache",
+                )
     return _image_executor
 
 
@@ -426,10 +429,7 @@ async def get_or_fetch_cover_path_async(
         return str(migrated)
 
     # Create async task for download
-    loop = asyncio.get_event_loop()
-    if loop is None:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    loop = asyncio.get_running_loop()
 
     task = loop.run_in_executor(
         get_image_executor(),

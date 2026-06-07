@@ -7,6 +7,7 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 import json
+import logging
 from pathlib import Path
 import sys
 import time
@@ -17,11 +18,13 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Windows fallback.
     resource = None  # type: ignore[assignment]
 
+logger = logging.getLogger(__name__)
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from discogs_player.capabilities import get_capabilities
 from discogs_player.core.settings import (
@@ -452,6 +455,10 @@ button.ipod-gallery-card.is-selected {
 
 .ipod-root.ipod-width-ultra-compact .ipod-help-menu-button {
   min-width: 36px;
+}
+
+.ipod-root.ipod-width-ultra-compact .ipod-download-csv-button {
+  display: none;
 }
 
 .ipod-help-menu-button {
@@ -1384,6 +1391,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self._spin_wheel.add_css_class("ipod-mode-spin")
         mode_row.append(self._spin_wheel)
 
+        self._download_csv_button = Gtk.Button(label="Download CSV")
+        self._download_csv_button.add_css_class("ipod-mode-toggle")
+        self._download_csv_button.add_css_class("ipod-download-csv-button")
+        self._download_csv_button.connect("clicked", self._handle_download_csv_clicked)
+        mode_row.append(self._download_csv_button)
+
         self._browse_stack = Gtk.Stack()
         self._browse_stack.set_hexpand(True)
         self._browse_stack.set_vexpand(True)
@@ -1579,7 +1592,7 @@ class MainWindow(Gtk.ApplicationWindow):
             try:
                 GLib.source_remove(source_id)
             except Exception:
-                pass
+                logger.debug("GLib.source_remove failed during animation cleanup", exc_info=True)
         self._split_animation_source_ids.clear()
         self._actions_executor.shutdown(wait=False, cancel_futures=True)
         self._value_ops_executor.shutdown(wait=False, cancel_futures=True)
@@ -2391,7 +2404,7 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             GLib.source_remove(source_id)
         except Exception:
-            pass
+            logger.debug("GLib.source_remove failed clearing layout settle source", exc_info=True)
 
     def _cancel_visible_layout_settle(self) -> None:
         self._layout_settle_generation += 1
@@ -2487,7 +2500,7 @@ class MainWindow(Gtk.ApplicationWindow):
         try:
             GLib.source_remove(source_id)
         except Exception:
-            pass
+            logger.debug("GLib.source_remove failed clearing split animation source", exc_info=True)
 
     def _animate_split_position(
         self,
@@ -3119,10 +3132,12 @@ class MainWindow(Gtk.ApplicationWindow):
     def _check_first_run(self) -> None:
         """Show the setup wizard and FTUX surfaces if Discogs is not yet configured."""
         from discogs_player.use_cases.setup_report import run_setup_report
+        from discogs_player.core.settings import get_setting
 
         try:
             report = run_setup_report()
         except Exception:
+            logger.warning("Failed to load setup report; skipping first-run check", exc_info=True)
             return
         stage = report.get("onboarding_stage")
         readiness = report.get("provider_readiness")
@@ -3132,6 +3147,10 @@ class MainWindow(Gtk.ApplicationWindow):
             required_ready = bool(summary.get("required_services_configured", True))
         if stage == "needs_discogs_token" or not required_ready:
             self._update_setup_state(token_missing=True)
+
+        # Re-open wizard if the user closed it mid-flow on a previous session.
+        wizard_step = get_setting("wizard_completed_step")
+        if stage == "needs_discogs_token" or wizard_step in ("1", "2"):
             self._open_setup_wizard()
 
     def _on_wizard_complete(self, _wizard: object) -> None:
@@ -3915,11 +3934,31 @@ class MainWindow(Gtk.ApplicationWindow):
         return self._selected_release_id
 
     def _friendly_error_message(self, exc: Exception) -> str:
+        msg = str(exc)
+        msg_lower = msg.lower()
+        # Provide actionable guidance for common failure patterns.
+        if isinstance(exc, (ConnectionError, TimeoutError)) or any(
+            kw in msg_lower for kw in ("connection", "timeout", "network", "unreachable")
+        ):
+            return "Network error — check your internet connection and try again."
+        if "redirect_uri" in msg_lower:
+            return (
+                "Redirect URI mismatch — add http://127.0.0.1:8765/callback "
+                "to your Spotify Developer Dashboard app."
+            )
+        if isinstance(exc, DiscogsAuthError) or "invalid token" in msg_lower:
+            return (
+                f"{msg} — check your token at discogs.com/settings/developers"
+            )
+        if isinstance(exc, MissingDiscogsTokenError):
+            return (
+                "Discogs token is not configured — visit discogs.com/settings/developers "
+                "to generate one, then add it in Settings."
+            )
         if isinstance(
             exc,
             (
                 DiscogsDependencyError,
-                DiscogsAuthError,
                 DiscogsApiError,
                 PlayerDependencyError,
                 PlayerAuthError,
@@ -3928,12 +3967,19 @@ class MainWindow(Gtk.ApplicationWindow):
                 MatchingDependencyError,
                 NoSpotifyDevicesError,
                 MissingLastSpinError,
-                MissingDiscogsTokenError,
                 ValueError,
             ),
         ):
-            return str(exc)
+            return msg
         return f"{type(exc).__name__}: {exc}"
+
+    def _notify_spotify_auth_expired(self) -> None:
+        """Surface a reconnect prompt when a play action fails with an auth error."""
+        if hasattr(self, "_device_picker"):
+            self._device_picker.set_capability_hint(
+                "Spotify session expired — use 'Connect Spotify' to reconnect.",
+                show_controls=False,
+            )
 
     def _spotify_playback_available(self) -> bool:
         return bool(
@@ -4835,8 +4881,11 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._selected_release_id, album_id
                     )
 
+        raw = payload.get("raw")
+        if isinstance(raw, dict) and raw.get("fallback_reason") == "auth_error":
+            self._notify_spotify_auth_expired()
+
         if not self._spotify_playback_available():
-            raw = payload.get("raw")
             if isinstance(raw, dict):
                 fallback_url = str(raw.get("fallback_open_url") or "").strip()
                 if fallback_url and self._open_spotify_url(fallback_url):
@@ -5127,6 +5176,49 @@ class MainWindow(Gtk.ApplicationWindow):
         self._wantlist_detail.set_entry(selected)
         release_id_text = str(release_id) if isinstance(release_id, int) else "n/a"
         self._set_status(f"Pricing refreshed for wantlist release {release_id_text}.")
+
+    def _handle_download_csv_clicked(self, _button: Gtk.Button) -> None:
+        dialog = Gtk.FileDialog()
+        dialog.set_title("Save Collection CSV")
+        dialog.set_initial_name("collection.csv")
+        csv_filter = Gtk.FileFilter()
+        csv_filter.set_name("CSV files (*.csv)")
+        csv_filter.add_pattern("*.csv")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(csv_filter)
+        dialog.set_filters(filters)
+        dialog.set_default_filter(csv_filter)
+        dialog.save(self, None, self._on_download_csv_file_chosen)
+
+    def _on_download_csv_file_chosen(
+        self, dialog: Gtk.FileDialog, result: Gio.AsyncResult
+    ) -> None:
+        try:
+            gfile = dialog.save_finish(result)
+        except GLib.Error:
+            return
+        path = gfile.get_path()
+        if not path:
+            return
+        from discogs_player.use_cases.export_collection import run_export_collection
+        self._start_async_action(
+            action_key="download-csv",
+            busy_message="Exporting collection to CSV…",
+            duplicate_message="CSV export already in progress.",
+            runner=lambda: run_export_collection(
+                output_path=path,
+                export_format="csv",
+                include_inactive=False,
+            ),
+            on_started=lambda: self._download_csv_button.set_sensitive(False),
+            on_finished=lambda: self._download_csv_button.set_sensitive(True),
+            on_success=self._on_download_csv_success,
+            on_error=lambda msg: self._set_status(f"CSV export failed: {msg}"),
+        )
+
+    def _on_download_csv_success(self, result: dict[str, object]) -> None:
+        count = result.get("release_count", "?")
+        self._set_status(f"Exported {count} releases to CSV.")
 
     def _handle_browse_sync_clicked(self) -> None:
         self._start_async_action(

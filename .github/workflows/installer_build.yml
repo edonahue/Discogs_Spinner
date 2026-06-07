@@ -116,7 +116,7 @@ jobs:
             tauri_targets: dmg
           - os: windows-2022
             target_triple: x86_64-pc-windows-msvc
-            tauri_targets: msi,nsis
+            tauri_targets: msi,nsis,msix
 
     steps:
       - name: Checkout
@@ -186,6 +186,27 @@ jobs:
           fi
           python3 "${args[@]}"
 
+      # -- macOS: import signing certificate into keychain before build --
+      - name: Import Apple signing certificate (macOS)
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "ci-keychain" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "ci-keychain" build.keychain
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "ci-keychain" build.keychain
+          rm -f certificate.p12
+
       # -- Tauri build --
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2" --locked
@@ -193,8 +214,18 @@ jobs:
       - name: Build Tauri installers
         working-directory: desktop_shell/src-tauri
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ""
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
+          # macOS code signing (Apple Developer Program) — empty until certs are provisioned
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID || '' }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          # Windows code signing — empty until cert is provisioned
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE || '' }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD || '' }}
         run: cargo tauri build --target ${{ matrix.target_triple }} --bundles ${{ matrix.tauri_targets }}
 
       - name: Validate Linux Tauri bundles
@@ -246,6 +277,7 @@ jobs:
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msix/*.msix
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -411,6 +443,7 @@ jobs:
           mapfile -d '' -t dmgs < <(find "$RELEASE_RAW_DIR"/installer-macos-* -type f -name '*.dmg' -print0 | sort -z)
           mapfile -d '' -t msis < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.msi' -print0 | sort -z)
           mapfile -d '' -t exes < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.exe' -print0 | sort -z)
+          mapfile -d '' -t msixs < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.msix' -print0 | sort -z)
 
           copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
           copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
@@ -427,6 +460,9 @@ jobs:
           for exe in "${exes[@]}"; do
             copy_single_asset "$exe" "$(basename "$exe")"
           done
+          for msix in "${msixs[@]}"; do
+            copy_single_asset "$msix" "$(basename "$msix")"
+          done
 
       - name: Validate release asset inventory
         shell: bash
@@ -438,6 +474,7 @@ jobs:
           ls "$RELEASE_PUBLISH_DIR"/*.dmg >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null
+          ls "$RELEASE_PUBLISH_DIR"/*.msix >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.AppImage >/dev/null
 
       - name: Generate SHA256 checksums
@@ -516,5 +553,6 @@ jobs:
           grep -F ".dmg" <<<"$asset_names"
           grep -F ".msi" <<<"$asset_names"
           grep -F ".exe" <<<"$asset_names"
+          grep -F ".msix" <<<"$asset_names"
           grep -Fx "CHECKSUMS-INSTALLERS.txt" <<<"$asset_names"
           grep -Fx "INSTALLER-MANIFEST.txt" <<<"$asset_names"

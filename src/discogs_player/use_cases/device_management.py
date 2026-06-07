@@ -51,8 +51,11 @@ def choose_auto_device(devices: list[dict[str, object]]) -> dict[str, object]:
             "Spotify returned devices without ids; cannot set default device."
         )
 
+    unrestricted = [d for d in with_ids if not d.get("is_restricted")]
+    candidates = unrestricted if unrestricted else with_ids
+
     return max(
-        with_ids,
+        candidates,
         key=lambda device: (
             _score_device(device),
             str(device.get("name") or ""),

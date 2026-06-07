@@ -159,6 +159,16 @@ else
     echo "Warning: icon not found at ${ICON_SOURCE}" >&2
 fi
 
+# AppStream metainfo (enables GNOME Software / KDE Discover discoverability)
+METAINFO_FILE="${ROOT_DIR}/packaging/metainfo/com.discogs-spinner.app.metainfo.xml"
+METAINFO_DIR="${STAGING_DIR}/usr/share/metainfo"
+mkdir -p "$METAINFO_DIR"
+if [[ -f "$METAINFO_FILE" ]]; then
+    cp "$METAINFO_FILE" "${METAINFO_DIR}/com.discogs-spinner.app.metainfo.xml"
+else
+    echo "Warning: metainfo not found at ${METAINFO_FILE}" >&2
+fi
+
 # Debian package metadata.
 DOC_DIR="${STAGING_DIR}/usr/share/doc/discogs-spinner"
 mkdir -p "$DOC_DIR"

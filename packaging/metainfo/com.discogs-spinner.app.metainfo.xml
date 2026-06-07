@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.discogs-spinner.app</id>
+
+  <name>Spinner for Discogs</name>
+  <summary>Browse your Discogs vinyl collection and control music playback</summary>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <developer_name>Eric Donahue</developer_name>
+
+  <description>
+    <p>
+      Spinner for Discogs is an unofficial third-party desktop client for Discogs.
+      Connect your Discogs account to browse your vinyl collection, spin a random
+      record, and control Spotify or YouTube Music playback — all from one app.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Browse and search your Discogs collection and wantlist</li>
+      <li>Spin the wheel to pick a random album to play</li>
+      <li>Control Spotify playback directly from the app</li>
+      <li>View release details, tracklists, and market prices</li>
+      <li>Sync your collection in the background with progress feedback</li>
+    </ul>
+    <p>
+      A free Discogs Personal Access Token is required. Optional Spotify
+      integration requires a Spotify account and internet connection.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">discogs-spinner.desktop</launchable>
+
+  <url type="homepage">https://github.com/edonahue/Discogs_Spinner</url>
+  <url type="bugtracker">https://github.com/edonahue/Discogs_Spinner/issues</url>
+  <url type="vcs-browser">https://github.com/edonahue/Discogs_Spinner</url>
+
+  <screenshots>
+    <!--
+      BEFORE SUBMITTING TO FLATHUB: Replace these placeholder entries with real
+      screenshots of the app. Recommended size: 1248x702 or 624x351.
+      At least one screenshot is required for Flathub review.
+
+      Example:
+      <screenshot type="default">
+        <caption>Collection gallery showing vinyl records</caption>
+        <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/screenshots/gallery.png</image>
+      </screenshot>
+    -->
+  </screenshots>
+
+  <releases>
+    <release version="0.2.2" date="2026-05-23">
+      <description>
+        <p>Packaging refresh: fixes COSMIC/GTK desktop launch sizing, hardens
+        the launcher Python fallback, keeps gallery cover art responsive while
+        scrolling, and adds Linux AppStream metadata for software-centre
+        discoverability.</p>
+      </description>
+    </release>
+    <release version="0.2.0" date="2026-03-30">
+      <description>
+        <p>First public installer release for Linux, Windows, and macOS. Native
+        cross-platform installers for all major desktop operating systems.</p>
+      </description>
+    </release>
+  </releases>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Music</category>
+  </categories>
+
+  <keywords>
+    <keyword>discogs</keyword>
+    <keyword>vinyl</keyword>
+    <keyword>music</keyword>
+    <keyword>collection</keyword>
+    <keyword>spotify</keyword>
+    <keyword>record</keyword>
+    <keyword>player</keyword>
+  </keywords>
+
+  <content_rating type="oars-1.1" />
+
+  <provides>
+    <binary>dplayer-gui</binary>
+  </provides>
+</component>

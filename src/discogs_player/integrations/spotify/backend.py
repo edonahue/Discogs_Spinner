@@ -132,7 +132,10 @@ class SpotifyPlayerBackend(PlayerBackend):
         self._ensure_addon()
         try:
             token = get_spotify_access_token(conn=conn)
-            return SpotifyClient(access_token=token)
+            return SpotifyClient(
+                access_token=token,
+                token_refresher=lambda: get_spotify_access_token(conn=conn),
+            )
         except SpotifyDependencyError as exc:
             raise PlayerDependencyError(str(exc)) from exc
         except SpotifyAuthError as exc:
