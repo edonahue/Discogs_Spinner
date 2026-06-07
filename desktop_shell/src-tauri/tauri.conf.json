@@ -42,8 +42,8 @@
       "digestAlgorithm": "sha256",
       "timestampUrl": "",
       "msix": {
-        "identityName": "EricDonahue.SpinnerforDiscogs",
-        "publisherDisplayName": "Eric Donahue"
+        "identityName": "ErichDonahue.SpinnerforDiscogs",
+        "publisherDisplayName": "Erich Donahue"
       }
     },
     "macOS": {

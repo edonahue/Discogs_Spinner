@@ -44,9 +44,13 @@ Verify with: `spctl --assess --verbose /Applications/DiscogSpinner.app`
 Required for: Microsoft Store (MSIX) submission.
 - Register at https://partner.microsoft.com/dashboard ($19 one-time)
 - Reserve the app name **"Spinner for Discogs"**
-- Note your assigned **Publisher Display Name** and **Publisher ID** (e.g. `CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`)
-- Update `desktop_shell/src-tauri/tauri.conf.json` → `bundle.windows.msix.publisherDisplayName`
-  to match your registered Publisher Display Name exactly
+- On the app overview → **App identity** page, note:
+  - **Publisher display name** (as registered)
+  - **Package/Identity Name** (e.g. `ErichDonahue.SpinnerforDiscogs` or a GUID-based string)
+- Update `desktop_shell/src-tauri/tauri.conf.json` → `bundle.windows.msix`:
+  - `identityName` → the exact Package/Identity Name from App identity page
+  - `publisherDisplayName` → your registered Publisher Display Name
+- Commit and push — CI will build a fresh MSIX with the correct identity on the next tag
 
 ---
 
@@ -189,15 +193,12 @@ a tag push completes, the `.msix` file is available in the GitHub Release assets
 Run these steps for every new app version (substitute `0.3.0` with the actual version):
 
 ```bash
-# 1. Bump version across pyproject.toml, Cargo.toml, webapp/package.json
+# 1. Bump version across pyproject.toml, Cargo.toml, webapp/package.json, snap/snapcraft.yaml
 ./scripts/bump_version.sh 0.3.0
 
-# 2. Update store manifests that must be committed with the release
-#    a. Snap version
-sed -i 's/^version: ".*"/version: "0.3.0"/' snap/snapcraft.yaml
-
-#    b. AppStream metainfo — add a <release> entry for the new version
-#       Edit packaging/metainfo/com.discogs-spinner.app.metainfo.xml manually
+# 2. AppStream metainfo — add a <release> entry for the new version (~30 sec, manual)
+#    Edit packaging/metainfo/com.discogs-spinner.app.metainfo.xml
+#    Edit packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml
 
 # 3. Write release notes (required by CI to publish the GitHub Release)
 cp docs/releases/TEMPLATE.md docs/releases/v0.3.0.md
@@ -209,24 +210,28 @@ git commit -m "Release 0.3.0"
 git tag v0.3.0
 git push origin main --tags
 
-# 5. After CI completes: generate WinGet manifests (fetches SHA256 automatically)
+# 5. After CI completes
+#    a. Generate WinGet manifests (fetches SHA256 automatically)
 ./scripts/update_winget_manifest.sh 0.3.0
+#       - In your microsoft/winget-pkgs fork, copy:
+#           packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
+#         to manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
+#       - Open PR titled: "Update ErichDonahue.SpinnerforDiscogs to 0.3.0"
 
-# 6. Submit WinGet PR
-#    - In your microsoft/winget-pkgs fork, create:
-#        manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
-#    - Copy the 3 YAML files from packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
-#    - Open PR titled: "Update ErichDonahue.SpinnerforDiscogs to 0.3.0"
-#    (Snap Store auto-rebuilds from the pushed tag — no extra step needed)
+#    b. Upload the .msix to Microsoft Partner Center (once account exists)
+#       Download from GitHub Release → Partner Center → Spinner for Discogs
+#       → Start submission → Packages → upload .msix
+
+#    (Snap Store auto-rebuilds from the pushed tag via snap_publish.yml — no manual step)
 ```
 
 ### Per-store files to update each release
 
 | Store | File | What changes |
 |---|---|---|
-| All | `pyproject.toml`, `Cargo.toml`, `package.json` | `bump_version.sh` handles this |
-| Snap | `snap/snapcraft.yaml` | `version:` field |
+| All | `pyproject.toml`, `Cargo.toml`, `package.json`, `snap/snapcraft.yaml` | `bump_version.sh` handles this |
 | AppStream | `packaging/metainfo/com.discogs-spinner.app.metainfo.xml` | Add `<release>` entry |
 | WinGet | `packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/<VERSION>/` | `update_winget_manifest.sh` handles this |
+| Microsoft Store | GitHub Release `.msix` → Partner Center upload | Manual (~5 min) |
 | Homebrew | `packaging/homebrew/spinner-for-discogs.rb` | `version`, `sha256` for ARM + Intel |
 | Flatpak | `packaging/flatpak/com.discogs-spinner.app.yml` | `tag:` and `commit:` fields |

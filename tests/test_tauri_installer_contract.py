@@ -292,3 +292,7 @@ def test_tauri_config_uses_top_level_identifier_only():
     bundle = payload["bundle"]
     assert "identifier" not in bundle
     assert bundle["icon"][0] == "../icons/32x32.png"
+    assert "msix" in bundle["targets"]
+    msix = bundle["windows"]["msix"]
+    assert msix["identityName"]
+    assert msix["publisherDisplayName"]
