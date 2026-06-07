@@ -18,6 +18,12 @@ description: |
 
 grade: stable
 confinement: strict
+license: MIT
+title: Spinner for Discogs
+website: https://github.com/edonahue/Discogs_Spinner
+contact: https://github.com/edonahue/Discogs_Spinner/issues
+source-code: https://github.com/edonahue/Discogs_Spinner
+issues: https://github.com/edonahue/Discogs_Spinner/issues
 
 # Snap publication steps:
 #   snapcraft login
@@ -53,9 +59,11 @@ parts:
     organize:
       packaging/deb/dplayer-gui.desktop: usr/share/applications/discogs-spinner.desktop
       assets/icons/discogs-player.svg: usr/share/icons/hicolor/scalable/apps/discogs-spinner.svg
+      packaging/metainfo/com.discogs-spinner.app.metainfo.xml: usr/share/metainfo/com.discogs-spinner.app.metainfo.xml
     stage:
       - usr/share/applications/discogs-spinner.desktop
       - usr/share/icons/hicolor/scalable/apps/discogs-spinner.svg
+      - usr/share/metainfo/com.discogs-spinner.app.metainfo.xml
     override-build: |
       craftctl default
       sed -i 's|^Exec=.*|Exec=spinner-for-discogs|' \
