@@ -21,6 +21,9 @@ on:
         required: false
         default: "dev"
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ---------------------------------------------------------------------------
   # Phase B: Build the PyInstaller API sidecar on each platform
