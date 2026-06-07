@@ -22,7 +22,7 @@ confinement: strict
 # Snap publication steps:
 #   snapcraft login
 #   snapcraft build
-#   snapcraft upload spinner-for-discogs_0.2.0_amd64.snap --release=stable
+#   snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
 
 layout:
   /usr/lib/x86_64-linux-gnu/girepository-1.0:

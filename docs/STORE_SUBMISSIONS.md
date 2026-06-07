@@ -70,19 +70,23 @@ Required for: Microsoft Store (MSIX) submission.
 
 **Prerequisites:** None (no signing required for WinGet).
 
-**Files:** `packaging/winget/manifests/e/EricDonahue/SpinnerforDiscogs/0.2.0/`
+**Files:** `packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/<VERSION>/`
 
-1. Download the `.exe` (NSIS installer) and `.msi` (WiX installer) from the GitHub Release
-2. Compute SHA256 checksums and replace `PLACEHOLDER_SHA256_REPLACE_BEFORE_PR_SUBMISSION`
-   in `EricDonahue.SpinnerforDiscogs.installer.yaml`
-3. Validate manifests locally (requires `winget-cli`):
-   ```
-   winget validate --manifest packaging/winget/manifests/e/EricDonahue/SpinnerforDiscogs/0.2.0/
-   ```
-4. Fork https://github.com/microsoft/winget-pkgs
-5. Copy the entire `packaging/winget/manifests/e/EricDonahue/SpinnerforDiscogs/` directory
-   to the same path in your fork
-6. Submit PR — WinGet bot will auto-validate manifests
+For new releases, use the automation script (see [Per-Release Checklist](#per-release-checklist)):
+
+```bash
+./scripts/update_winget_manifest.sh 0.3.0
+```
+
+This downloads `CHECKSUMS-INSTALLERS.txt` from the GitHub Release, fills in the correct
+SHA256 values, and creates a ready-to-submit manifest directory.
+
+For manual submission:
+1. Fork https://github.com/microsoft/winget-pkgs
+2. Copy the new version directory to `manifests/e/ErichDonahue/SpinnerforDiscogs/<VERSION>/`
+3. Submit PR — WinGet bot auto-validates manifests within minutes
+4. Sign the CLA if prompted (`@microsoft-github-policy-service agree`)
+5. Maintainers typically merge within 1-3 days
 
 ---
 
@@ -138,27 +142,28 @@ Flathub review typically takes 1-4 weeks.
 
 ## Channel 4: Snap Store (Linux)
 
-**Prerequisites:** None.
+**Prerequisites:** None (free Snapcraft account).
 
 **File:** `packaging/snap/snapcraft.yaml`
 
-1. Install snapcraft: `sudo snap install snapcraft --classic`
-2. Create a snapcraft.io account at https://snapcraft.io/account
-3. Build the snap from the project root:
-   ```bash
-   cd packaging/snap
-   snapcraft
-   ```
-4. Review the built snap:
-   ```bash
-   snap install spinner-for-discogs_0.2.0_amd64.snap --dangerous
-   snap run spinner-for-discogs
-   ```
-5. Login and upload:
-   ```bash
-   snapcraft login
-   snapcraft upload spinner-for-discogs_0.2.0_amd64.snap --release=stable
-   ```
+**Recommended: GitHub-connected build service (no local tooling needed)**
+
+1. Create account at https://snapcraft.io/create-account
+2. Register snap name: snapcraft.io → My snaps → **New snap** → name: `spinner-for-discogs`
+3. In snap dashboard → **Builds** → "Connect a GitHub repo" →
+   repo: `edonahue/Discogs_Spinner`, manifest path: `packaging/snap/snapcraft.yaml`
+4. Click **Request build** — Snap Store builds and publishes to the `stable` track automatically
+5. Future versions: updating `version:` in `snapcraft.yaml` as part of the release commit
+   auto-triggers a rebuild (no manual upload needed)
+
+**Alternative: local build and upload**
+```bash
+sudo snap install snapcraft --classic
+snapcraft login
+# from repo root:
+snapcraft --destructive-mode
+snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
+```
 
 ---
 
@@ -179,17 +184,49 @@ a tag push completes, the `.msix` file is available in the GitHub Release assets
 
 ---
 
-## Updating for New Releases
+## Per-Release Checklist
 
-When a new version is released, update the following files before tagging:
+Run these steps for every new app version (substitute `0.3.0` with the actual version):
 
-| File | What to update |
-|---|---|
-| `packaging/winget/manifests/e/EricDonahue/SpinnerforDiscogs/<NEW_VERSION>/` | Copy and update installer YAML with new URLs + SHA256 hashes |
-| `packaging/homebrew/spinner-for-discogs.rb` | Update `version`, `sha256` for both architectures |
-| `packaging/flatpak/com.discogs-spinner.app.yml` | Update `tag:` and `commit:` |
-| `packaging/metainfo/com.discogs-spinner.app.metainfo.xml` | Add new `<release>` entry |
-| `packaging/snap/snapcraft.yaml` | Update `version:` |
+```bash
+# 1. Bump version across pyproject.toml, Cargo.toml, webapp/package.json
+./scripts/bump_version.sh 0.3.0
 
-The `scripts/bump_version.sh` script handles `pyproject.toml`, `Cargo.toml`, and
-`package.json` version bumps. Store manifest files must be updated manually.
+# 2. Update store manifests that must be committed with the release
+#    a. Snap version
+sed -i 's/^version: ".*"/version: "0.3.0"/' packaging/snap/snapcraft.yaml
+
+#    b. AppStream metainfo — add a <release> entry for the new version
+#       Edit packaging/metainfo/com.discogs-spinner.app.metainfo.xml manually
+
+# 3. Write release notes (required by CI to publish the GitHub Release)
+cp docs/releases/TEMPLATE.md docs/releases/v0.3.0.md
+# Edit docs/releases/v0.3.0.md — fill in What's New, Bug Fixes, etc.
+
+# 4. Commit everything, tag, and push — CI builds all installers automatically
+git add -p
+git commit -m "Release 0.3.0"
+git tag v0.3.0
+git push origin main --tags
+
+# 5. After CI completes: generate WinGet manifests (fetches SHA256 automatically)
+./scripts/update_winget_manifest.sh 0.3.0
+
+# 6. Submit WinGet PR
+#    - In your microsoft/winget-pkgs fork, create:
+#        manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
+#    - Copy the 3 YAML files from packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
+#    - Open PR titled: "Update ErichDonahue.SpinnerforDiscogs to 0.3.0"
+#    (Snap Store auto-rebuilds from the pushed tag — no extra step needed)
+```
+
+### Per-store files to update each release
+
+| Store | File | What changes |
+|---|---|---|
+| All | `pyproject.toml`, `Cargo.toml`, `package.json` | `bump_version.sh` handles this |
+| Snap | `packaging/snap/snapcraft.yaml` | `version:` field |
+| AppStream | `packaging/metainfo/com.discogs-spinner.app.metainfo.xml` | Add `<release>` entry |
+| WinGet | `packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/<VERSION>/` | `update_winget_manifest.sh` handles this |
+| Homebrew | `packaging/homebrew/spinner-for-discogs.rb` | `version`, `sha256` for ARM + Intel |
+| Flatpak | `packaging/flatpak/com.discogs-spinner.app.yml` | `tag:` and `commit:` fields |
