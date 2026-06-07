@@ -2,11 +2,11 @@
 Version=1.0
 Type=Application
 Name=Discogs Spinner
-Comment=Browse Discogs collection and control Spotify/YouTube Music playback
+Comment=Browse, spin, and value your Discogs vinyl collection
 Exec=dplayer-gui
 Icon=discogs-spinner
 Terminal=false
 Categories=AudioVideo;Audio;Player;Music;
-Keywords=Discogs;Spotify;YouTube;Collection;Music;Vinyl;
+Keywords=Discogs;Records;Vinyl;Collection;Wantlist;Market Value;Spotify;YouTube;Music;
 StartupNotify=true
-StartupWMClass=com.discogs-spinner.app
+StartupWMClass=com.discogs_player.app

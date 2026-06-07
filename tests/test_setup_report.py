@@ -53,6 +53,10 @@ def test_setup_report_requires_discogs_token_and_spotify_addon(
     assert report["onboarding_stage"] == "needs_discogs_token"
     assert report["discogs"]["configured"] is False
     assert report["spotify"]["addon_available"] is False
+    readiness = report["provider_readiness"]
+    assert readiness["core_service"]["service_id"] == "discogs"
+    assert readiness["core_service"]["required"] is True
+    assert readiness["summary"]["required_services_configured"] is False
     checklist = report["first_run_checklist"]
     assert checklist["discogs_configured"] is False
     assert checklist["collection_synced"] is True
@@ -65,6 +69,8 @@ def test_setup_report_requires_discogs_token_and_spotify_addon(
         report["links"]["spotify_dashboard_url"]
         == "https://developer.spotify.com/dashboard"
     )
+    assert isinstance(report["daily_use_actions"], list)
+    assert report["daily_use_actions"]
     assert 'export DISCOGS_TOKEN="your_discogs_personal_token"' in report["next_steps"]
     assert 'pip install -e ".[spotify]"' in report["next_steps"]
 
@@ -100,6 +106,12 @@ def test_setup_report_ready_when_discogs_and_spotify_are_configured(
     assert report["discogs"]["token_source"] == "environment"
     assert report["collection"]["release_count_active"] == 1
     assert report["spotify"]["configured"] is True
+    assert "addon_available" in report["spotify"]
+    assert "action_label" in report["spotify"]
+    assert "status_message" in report["spotify"]
+    readiness = report["provider_readiness"]
+    assert readiness["summary"]["required_services_configured"] is True
+    assert readiness["summary"]["collection_synced"] is True
     checklist = report["first_run_checklist"]
     assert checklist["discogs_configured"] is True
     assert checklist["collection_synced"] is True
@@ -107,6 +119,7 @@ def test_setup_report_ready_when_discogs_and_spotify_are_configured(
     assert checklist["spotify_configured"] is True
     assert checklist["ready_for_daily_use"] is True
     assert report["spotify"]["dashboard_url"] == "https://developer.spotify.com/dashboard"
+    assert any("dplayer spin" in str(step) for step in report["daily_use_actions"])
     assert "dplayer devices --json" in report["next_steps"]
 
 
@@ -138,6 +151,12 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
     assert report["profile"] == "plus"
     assert report["onboarding_stage"] == "needs_spotify_auth"
     assert report["spotify"]["configured"] is False
+    assert "addon_available" in report["spotify"]
+    assert "action_label" in report["spotify"]
+    assert "status_message" in report["spotify"]
+    readiness = report["provider_readiness"]
+    assert isinstance(readiness.get("providers"), list)
+    assert readiness["summary"]["ready_provider_count"] == 0
     checklist = report["first_run_checklist"]
     assert checklist["discogs_configured"] is True
     assert checklist["collection_synced"] is True
@@ -156,6 +175,7 @@ def test_setup_report_spotify_auth_next_steps_include_redirect_uri(
         report["spotify"]["oauth_guide_url"]
         == "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
     )
+    assert any("Optional: connect Spotify" in str(step) for step in report["daily_use_actions"])
     assert "dplayer auth spotify-doctor" in report["next_steps"]
 
 

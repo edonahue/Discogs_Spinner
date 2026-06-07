@@ -14,15 +14,15 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 Download the current stable Windows installer directly:
 
-- Recommended installer: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe)
-- MSI installer: [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- Recommended installer: [Discogs Spinner_0.2.1_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe)
+- MSI installer: [Discogs Spinner_0.2.1_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Choose either installer:
 
-- `Discogs Spinner_0.2.0_x64-setup.exe` for the standard guided installer flow
-- `Discogs Spinner_0.2.0_x64_en-US.msi` if you prefer MSI deployment tooling
+- `Discogs Spinner_0.2.1_x64-setup.exe` for the standard guided installer flow
+- `Discogs Spinner_0.2.1_x64_en-US.msi` if you prefer MSI deployment tooling
 
 Run the installer and launch **Discogs Spinner** from the Start menu.
 

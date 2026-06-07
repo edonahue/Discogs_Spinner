@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from discogs_player.services import image_cache
@@ -44,6 +46,31 @@ def test_get_or_fetch_cover_path_caches_once(isolated_xdg, monkeypatch):
     assert Path(first).exists()
     assert Path(first).suffix == ".jpg"
     assert Path(first).read_bytes() == b"image-bytes"
+
+
+def test_get_or_fetch_cover_path_deduplicates_concurrent_fetches(
+    isolated_xdg,
+    monkeypatch,
+):
+    calls = {"count": 0}
+
+    def _fake_urlopen(request, timeout=None):
+        _ = (request, timeout)
+        calls["count"] += 1
+        time.sleep(0.05)
+        return _FakeResponse(b"image-bytes")
+
+    monkeypatch.setattr(image_cache.urllib.request, "urlopen", _fake_urlopen)
+
+    url = "https://example.test/concurrent-cover.jpg"
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(image_cache.get_or_fetch_cover_path, url)
+        second = executor.submit(image_cache.get_or_fetch_cover_path, url)
+        results = [first.result(timeout=2), second.result(timeout=2)]
+
+    assert results[0] is not None
+    assert results[1] == results[0]
+    assert calls["count"] == 1
 
 
 def test_get_or_fetch_cover_path_rejects_non_image_content(isolated_xdg, monkeypatch):
@@ -115,3 +142,49 @@ def test_get_or_fetch_cover_path_uses_discogs_friendly_headers(
     assert captured["referer"] == "https://www.discogs.com/"
     assert "image/" in captured["accept"]
     assert captured["accept_language"] == "en-US,en;q=0.9"
+
+
+def test_ensure_cover_path_for_gtk_refetches_incompatible_cached_format(
+    isolated_xdg, monkeypatch
+):
+    captured: dict[str, str] = {}
+    url = "https://i.discogs.com/hash/discogs-images/R-99.jpg"
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+    incompatible = image_cache.cover_cache_dir() / f"{digest}.avif"
+    incompatible.parent.mkdir(parents=True, exist_ok=True)
+    incompatible.write_bytes(b"\x00\x00\x00\x18ftypavif\x00\x00\x00\x00")
+
+    def _fake_urlopen(request, timeout=None):
+        _ = timeout
+        header_map = {str(k).lower(): str(v) for k, v in request.header_items()}
+        captured["accept"] = header_map.get("accept", "")
+        return _FakeResponse(b"\xff\xd8\xffjpeg-bytes", content_type="image/jpeg")
+
+    monkeypatch.setattr(image_cache.urllib.request, "urlopen", _fake_urlopen)
+    resolved = image_cache.ensure_cover_path_for_gtk(url, str(incompatible))
+
+    assert resolved is not None
+    resolved_path = Path(resolved)
+    assert resolved_path.suffix == ".jpg"
+    assert resolved_path.exists()
+    assert not incompatible.exists()
+    assert "image/webp" in captured["accept"]
+    assert "image/avif" not in captured["accept"]
+
+
+def test_get_or_fetch_cover_path_prefer_gtk_compatible_rejects_avif(
+    isolated_xdg, monkeypatch
+):
+    def _fake_urlopen(request, timeout=None):
+        _ = (request, timeout)
+        return _FakeResponse(
+            b"\x00\x00\x00\x18ftypavif\x00\x00\x00\x00",
+            content_type="image/avif",
+        )
+
+    monkeypatch.setattr(image_cache.urllib.request, "urlopen", _fake_urlopen)
+    resolved = image_cache.get_or_fetch_cover_path(
+        "https://i.discogs.com/hash/discogs-images/R-100.jpg",
+        prefer_gtk_compatible=True,
+    )
+    assert resolved is None

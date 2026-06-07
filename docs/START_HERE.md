@@ -2,6 +2,8 @@
 
 Three quick questions will point you at the fastest successful setup path.
 
+You will need a Discogs account and personal access token before the app can sync your collection. Get one from [Discogs Settings → Developers](https://www.discogs.com/settings/developers), then keep it ready for the first-run setup wizard.
+
 ---
 
 ## Which setup is right for you?
@@ -45,6 +47,8 @@ Three quick questions will point you at the fastest successful setup path.
 ---
 
 ## What to expect at the end of each path
+
+The goal is the same on every platform: install, paste your Discogs token, sync once, see your records, and use Spin to choose something to play.
 
 ### Web App (~10 min)
 Two terminals running (`dplayer-api` + `npm run dev`), browser open at `http://localhost:5173`.

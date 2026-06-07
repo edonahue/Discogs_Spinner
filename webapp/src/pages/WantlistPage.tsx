@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchWantlist, Release, SyncSummary, syncWantlist } from "../api";
 import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
+import { usePageVisible } from "../hooks/usePageVisible";
 
 const PAGE_SIZE = 25;
 
@@ -56,6 +57,7 @@ export function WantlistPage() {
   const [syncMessage, setSyncMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [pendingFocusValidation, setPendingFocusValidation] = useState(false);
+  const pageVisible = usePageVisible();
   const focusedReleaseId = parseFocusId(searchParams.get("focus"));
 
   useEffect(() => {
@@ -78,7 +80,9 @@ export function WantlistPage() {
   }, [debouncedQuery, debouncedYear, debouncedGenre, showValue]);
 
   useEffect(() => {
+    if (!pageVisible) return;
     let cancelled = false;
+    const controller = new AbortController();
     const shouldValidateFocus = pendingFocusValidation;
     setLoading(true);
     setError("");
@@ -88,7 +92,7 @@ export function WantlistPage() {
       year: debouncedYear || undefined,
       genres: debouncedGenre ? [debouncedGenre] : undefined,
       withValue: showValue || undefined,
-    })
+    }, { signal: controller.signal })
       .then((payload) => {
         if (cancelled) return;
         const nextEntries = payload.data ?? [];
@@ -106,6 +110,7 @@ export function WantlistPage() {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to load wantlist.");
         if (shouldValidateFocus) {
           setPendingFocusValidation(false);
@@ -114,8 +119,11 @@ export function WantlistPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
-  }, [debouncedQuery, debouncedYear, debouncedGenre, showValue, limit, reloadToken]);
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [debouncedQuery, debouncedYear, debouncedGenre, showValue, limit, reloadToken, pageVisible]);
 
   function clearFilters() {
     setQuery("");

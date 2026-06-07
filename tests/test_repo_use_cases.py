@@ -463,6 +463,14 @@ def test_status_report_shape_and_values(isolated_xdg):
     assert report["default_spotify_device"] == {"id": "device-1", "name": "Desk"}
     assert report["market_value_last_updated"] is None
     assert report["wantlist_count"] == 1
+    assert isinstance(report["provider_readiness"], dict)
+    assert report["provider_readiness"]["schema_version"] == 2
+    # Backward-compatible Spotify-shaped payload remains available for legacy adapters.
+    assert isinstance(report["spotify_capability"], dict)
+    assert "addon_available" in report["spotify_capability"]
+    assert "configured" in report["spotify_capability"]
+    assert "action_label" in report["spotify_capability"]
+    assert "status_message" in report["spotify_capability"]
 
 
 def test_wantlist_repo_filters_and_count(isolated_xdg):

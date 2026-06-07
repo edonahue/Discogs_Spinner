@@ -36,7 +36,17 @@ class _MockWidget:
     """Stand-in for any GTK widget."""
 
     def __init__(self, *a, **kw):
-        pass
+        self._child = None
+        self._size_request: tuple[int, int] | None = None
+
+    def set_child(self, child):
+        self._child = child
+
+    def get_child(self):
+        return self._child
+
+    def set_size_request(self, width, height):
+        self._size_request = (int(width), int(height))
 
     def __getattr__(self, name):
         return lambda *a, **kw: None
@@ -180,11 +190,13 @@ def _seed_sys_modules() -> None:
             setattr(gi_repo, attr, mod)
         if key not in sys.modules:
             sys.modules[key] = getattr(gi_repo, attr)  # type: ignore[assignment]
+    _ensure_widget_state_tracking(getattr(gi_repo, "Gtk"))
 
     # image_cache service stub
     if "discogs_player.services.image_cache" not in sys.modules:
         sys.modules["discogs_player.services.image_cache"] = types.SimpleNamespace(  # type: ignore[assignment]
-            get_or_fetch_cover_path=lambda url: None
+            get_or_fetch_cover_path=lambda url: None,
+            ensure_cover_path_for_gtk=lambda cover_url, cover_path: cover_path,
         )
 
     # formatting stub — AlbumDetail needs all seven helpers
@@ -201,13 +213,41 @@ def _seed_sys_modules() -> None:
             setattr(fmt, _fn, lambda *a, **kw: "n/a")
 
 
+def _ensure_widget_state_tracking(gtk_mod) -> None:
+    """Add child/size state to whichever GTK stub was imported first."""
+
+    def _patch_class(cls) -> None:
+        if getattr(cls, "_discogs_player_state_tracking", False):
+            return
+
+        def set_child(self, child):
+            self.__dict__["_child"] = child
+
+        def get_child(self):
+            return self.__dict__.get("_child")
+
+        def set_size_request(self, width, height):
+            self.__dict__["_size_request"] = (int(width), int(height))
+
+        cls.set_child = set_child
+        cls.get_child = get_child
+        cls.set_size_request = set_size_request
+        cls._discogs_player_state_tracking = True
+
+    try:
+        _patch_class(type(gtk_mod.Box()))
+        _patch_class(type(gtk_mod.Button()))
+    except Exception:
+        return
+
+
 _seed_sys_modules()
 
 # ============================================================
 # Widget imports — must follow sys.modules setup
 # ============================================================
 
-from discogs_player.ui.widgets.cover_grid import CoverGrid  # noqa: E402
+from discogs_player.ui.widgets.cover_grid import _CARD_TEXT_HEIGHT, CoverGrid  # noqa: E402
 from discogs_player.ui.widgets.album_detail import AlbumDetail  # noqa: E402
 
 # ============================================================
@@ -237,6 +277,10 @@ def _make_grid(
     )
     grid.set_items(items if items is not None else _make_releases())
     return grid
+
+
+def _widget_sizes(widgets) -> list[tuple[int, int] | None]:
+    return [getattr(widget, "__dict__", {}).get("_size_request") for widget in widgets]
 
 
 # ============================================================
@@ -358,6 +402,15 @@ def test_cover_grid_clear_selection_emit_false_suppresses_callback():
     received.clear()
     grid.clear_selection(emit=False)
     assert received == [], "clear_selection(emit=False) must not fire the callback"
+
+
+def test_cover_grid_background_suspension_pauses_lazy_append():
+    grid = _make_grid(items=_make_releases(80))
+    grid.set_background_suspended(True)
+    before = grid._rendered_count
+    grid._schedule_append_next_chunk()
+    assert grid._pending_append_source_id is None
+    assert grid._rendered_count == before
     assert not grid.has_active_selection()
 
 
@@ -393,6 +446,42 @@ def test_cover_grid_set_empty_items_clears_selection():
     grid.select_release(1)
     grid.set_items([])
     assert not grid.has_active_selection()
+
+
+def test_cover_grid_large_sets_render_lazy_initial_chunk(monkeypatch):
+    monkeypatch.setenv("DP_GALLERY_INITIAL_ITEMS", "10")
+    grid = _make_grid(items=_make_releases(50))
+    assert grid._rendered_count == 10
+    assert len(grid._buttons_by_id) == 10
+
+
+def test_cover_grid_select_release_renders_target_chunk(monkeypatch):
+    monkeypatch.setenv("DP_GALLERY_INITIAL_ITEMS", "10")
+    grid = _make_grid(items=_make_releases(50))
+    assert grid.select_release(45) is True
+    assert grid._rendered_count >= 45
+    assert grid._selected_release_id == 45
+
+
+def test_cover_grid_lazy_appended_cards_keep_responsive_cover_size(monkeypatch):
+    monkeypatch.setenv("DP_GALLERY_INITIAL_ITEMS", "3")
+    monkeypatch.setenv("DP_GALLERY_CHUNK_ITEMS", "2")
+    grid = _make_grid(items=_make_releases(12))
+    grid.apply_layout_hint(1200, 900)
+    grid._flush_pending_responsive_layout()
+
+    expected_button_size = (grid._card_width, grid._cover_size + _CARD_TEXT_HEIGHT)
+    expected_cover_size = (grid._cover_size, grid._cover_size)
+    assert set(_widget_sizes(grid._buttons_by_id.values())) == {expected_button_size}
+    assert set(_widget_sizes(grid._button_to_frame.values())) == {expected_cover_size}
+    assert set(_widget_sizes(grid._button_to_media.values())) == {expected_cover_size}
+
+    grid._append_next_chunk()
+
+    assert grid._rendered_count == 5
+    assert set(_widget_sizes(grid._buttons_by_id.values())) == {expected_button_size}
+    assert set(_widget_sizes(grid._button_to_frame.values())) == {expected_cover_size}
+    assert set(_widget_sizes(grid._button_to_media.values())) == {expected_cover_size}
 
 
 # ============================================================

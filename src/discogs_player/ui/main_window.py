@@ -13,6 +13,11 @@ import sys
 import time
 import traceback
 
+try:
+    import resource
+except ModuleNotFoundError:  # pragma: no cover - Windows fallback.
+    resource = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 import gi
@@ -28,6 +33,7 @@ from discogs_player.core.settings import (
     get_setting,
     set_setting,
 )
+from discogs_player.performance import performance_profile
 from discogs_player.use_cases.sync_collection import run_sync_collection
 from discogs_player.integrations.player_backend import (
     PlayerApiError,
@@ -76,12 +82,15 @@ from discogs_player.use_cases.wantlist_value_refresh import (
     run_refresh_wantlist_market_value,
 )
 from discogs_player.use_cases.collection_health import run_collection_health
+from discogs_player.use_cases.release_collection_summary import (
+    run_release_collection_summary,
+)
+from discogs_player.use_cases.hidden_gems import run_hidden_gems
 from discogs_player.use_cases.value_dashboard import run_market_value_dashboard
 from discogs_player.use_cases.value_release_detail import (
     run_get_value_release_detail,
     run_refresh_value_release_detail,
 )
-from discogs_player.use_cases.value_refresh_queue import run_value_refresh_queue
 from discogs_player.use_cases.value_missing import run_market_value_missing
 from discogs_player.use_cases.value_refresh import run_refresh_market_values
 from discogs_player.use_cases.value_search import run_search_value_releases
@@ -123,8 +132,8 @@ from discogs_player.ui.widgets.device_picker import DevicePicker
 from discogs_player.ui.widgets.filters import FilterBar
 from discogs_player.ui.widgets.spin_wheel import SpinWheel
 from discogs_player.ui.widgets.text_menu import ReleaseTextMenu
+from discogs_player.ui.widgets.collection_summary import CollectionSummaryWidget
 from discogs_player.ui.widgets.health_score import HealthScoreWidget
-from discogs_player.ui.widgets.value_queue import ValueQueueWidget
 from discogs_player.ui.widgets.value_workspace import ValueWorkspace
 from discogs_player.ui.widgets.wantlist_detail import WantlistDetail
 from discogs_player.ui.widgets.wantlist_filters import WantlistFilterBar
@@ -577,6 +586,50 @@ button.ipod-gallery-card.is-selected {
   background-image: linear-gradient(145deg, rgba(90, 120, 188, 0.36), rgba(16, 24, 39, 0.9));
 }
 
+.ipod-collection-summary {
+  padding: 0 0 2px 0;
+}
+
+.ipod-collection-summary-subtitle,
+.ipod-collection-summary-status,
+.ipod-collection-card-meta {
+  color: #95a8c6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ipod-collection-card {
+  min-width: 0;
+  padding: 10px 12px;
+  background-color: rgba(9, 13, 20, 0.86);
+}
+
+.ipod-collection-card-accent {
+  background-image: linear-gradient(145deg, rgba(42, 68, 104, 0.28), rgba(10, 14, 22, 0.9));
+}
+
+.ipod-collection-card-highlight {
+  background-image: linear-gradient(145deg, rgba(50, 108, 148, 0.34), rgba(11, 18, 28, 0.92));
+}
+
+.ipod-collection-card-recent {
+  background-image: linear-gradient(145deg, rgba(78, 104, 144, 0.28), rgba(12, 18, 29, 0.9));
+}
+
+.ipod-collection-card-title {
+  color: #9fb4d6;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.ipod-collection-card-value {
+  color: #f5f9ff;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.25px;
+}
+
 .ipod-value-section-title {
   color: #dbe8ff;
   font-size: 14px;
@@ -842,6 +895,12 @@ _WANTLIST_DETAIL_PANEL_MIN_WIDTH = 180
 _WANTLIST_DETAIL_PANEL_MAX_WIDTH = 300
 _STARTUP_WINDOW_DEFAULT_WIDTH = 1100
 _STARTUP_WINDOW_DEFAULT_HEIGHT = 760
+_STARTUP_WINDOW_WORKAREA_WIDTH_RATIO = 0.70
+_STARTUP_WINDOW_WORKAREA_HEIGHT_RATIO = 0.70
+_STARTUP_WINDOW_MAX_WIDTH = 2400
+_STARTUP_WINDOW_MAX_HEIGHT = 1100
+_STARTUP_WINDOW_WORKAREA_WIDTH_CAP_RATIO = 0.92
+_STARTUP_WINDOW_WORKAREA_HEIGHT_CAP_RATIO = 0.90
 _STARTUP_WINDOW_MIN_WIDTH = 820
 _STARTUP_WINDOW_MIN_HEIGHT = 620
 _SPLIT_ANIMATION_INTERVAL_MS = 14
@@ -851,6 +910,7 @@ _VISIBLE_LAYOUT_SETTLE_DELAYS_MS = (0, 90, 220, 420)
 _VISIBLE_LAYOUT_SETTLE_MIN_CONTENT_WIDTH = 480
 _VISIBLE_LAYOUT_SETTLE_MIN_STACK_WIDTH = 360
 _VISIBLE_LAYOUT_SETTLE_MIN_STACK_HEIGHT = 220
+_BACKGROUND_IDLE_TRIM_DELAY_MS = 60_000
 _TRACKLIST_DETAIL_CACHE_LIMIT = 384
 _README_DOC_PATH = "README.md"
 _PRODUCT_STATE_DOC_PATH = "PRODUCT_STATE.md"
@@ -937,11 +997,10 @@ class MainWindow(Gtk.ApplicationWindow):
         on_interactive_lowest_navigate: Callable[[int], None] | None = None,
         on_interactive_median_navigate: Callable[[int], None] | None = None,
     ) -> None:
-        super().__init__(application=app, title="Discogs Player")
+        super().__init__(application=app, title="Discogs Spinner")
         self.add_css_class("ipod-shell")
-        self.set_default_size(
-            _STARTUP_WINDOW_DEFAULT_WIDTH, _STARTUP_WINDOW_DEFAULT_HEIGHT
-        )
+        target_width, target_height = self._startup_target_window_size()
+        self.set_default_size(target_width, target_height)
         self.set_size_request(_STARTUP_WINDOW_MIN_WIDTH, _STARTUP_WINDOW_MIN_HEIGHT)
         self.set_resizable(True)
         self.set_deletable(True)
@@ -955,8 +1014,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self._limit = _normalize_release_limit(limit)
         self._preload_covers = bool(preload_covers)
         self._startup_size_fitted = False
+        self._browse_sync_reload_needed = False
+        self._wantlist_sync_reload_needed = False
         self._selected_release_id: int | None = None
         self._selected_release: dict[str, object] | None = None
+        self._browse_items: list[dict[str, object]] = []
+        self._browse_populated_modes: set[str] = set()
         self._visible_release_ids: list[int] = []
         self._visible_release_id_to_index: dict[int, int] = {}
         self._pending_spin_result: dict[str, object] | None = None
@@ -966,6 +1029,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self._selected_wantlist_id: int | None = None
         self._selected_wantlist: dict[str, object] | None = None
+        self._wantlist_items: list[dict[str, object]] = []
+        self._wantlist_populated_modes: set[str] = set()
         self._visible_wantlist_ids: list[int] = []
         self._visible_wantlist_id_to_index: dict[int, int] = {}
         self._wantlist_tracklist_cache: OrderedDict[int, dict[str, object]] = (
@@ -984,6 +1049,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self._split_animation_source_ids: dict[str, int] = {}
         self._layout_settle_source_ids: dict[str, int] = {}
         self._layout_settle_generation = 0
+        self._last_allocated_size: tuple[int, int] = (0, 0)
+        self._allocation_reflow_source_id: int | None = None
+        self._size_tick_callback_id: int | None = None
+        self._background_suspended = False
+        self._force_background_suspended = False
+        self._idle_trim_source_id: int | None = None
+        self._value_dashboard_loaded = False
         self._actions_executor = ThreadPoolExecutor(
             max_workers=4,
             thread_name_prefix="ui-actions",
@@ -1003,12 +1075,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self._spotify_capability = self._capabilities.spotify
 
         # Add window resize handling using notify signals (GTK4 compatible)
-        self.connect('notify::default-width', self._on_window_resize)
-        self.connect('notify::default-height', self._on_window_resize)
         self.connect('notify::width', self._on_window_resize)
         self.connect('notify::height', self._on_window_resize)
         self.connect('notify::maximized', self._on_window_state_change)
         self.connect('notify::fullscreened', self._on_window_state_change)
+        self.connect("notify::is-active", self._on_window_active_changed)
+        self._size_tick_callback_id = self.add_tick_callback(self._handle_size_tick)
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ipod-root")
@@ -1028,6 +1100,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self._main_stack = Gtk.Stack()
         self._main_stack.set_hexpand(True)
         self._main_stack.set_vexpand(True)
+        self._main_stack.set_hhomogeneous(False)
+        self._main_stack.set_vhomogeneous(False)
         self._main_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self._main_stack.connect(
             "notify::visible-child-name", self._handle_main_stack_changed
@@ -1069,6 +1143,8 @@ class MainWindow(Gtk.ApplicationWindow):
         wantlist_page.append(self._wantlist_filters_scroll)
 
         wantlist_content = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+        wantlist_content.set_vexpand(True)
+        wantlist_content.set_hexpand(True)
         wantlist_content.set_resize_start_child(True)
         wantlist_content.set_shrink_start_child(True)
         wantlist_content.set_resize_end_child(True)
@@ -1142,6 +1218,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self._wantlist_stack = Gtk.Stack()
         self._wantlist_stack.set_hexpand(True)
         self._wantlist_stack.set_vexpand(True)
+        self._wantlist_stack.set_hhomogeneous(False)
+        self._wantlist_stack.set_vhomogeneous(False)
         self._wantlist_stack.set_transition_type(
             Gtk.StackTransitionType.SLIDE_LEFT_RIGHT
         )
@@ -1244,7 +1322,13 @@ class MainWindow(Gtk.ApplicationWindow):
         self._filters_scroll.set_child(self._filters)
         browse_page.append(self._filters_scroll)
 
+        self._collection_summary = CollectionSummaryWidget()
+        self._collection_summary.add_css_class("ipod-panel")
+        browse_page.append(self._collection_summary)
+
         content = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+        content.set_vexpand(True)
+        content.set_hexpand(True)
         content.set_resize_start_child(True)
         content.set_shrink_start_child(True)
         content.set_resize_end_child(True)
@@ -1316,6 +1400,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self._browse_stack = Gtk.Stack()
         self._browse_stack.set_hexpand(True)
         self._browse_stack.set_vexpand(True)
+        self._browse_stack.set_hhomogeneous(False)
+        self._browse_stack.set_vhomogeneous(False)
         self._browse_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
         self._browse_stack.connect("notify::width", self._on_stack_size_change)
         self._browse_stack.connect("notify::height", self._on_stack_size_change)
@@ -1434,6 +1520,7 @@ class MainWindow(Gtk.ApplicationWindow):
             on_open_docs=self._handle_market_value_docs_requested,
         )
         self._value_dashboard = self._value_workspace.dashboard
+        self._hidden_gems_card = self._value_workspace.hidden_gems
         self._value_dashboard.set_ops_controls(
             stale_days=self._value_ops_stale_days,
             refresh_limit=self._value_ops_refresh_limit,
@@ -1447,22 +1534,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self._value_dashboard_scroll.set_child(self._value_workspace)
         self._main_stack.add_titled(
             self._value_dashboard_scroll, "value", "Value"
-        )
-
-        self._value_queue_widget = ValueQueueWidget(
-            on_refresh=self._handle_value_queue_refresh,
-            on_release_selected=self._handle_value_queue_release_selected,
-        )
-        self._value_queue_widget.add_css_class("ipod-panel")
-        self._value_queue_scroll = Gtk.ScrolledWindow()
-        self._value_queue_scroll.set_hexpand(True)
-        self._value_queue_scroll.set_vexpand(True)
-        self._value_queue_scroll.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
-        )
-        self._value_queue_scroll.set_child(self._value_queue_widget)
-        self._main_stack.add_titled(
-            self._value_queue_scroll, "queue", "Queue"
         )
 
         self._health_score_widget = HealthScoreWidget(
@@ -1505,15 +1576,18 @@ class MainWindow(Gtk.ApplicationWindow):
         self.add_controller(key_controller)
 
         GLib.idle_add(self._apply_startup_window_size)
-        GLib.idle_add(self._initial_load)
 
     def _initial_load(self) -> None:
-        """Trigger initial data load for both browse and wantlist sections."""
+        """Compatibility shim for tests and older call sites."""
         self.refresh()
-        self.refresh_wantlist()
 
     def do_unroot(self) -> None:  # pragma: no cover - lifecycle callback
+        if self._size_tick_callback_id is not None:
+            self.remove_tick_callback(self._size_tick_callback_id)
+            self._size_tick_callback_id = None
+        self._cancel_allocation_reflow()
         self._cancel_visible_layout_settle()
+        self._cancel_idle_trim()
         for source_id in self._split_animation_source_ids.values():
             try:
                 GLib.source_remove(source_id)
@@ -1523,6 +1597,17 @@ class MainWindow(Gtk.ApplicationWindow):
         self._actions_executor.shutdown(wait=False, cancel_futures=True)
         self._value_ops_executor.shutdown(wait=False, cancel_futures=True)
         super().do_unroot()
+
+    def _handle_size_tick(self, _widget: Gtk.Widget, _frame_clock: object) -> bool:
+        allocated_size = (
+            max(1, int(self.get_width() or 0)),
+            max(1, int(self.get_height() or 0)),
+        )
+        if allocated_size == self._last_allocated_size:
+            return True
+        self._last_allocated_size = allocated_size
+        self._schedule_allocation_reflow()
+        return True
 
     def _refresh_from_filters(self) -> None:
         self.refresh()
@@ -1731,33 +1816,6 @@ class MainWindow(Gtk.ApplicationWindow):
             self._set_status(
                 f"Release {release_id} could not be focused from Value tab."
             )
-
-    def _handle_value_queue_refresh(self) -> None:
-        self._refresh_value_queue()
-
-    def _handle_value_queue_release_selected(self, discogs_release_id: int) -> None:
-        self._main_stack.set_visible_child_name("browse")
-        if self._focus_release_id(discogs_release_id):
-            self._set_status(
-                f"Focused release {discogs_release_id} from Value Queue."
-            )
-        else:
-            self._set_status(
-                f"Release {discogs_release_id} could not be focused."
-            )
-
-    def _refresh_value_queue(self) -> None:
-        self._value_queue_widget.set_busy()
-        try:
-            report = run_value_refresh_queue()
-        except Exception as exc:
-            message = self._friendly_error_message(exc)
-            self._value_queue_widget.set_error(message)
-            self._set_status(f"Value queue unavailable: {message}")
-            return
-        self._value_queue_widget.set_queue(dict(report))
-        total = report.get("total_candidates", 0)
-        self._set_status(f"Value queue refreshed ({total} candidate{'s' if total != 1 else ''}).")
 
     def _handle_health_score_refresh(self) -> None:
         self._refresh_health_score()
@@ -2091,9 +2149,25 @@ class MainWindow(Gtk.ApplicationWindow):
             return _STARTUP_WINDOW_DEFAULT_WIDTH, _STARTUP_WINDOW_DEFAULT_HEIGHT
 
         workarea_width, workarea_height = workarea
+        width_cap = int(workarea_width * _STARTUP_WINDOW_WORKAREA_WIDTH_CAP_RATIO)
+        height_cap = int(workarea_height * _STARTUP_WINDOW_WORKAREA_HEIGHT_CAP_RATIO)
+        target_width = min(
+            _STARTUP_WINDOW_MAX_WIDTH,
+            max(
+                _STARTUP_WINDOW_DEFAULT_WIDTH,
+                int(workarea_width * _STARTUP_WINDOW_WORKAREA_WIDTH_RATIO),
+            ),
+        )
+        target_height = min(
+            _STARTUP_WINDOW_MAX_HEIGHT,
+            max(
+                _STARTUP_WINDOW_DEFAULT_HEIGHT,
+                int(workarea_height * _STARTUP_WINDOW_WORKAREA_HEIGHT_RATIO),
+            ),
+        )
         return (
-            max(1, min(_STARTUP_WINDOW_DEFAULT_WIDTH, int(workarea_width * 0.90))),
-            max(1, min(_STARTUP_WINDOW_DEFAULT_HEIGHT, int(workarea_height * 0.90))),
+            max(1, min(target_width, width_cap)),
+            max(1, min(target_height, height_cap)),
         )
 
     def _gallery_detail_visible(self, *, wantlist: bool) -> bool:
@@ -2136,22 +2210,18 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _compute_detail_panel_width(self, width: int, *, wantlist: bool = False) -> int:
         effective_width = self._effective_layout_width(width)
+        # Blend smoothly from narrow-window config to wide-window config across
+        # a 280 px transition zone, eliminating the hard jump at the old 1100 px boundary.
+        _NARROW_W, _WIDE_W = 960, 1240
+        t = max(0.0, min(1.0, (effective_width - _NARROW_W) / (_WIDE_W - _NARROW_W)))
         if wantlist:
-            ratio = _WANTLIST_DETAIL_PANEL_WIDTH_RATIO
+            ratio = 0.20 + t * (0.22 - 0.20)
             min_width = _WANTLIST_DETAIL_PANEL_MIN_WIDTH
-            max_width = _WANTLIST_DETAIL_PANEL_MAX_WIDTH
+            max_width = int(230 + t * (_WANTLIST_DETAIL_PANEL_MAX_WIDTH - 230))
         else:
-            ratio = _DETAIL_PANEL_WIDTH_RATIO
+            ratio = 0.22 + t * (_DETAIL_PANEL_WIDTH_RATIO - 0.22)
             min_width = _DETAIL_PANEL_MIN_WIDTH
-            max_width = _DETAIL_PANEL_MAX_WIDTH
-
-        if effective_width <= 1100:
-            if wantlist:
-                ratio = 0.20
-                max_width = 230
-            else:
-                ratio = 0.22
-                max_width = 260
+            max_width = int(260 + t * (_DETAIL_PANEL_MAX_WIDTH - 260))
 
         computed = int(effective_width * ratio)
         capped = min(max_width, max(min_width, computed))
@@ -2164,12 +2234,168 @@ class MainWindow(Gtk.ApplicationWindow):
             return False
         self._startup_size_fitted = True
 
-        target_width, target_height = self._startup_target_window_size()
-        self.set_default_size(target_width, target_height)
-        self.queue_resize()
         self._apply_split_layout_from_current_size()
         self._schedule_visible_layout_settle(reason="startup")
         return False
+
+    def _cancel_allocation_reflow(self) -> None:
+        if self._allocation_reflow_source_id is None:
+            return
+        source_id = self._allocation_reflow_source_id
+        self._allocation_reflow_source_id = None
+        try:
+            GLib.source_remove(source_id)
+        except Exception:
+            pass
+
+    def _schedule_allocation_reflow(self) -> None:
+        if self._allocation_reflow_source_id is not None:
+            return
+        self._allocation_reflow_source_id = GLib.idle_add(
+            self._run_allocation_reflow
+        )
+
+    def _run_allocation_reflow(self) -> bool:
+        self._allocation_reflow_source_id = None
+        self._apply_split_layout_from_current_size()
+        self._schedule_visible_layout_settle(reason="window-allocation")
+        return False
+
+    def _cancel_idle_trim(self) -> None:
+        if self._idle_trim_source_id is None:
+            return
+        source_id = self._idle_trim_source_id
+        self._idle_trim_source_id = None
+        try:
+            GLib.source_remove(source_id)
+        except Exception:
+            pass
+
+    def _schedule_idle_trim(self) -> None:
+        self._cancel_idle_trim()
+        self._idle_trim_source_id = GLib.timeout_add(
+            _BACKGROUND_IDLE_TRIM_DELAY_MS,
+            self._trim_idle_resources,
+        )
+
+    def _trim_idle_resources(self) -> bool:
+        self._idle_trim_source_id = None
+        if not self._background_suspended:
+            return False
+        for widget_name in ("_carousel", "_wantlist_carousel"):
+            widget = getattr(self, widget_name, None)
+            trim = getattr(widget, "trim_idle_resources", None)
+            if callable(trim):
+                trim()
+        return False
+
+    def _set_background_suspended(self, suspended: bool) -> None:
+        suspended = bool(suspended)
+        if self._background_suspended == suspended:
+            return
+        self._background_suspended = suspended
+        widgets = (
+            "_carousel",
+            "_wantlist_carousel",
+            "_browse_gallery",
+            "_wantlist_gallery",
+            "_spin_wheel",
+            "_wantlist_spin_wheel",
+        )
+        for widget_name in widgets:
+            widget = getattr(self, widget_name, None)
+            setter = getattr(widget, "set_background_suspended", None)
+            if callable(setter):
+                setter(True if suspended else self._widget_should_remain_suspended(widget_name))
+        if suspended:
+            self._cancel_visible_layout_settle()
+            for key in list(self._split_animation_source_ids):
+                self._clear_split_animation(key)
+            self._schedule_idle_trim()
+        else:
+            self._cancel_idle_trim()
+            self._populate_active_modes()
+            self._apply_visible_widget_suspension()
+
+    def _widget_should_remain_suspended(self, widget_name: str) -> bool:
+        active_view = self._active_main_view() if hasattr(self, "_main_stack") else "browse"
+        browse_mode = self._active_browse_mode() if hasattr(self, "_browse_stack") else "carousel"
+        wantlist_mode = (
+            self._active_wantlist_mode()
+            if hasattr(self, "_wantlist_stack")
+            else "carousel"
+        )
+        visible_widgets = {
+            "_spin_wheel" if active_view == "browse" else "",
+            "_wantlist_spin_wheel" if active_view == "wantlist" else "",
+            "_carousel" if active_view == "browse" and browse_mode == "carousel" else "",
+            "_browse_gallery" if active_view == "browse" and browse_mode == "gallery" else "",
+            "_wantlist_carousel"
+            if active_view == "wantlist" and wantlist_mode == "carousel"
+            else "",
+            "_wantlist_gallery"
+            if active_view == "wantlist" and wantlist_mode == "gallery"
+            else "",
+        }
+        return widget_name not in visible_widgets
+
+    def _apply_visible_widget_suspension(self) -> None:
+        if self._background_suspended:
+            return
+        for widget_name in (
+            "_carousel",
+            "_wantlist_carousel",
+            "_browse_gallery",
+            "_wantlist_gallery",
+            "_spin_wheel",
+            "_wantlist_spin_wheel",
+        ):
+            widget = getattr(self, widget_name, None)
+            setter = getattr(widget, "set_background_suspended", None)
+            if callable(setter):
+                setter(self._widget_should_remain_suspended(widget_name))
+
+    def _on_window_active_changed(self, _window: Gtk.Window, _param) -> None:
+        if self._force_background_suspended:
+            self._set_background_suspended(True)
+            return
+        try:
+            active = bool(self.is_active())
+        except Exception:
+            active = True
+        self._set_background_suspended(not active)
+
+    def force_background_idle_for_probe(self) -> None:
+        self._force_background_suspended = True
+        self._set_background_suspended(True)
+
+    def idle_debug_state(self) -> dict[str, object]:
+        def _widget_state(name: str) -> dict[str, object]:
+            widget = getattr(self, name, None)
+            state = getattr(widget, "idle_debug_state", None)
+            if callable(state):
+                try:
+                    return dict(state())
+                except Exception:
+                    return {"error": "unavailable"}
+            return {}
+
+        return {
+            "background_suspended": self._background_suspended,
+            "force_background_suspended": self._force_background_suspended,
+            "idle_trim_pending": self._idle_trim_source_id is not None,
+            "browse_populated_modes": sorted(self._browse_populated_modes),
+            "wantlist_populated_modes": sorted(self._wantlist_populated_modes),
+            "browse_item_count": len(self._browse_items),
+            "wantlist_item_count": len(self._wantlist_items),
+            "value_dashboard_loaded": self._value_dashboard_loaded,
+            "carousel": _widget_state("_carousel"),
+            "wantlist_carousel": _widget_state("_wantlist_carousel"),
+            "browse_gallery": _widget_state("_browse_gallery"),
+            "wantlist_gallery": _widget_state("_wantlist_gallery"),
+            "spin_wheel": _widget_state("_spin_wheel"),
+            "wantlist_spin_wheel": _widget_state("_wantlist_spin_wheel"),
+        }
 
     def _clear_layout_settle_source(self, key: str) -> None:
         source_id = self._layout_settle_source_ids.pop(str(key), None)
@@ -2315,13 +2541,15 @@ class MainWindow(Gtk.ApplicationWindow):
         source_id = GLib.timeout_add(_SPLIT_ANIMATION_INTERVAL_MS, _tick)
         self._split_animation_source_ids[key] = source_id
 
-    def _apply_split_layout(self, width: int) -> None:
+    def _apply_split_layout(self, width: int, *, prefer_width: bool = False) -> None:
         fallback_width = self._effective_layout_width(width)
 
         if hasattr(self, "_browse_content") and hasattr(self, "_sidebar_scroll"):
             browse_width = self._effective_layout_width(
                 self._browse_content.get_width() or fallback_width
             )
+            if prefer_width and fallback_width > 1:
+                browse_width = fallback_width
             browse_target_detail_width = self._compute_detail_panel_width(browse_width)
             browse_gallery_mode = (
                 hasattr(self, "_browse_stack")
@@ -2365,6 +2593,8 @@ class MainWindow(Gtk.ApplicationWindow):
             wantlist_width = self._effective_layout_width(
                 self._wantlist_content.get_width() or fallback_width
             )
+            if prefer_width and fallback_width > 1:
+                wantlist_width = fallback_width
             wantlist_target_detail_width = self._compute_detail_panel_width(
                 wantlist_width, wantlist=True
             )
@@ -2472,7 +2702,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 self._root.add_css_class("ipod-width-compact")
 
         self._apply_responsive_controls(width)
-        self._apply_split_layout(width)
+        self._apply_split_layout(width, prefer_width=True)
         self._schedule_visible_layout_settle(reason="window-resize")
 
     def _apply_responsive_controls(self, width: int) -> None:
@@ -2515,13 +2745,16 @@ class MainWindow(Gtk.ApplicationWindow):
     def _apply_split_layout_from_current_size(self) -> bool:
         width = max(1, int(self.get_width()))
         self._apply_responsive_controls(width)
-        self._apply_split_layout(width)
+        self._apply_split_layout(width, prefer_width=True)
         return False
 
     def _on_window_state_change(self, window, param) -> None:
         """Handle window state changes (maximized, fullscreen, etc.)."""
-        # Trigger resize handling when window state changes
+        # Trigger resize handling when window state changes. Wayland compositors
+        # can deliver the state notification before the final allocation lands,
+        # so also defer one pass to the next main-loop tick.
         self._on_window_resize(window, param)
+        GLib.idle_add(self._apply_split_layout_from_current_size)
         self._schedule_visible_layout_settle(reason="window-state")
 
     def _build_empty_state_box(
@@ -2816,11 +3049,19 @@ class MainWindow(Gtk.ApplicationWindow):
                 "Core setup:",
                 "  dplayer setup",
                 "  dplayer sync",
+                "  dplayer status --json",
+                "  dplayer providers --json",
                 "",
                 "Spotify setup:",
                 "  dplayer auth spotify-doctor",
                 "  dplayer auth spotify --open-browser --listen-host 127.0.0.1 --listen-port 8765",
                 "  dplayer devices --json",
+                "",
+                "Collector daily-use:",
+                "  dplayer spin",
+                "  dplayer play --last-spin --open",
+                "  dplayer insights --json",
+                "  dplayer value gems --limit 10",
                 "",
                 "Useful URLs:",
                 f"  Discogs token page: {_DISCOGS_TOKEN_URL}",
@@ -2899,7 +3140,12 @@ class MainWindow(Gtk.ApplicationWindow):
             logger.warning("Failed to load setup report; skipping first-run check", exc_info=True)
             return
         stage = report.get("onboarding_stage")
-        if stage == "needs_discogs_token":
+        readiness = report.get("provider_readiness")
+        summary = readiness.get("summary") if isinstance(readiness, dict) else {}
+        required_ready = True
+        if isinstance(summary, dict):
+            required_ready = bool(summary.get("required_services_configured", True))
+        if stage == "needs_discogs_token" or not required_ready:
             self._update_setup_state(token_missing=True)
 
         # Re-open wizard if the user closed it mid-flow on a previous session.
@@ -2947,11 +3193,62 @@ class MainWindow(Gtk.ApplicationWindow):
             fallback_url=None,
         )
 
+    def _populate_browse_mode(self, mode: str, *, force: bool = False) -> None:
+        normalized_mode = str(mode or "carousel")
+        if not force and normalized_mode in self._browse_populated_modes:
+            return
+        items = [dict(item) for item in self._browse_items]
+        self._syncing_selection = True
+        try:
+            if normalized_mode == "text":
+                self._text_menu.set_items(items)
+            elif normalized_mode == "gallery":
+                self._browse_gallery.set_items(items)
+            else:
+                normalized_mode = "carousel"
+                self._carousel.set_items(items)
+        finally:
+            self._syncing_selection = False
+        self._browse_populated_modes.add(normalized_mode)
+        if isinstance(self._selected_release_id, int):
+            self._sync_release_selection(self._selected_release_id)
+        self._apply_visible_widget_suspension()
+
+    def _populate_wantlist_mode(self, mode: str, *, force: bool = False) -> None:
+        normalized_mode = str(mode or "carousel")
+        if not force and normalized_mode in self._wantlist_populated_modes:
+            return
+        items = [dict(item) for item in self._wantlist_items]
+        self._wantlist_syncing_selection = True
+        try:
+            if normalized_mode == "text":
+                self._wantlist_text_menu.set_items(items)
+            elif normalized_mode == "gallery":
+                self._wantlist_gallery.set_items(items)
+            else:
+                normalized_mode = "carousel"
+                self._wantlist_carousel.set_items(items)
+        finally:
+            self._wantlist_syncing_selection = False
+        self._wantlist_populated_modes.add(normalized_mode)
+        if isinstance(self._selected_wantlist_id, int):
+            self._sync_wantlist_selection(self._selected_wantlist_id)
+        self._apply_visible_widget_suspension()
+
+    def _populate_active_modes(self) -> None:
+        if self._background_suspended:
+            return
+        if hasattr(self, "_browse_stack"):
+            self._populate_browse_mode(self._active_browse_mode())
+        if self._active_main_view() == "wantlist":
+            self._populate_wantlist_mode(self._active_wantlist_mode())
+
     def _set_browse_mode(self, mode: str) -> None:
         previous_mode = self._active_browse_mode()
         self._syncing_mode_toggle = True
         try:
             if mode == "text":
+                self._populate_browse_mode("text")
                 self._text_mode.set_active(True)
                 self._carousel_mode.set_active(False)
                 self._gallery_mode.set_active(False)
@@ -2961,6 +3258,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._visible_release_ids[0], allow_expand_limit=False
                     )
             elif mode == "carousel":
+                self._populate_browse_mode("carousel")
                 self._carousel_mode.set_active(True)
                 self._text_mode.set_active(False)
                 self._gallery_mode.set_active(False)
@@ -2970,6 +3268,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._visible_release_ids[0], allow_expand_limit=False
                     )
             elif mode == "gallery":
+                self._populate_browse_mode("gallery")
                 self._gallery_mode.set_active(True)
                 self._carousel_mode.set_active(False)
                 self._text_mode.set_active(False)
@@ -2980,6 +3279,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._handle_release_selected(None)
         finally:
             self._syncing_mode_toggle = False
+        self._apply_visible_widget_suspension()
         self._update_gallery_clear_actions()
         self._schedule_visible_layout_settle(reason=f"browse-mode-{mode}")
 
@@ -2988,6 +3288,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._wantlist_syncing_mode_toggle = True
         try:
             if mode == "text":
+                self._populate_wantlist_mode("text")
                 self._wantlist_text_mode.set_active(True)
                 self._wantlist_carousel_mode.set_active(False)
                 self._wantlist_gallery_mode.set_active(False)
@@ -2997,6 +3298,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._visible_wantlist_ids[0], allow_expand_limit=False
                     )
             elif mode == "carousel":
+                self._populate_wantlist_mode("carousel")
                 self._wantlist_carousel_mode.set_active(True)
                 self._wantlist_text_mode.set_active(False)
                 self._wantlist_gallery_mode.set_active(False)
@@ -3006,6 +3308,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._visible_wantlist_ids[0], allow_expand_limit=False
                     )
             elif mode == "gallery":
+                self._populate_wantlist_mode("gallery")
                 self._wantlist_gallery_mode.set_active(True)
                 self._wantlist_carousel_mode.set_active(False)
                 self._wantlist_text_mode.set_active(False)
@@ -3016,6 +3319,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         self._handle_wantlist_selected(None)
         finally:
             self._wantlist_syncing_mode_toggle = False
+        self._apply_visible_widget_suspension()
         self._update_gallery_clear_actions()
         self._schedule_visible_layout_settle(reason=f"wantlist-mode-{mode}")
 
@@ -3137,15 +3441,17 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.refresh()
         elif active_view == "wantlist":
             self._set_status("Switched to Wantlist view")
+            self._populate_wantlist_mode(self._active_wantlist_mode())
             if not self._visible_wantlist_ids:
                 self.refresh_wantlist()
         elif active_view == "value":
             self._set_status("Switched to Value view")
-        elif active_view == "queue":
-            self._set_status("Switched to Queue view")
+            if not self._value_dashboard_loaded:
+                self._refresh_value_dashboard(update_status=False)
         elif active_view == "health":
             self._set_status("Switched to Health view")
 
+        self._apply_visible_widget_suspension()
         # Reapply responsive split sizing when tabs change so hidden paned widgets
         # don't keep stale allocations from previous visibility states.
         self._schedule_visible_layout_settle(reason="main-stack-changed")
@@ -3260,10 +3566,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self._focus_wantlist_id(target_release_id, allow_expand_limit=False)
 
     def _focused_widget_is_text_input(self) -> bool:
-        focus = self.get_focus()
-        return isinstance(
-            focus, (Gtk.Entry, Gtk.SpinButton, Gtk.TextView, Gtk.DropDown)
-        )
+        return self._widget_is_text_input(self.get_focus())
+
+    @staticmethod
+    def _widget_is_text_input(widget: Gtk.Widget | None) -> bool:
+        return isinstance(widget, (Gtk.Entry, Gtk.SpinButton, Gtk.TextView, Gtk.DropDown))
 
     @staticmethod
     def _is_descendant_of(
@@ -3290,10 +3597,14 @@ class MainWindow(Gtk.ApplicationWindow):
             return False
 
         panel = self._browse_panel if active_view == "browse" else self._wantlist_panel
+        stale_panel = self._wantlist_panel if active_view == "browse" else self._browse_panel
         focus = self.get_focus()
         if focus is not None and not self._is_descendant_of(focus, panel):
-            return False
-        if self._focused_widget_is_text_input():
+            if self._is_descendant_of(focus, stale_panel):
+                focus = None
+            else:
+                return False
+        if self._widget_is_text_input(focus):
             return False
 
         if active_view == "browse" and self._active_browse_mode() == "gallery":
@@ -3410,10 +3721,13 @@ class MainWindow(Gtk.ApplicationWindow):
     def _sync_release_selection(self, discogs_release_id: int) -> None:
         if self._syncing_selection:
             return
+        self._populate_browse_mode(self._active_browse_mode())
         self._syncing_selection = True
         try:
-            self._text_menu.select_release(discogs_release_id)
-            self._carousel.select_release(discogs_release_id)
+            if "text" in self._browse_populated_modes:
+                self._text_menu.select_release(discogs_release_id)
+            if "carousel" in self._browse_populated_modes:
+                self._carousel.select_release(discogs_release_id)
             if self._active_browse_mode() == "gallery":
                 self._browse_gallery.select_release(discogs_release_id)
         finally:
@@ -3422,10 +3736,13 @@ class MainWindow(Gtk.ApplicationWindow):
     def _sync_wantlist_selection(self, discogs_release_id: int) -> None:
         if self._wantlist_syncing_selection:
             return
+        self._populate_wantlist_mode(self._active_wantlist_mode())
         self._wantlist_syncing_selection = True
         try:
-            self._wantlist_text_menu.select_release(discogs_release_id)
-            self._wantlist_carousel.select_release(discogs_release_id)
+            if "text" in self._wantlist_populated_modes:
+                self._wantlist_text_menu.select_release(discogs_release_id)
+            if "carousel" in self._wantlist_populated_modes:
+                self._wantlist_carousel.select_release(discogs_release_id)
             if self._active_wantlist_mode() == "gallery":
                 self._wantlist_gallery.select_release(discogs_release_id)
         finally:
@@ -3591,13 +3908,25 @@ class MainWindow(Gtk.ApplicationWindow):
         except Exception as exc:
             message = self._friendly_error_message(exc)
             self._value_dashboard.set_error(message)
+            self._value_dashboard_loaded = True
             if update_status:
                 self._set_status(f"Market value dashboard unavailable: {message}")
+            self._refresh_hidden_gems()
             return None
 
         result = dict(report)
         self._set_value_dashboard_from_report(result, update_status=update_status)
+        self._value_dashboard_loaded = True
+        self._refresh_hidden_gems()
         return result
+
+    def _refresh_hidden_gems(self) -> None:
+        try:
+            report = run_hidden_gems(min_median=25.0, limit=10)
+        except Exception as exc:
+            self._hidden_gems_card.set_error(self._friendly_error_message(exc))
+            return
+        self._hidden_gems_card.set_gems(dict(report))
 
     def _selected_release_id_or_raise(self) -> int:
         if self._selected_release_id is None:
@@ -3791,18 +4120,20 @@ class MainWindow(Gtk.ApplicationWindow):
         _t_sort = time.perf_counter() - _t1
         cover_count = sum(1 for item in items if item.get("cover_path"))
 
-        value_dashboard_report: dict[str, object] | None = None
-        value_dashboard_error: str | None = None
+        collection_summary_report: dict[str, object] | None = None
+        collection_summary_error: str | None = None
         try:
-            value_dashboard_report = dict(
-                run_market_value_dashboard(
-                    top_limit=_VALUE_DASHBOARD_TOP_LIMIT,
-                    bottom_limit=_VALUE_DASHBOARD_BOTTOM_LIMIT,
-                    trend_limit=_VALUE_DASHBOARD_TREND_LIMIT,
+            collection_summary_report = dict(
+                run_release_collection_summary(
+                    q=q,
+                    year=year,
+                    genres=normalized_genres,
+                    styles=normalized_styles,
+                    unmatched=unmatched,
                 )
             )
         except Exception as exc:
-            value_dashboard_error = self._friendly_error_message(exc)
+            collection_summary_error = self._friendly_error_message(exc)
 
         return {
             "ok": True,
@@ -3816,8 +4147,8 @@ class MainWindow(Gtk.ApplicationWindow):
             "unmatched": unmatched,
             "sort": sort_mode,
             "limit": effective_limit,
-            "value_dashboard_report": value_dashboard_report,
-            "value_dashboard_error": value_dashboard_error,
+            "collection_summary_report": collection_summary_report,
+            "collection_summary_error": collection_summary_error,
             "_timing_query_s": _t_query,
             "_timing_sort_s": _t_sort,
         }
@@ -3843,30 +4174,26 @@ class MainWindow(Gtk.ApplicationWindow):
             self._visible_release_ids
         )
 
-        value_dashboard_error = str(payload.get("value_dashboard_error") or "").strip()
-        if value_dashboard_error:
-            self._value_dashboard.set_error(value_dashboard_error)
+        collection_summary_error = str(
+            payload.get("collection_summary_error") or ""
+        ).strip()
+        if collection_summary_error:
+            self._collection_summary.set_error(collection_summary_error)
         else:
-            value_dashboard_raw = payload.get("value_dashboard_report")
-            value_dashboard = (
-                dict(value_dashboard_raw)
-                if isinstance(value_dashboard_raw, dict)
+            collection_summary_raw = payload.get("collection_summary_report")
+            collection_summary = (
+                dict(collection_summary_raw)
+                if isinstance(collection_summary_raw, dict)
                 else {}
             )
-            if value_dashboard:
-                self._set_value_dashboard_from_report(
-                    value_dashboard, update_status=False
-                )
+            if collection_summary:
+                self._collection_summary.set_summary(collection_summary)
 
         # Hotspot 3: widget population (main thread)
         _t2 = time.perf_counter()
-        self._syncing_selection = True
-        try:
-            self._text_menu.set_items(items)
-            self._carousel.set_items(items)
-            self._browse_gallery.set_items(items)
-        finally:
-            self._syncing_selection = False
+        self._browse_items = [dict(item) for item in items]
+        self._browse_populated_modes.clear()
+        self._populate_browse_mode(self._active_browse_mode(), force=True)
         _t_widgets = time.perf_counter() - _t2
 
         if _TIMING_ENABLED:
@@ -3920,10 +4247,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 if last_sync is None:
                     status_msg = (
                         "No releases synced yet. Click \"Sync Collection\" to import"
-                        " your Discogs collection for the first time."
+                        " your Discogs collection for the first time, then try Spin."
                     )
                     self._browse_empty_label.set_text(
-                        "Sync your collection to get started."
+                        "Sync your collection to get started, then open collector insights."
                     )
                 else:
                     status_msg = "No releases match the current filters."
@@ -3960,6 +4287,10 @@ class MainWindow(Gtk.ApplicationWindow):
         # Sidebar/detail content can change natural width after load; reapply split.
         self._schedule_visible_layout_settle(reason="browse-load")
 
+        if self._browse_sync_reload_needed:
+            self._browse_sync_reload_needed = False
+            self.load_releases(background=True)
+
         return {
             "ok": True,
             "item_count": len(items),
@@ -3978,6 +4309,7 @@ class MainWindow(Gtk.ApplicationWindow):
         }
 
     def _handle_release_load_error(self, message: str) -> None:
+        self._collection_summary.set_error(message)
         self._set_status(message)
 
     def _run_wantlist_load_operation(
@@ -4049,13 +4381,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Hotspot 3: widget population (main thread)
         _t2 = time.perf_counter()
-        self._wantlist_syncing_selection = True
-        try:
-            self._wantlist_text_menu.set_items(items)
-            self._wantlist_carousel.set_items(items)
-            self._wantlist_gallery.set_items(items)
-        finally:
-            self._wantlist_syncing_selection = False
+        self._wantlist_items = [dict(item) for item in items]
+        self._wantlist_populated_modes.clear()
+        self._populate_wantlist_mode(self._active_wantlist_mode(), force=True)
         _t_widgets = time.perf_counter() - _t2
 
         if _TIMING_ENABLED:
@@ -4137,6 +4465,10 @@ class MainWindow(Gtk.ApplicationWindow):
         # Sidebar/detail content can change natural width after load; reapply split.
         self._schedule_visible_layout_settle(reason="wantlist-load")
 
+        if self._wantlist_sync_reload_needed:
+            self._wantlist_sync_reload_needed = False
+            self.load_wantlist(background=True)
+
         return {
             "ok": True,
             "item_count": len(items),
@@ -4160,15 +4492,20 @@ class MainWindow(Gtk.ApplicationWindow):
     def _focus_wantlist_id(
         self, discogs_release_id: int, *, allow_expand_limit: bool = True
     ) -> bool:
+        active_mode = self._active_wantlist_mode()
+        self._populate_wantlist_mode(active_mode)
         selected = False
-        if self._wantlist_text_menu.select_release(discogs_release_id):
-            selected = True
-        if self._wantlist_carousel.select_release(discogs_release_id):
+        if (
+            active_mode == "text"
+            and self._wantlist_text_menu.select_release(discogs_release_id)
+        ):
             selected = True
         if (
-            self._active_wantlist_mode() == "gallery"
-            and self._wantlist_gallery.select_release(discogs_release_id)
+            active_mode == "carousel"
+            and self._wantlist_carousel.select_release(discogs_release_id)
         ):
+            selected = True
+        if active_mode == "gallery" and self._wantlist_gallery.select_release(discogs_release_id):
             selected = True
         if selected:
             return True
@@ -4188,15 +4525,20 @@ class MainWindow(Gtk.ApplicationWindow):
             limit=expanded_limit,
             background=False,
         )
+        active_mode = self._active_wantlist_mode()
+        self._populate_wantlist_mode(active_mode, force=True)
         selected = False
-        if self._wantlist_text_menu.select_release(discogs_release_id):
-            selected = True
-        if self._wantlist_carousel.select_release(discogs_release_id):
+        if (
+            active_mode == "text"
+            and self._wantlist_text_menu.select_release(discogs_release_id)
+        ):
             selected = True
         if (
-            self._active_wantlist_mode() == "gallery"
-            and self._wantlist_gallery.select_release(discogs_release_id)
+            active_mode == "carousel"
+            and self._wantlist_carousel.select_release(discogs_release_id)
         ):
+            selected = True
+        if active_mode == "gallery" and self._wantlist_gallery.select_release(discogs_release_id):
             selected = True
         return selected
 
@@ -4259,15 +4601,14 @@ class MainWindow(Gtk.ApplicationWindow):
     def _focus_release_id(
         self, discogs_release_id: int, *, allow_expand_limit: bool = True
     ) -> bool:
+        active_mode = self._active_browse_mode()
+        self._populate_browse_mode(active_mode)
         selected = False
-        if self._text_menu.select_release(discogs_release_id):
+        if active_mode == "text" and self._text_menu.select_release(discogs_release_id):
             selected = True
-        if self._carousel.select_release(discogs_release_id):
+        if active_mode == "carousel" and self._carousel.select_release(discogs_release_id):
             selected = True
-        if (
-            self._active_browse_mode() == "gallery"
-            and self._browse_gallery.select_release(discogs_release_id)
-        ):
+        if active_mode == "gallery" and self._browse_gallery.select_release(discogs_release_id):
             selected = True
         if selected:
             return True
@@ -4288,15 +4629,14 @@ class MainWindow(Gtk.ApplicationWindow):
             limit=expanded_limit,
             background=False,
         )
+        active_mode = self._active_browse_mode()
+        self._populate_browse_mode(active_mode, force=True)
         selected = False
-        if self._text_menu.select_release(discogs_release_id):
+        if active_mode == "text" and self._text_menu.select_release(discogs_release_id):
             selected = True
-        if self._carousel.select_release(discogs_release_id):
+        if active_mode == "carousel" and self._carousel.select_release(discogs_release_id):
             selected = True
-        if (
-            self._active_browse_mode() == "gallery"
-            and self._browse_gallery.select_release(discogs_release_id)
-        ):
+        if active_mode == "gallery" and self._browse_gallery.select_release(discogs_release_id):
             selected = True
         return selected
 
@@ -4901,7 +5241,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self._set_status(
             f"Sync complete: fetched {fetched}, upserted {upserted}, deactivated {deactivated}."
         )
-        self.load_releases(background=True)
+        self._browse_sync_reload_needed = True
+        result = self.load_releases(background=True)
+        if result.get("ok"):
+            self._browse_sync_reload_needed = False
 
     def _handle_wantlist_sync_clicked(self) -> None:
         self._start_async_action(
@@ -4925,7 +5268,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self._set_status(
             f"Wantlist sync complete: fetched {fetched}, upserted {upserted}, deactivated {deactivated}."
         )
-        self.load_wantlist(background=True)
+        self._wantlist_sync_reload_needed = True
+        result = self.load_wantlist(background=True)
+        if result.get("ok"):
+            self._wantlist_sync_reload_needed = False
 
     def _handle_devices_refresh_clicked(self) -> None:
         self._start_async_action(
@@ -5012,7 +5358,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         def on_started() -> None:
             self._pending_spin_result = None
-            self._carousel.start_center_spin_animation()
+            if self._active_browse_mode() == "carousel":
+                self._carousel.start_center_spin_animation()
             self._spin_wheel.start_spin_animation(
                 on_complete=self._on_browse_spin_wheel_complete
             )
@@ -5033,7 +5380,7 @@ class MainWindow(Gtk.ApplicationWindow):
             on_success=self._handle_spin_payload_ready,
             on_error=self._handle_spin_error,
         )
-        if not started:
+        if not started and self._active_browse_mode() == "carousel":
             self._carousel.stop_center_spin_animation()
 
     def _handle_spin_payload_ready(self, payload: dict[str, object]) -> None:
@@ -5053,7 +5400,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self._spin_wheel.complete_spin_animation(payload)
 
     def _apply_spin_result(self, payload: dict[str, object]) -> None:
-        self._carousel.stop_center_spin_animation(invoke_callback=False)
+        if self._active_browse_mode() == "carousel":
+            self._carousel.stop_center_spin_animation(invoke_callback=False)
 
         release = payload.get("release")
         if not isinstance(release, dict):
@@ -5073,7 +5421,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _on_browse_spin_wheel_complete(self, payload: dict[str, object]) -> None:
         self._pending_spin_result = None
-        self._carousel.stop_center_spin_animation(invoke_callback=False)
+        if self._active_browse_mode() == "carousel":
+            self._carousel.stop_center_spin_animation(invoke_callback=False)
         self._apply_spin_result(payload)
 
     def _handle_play_last_spin_clicked(self) -> None:
@@ -5127,7 +5476,8 @@ class MainWindow(Gtk.ApplicationWindow):
             return
 
         def on_started() -> None:
-            self._wantlist_carousel.start_center_spin_animation()
+            if self._active_wantlist_mode() == "carousel":
+                self._wantlist_carousel.start_center_spin_animation()
             self._wantlist_spin_wheel.start_spin_animation(
                 on_complete=self._apply_wantlist_spin_result
             )
@@ -5159,7 +5509,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self._wantlist_spin_wheel.complete_spin_animation(payload)
 
     def _apply_wantlist_spin_result(self, payload: dict[str, object]) -> None:
-        self._wantlist_carousel.stop_center_spin_animation()
+        if self._active_wantlist_mode() == "carousel":
+            self._wantlist_carousel.stop_center_spin_animation()
         release_id = payload.get("discogs_release_id")
         if isinstance(release_id, int):
             # Immediately update the detail panel with spin result data
@@ -5346,6 +5697,7 @@ class MainWindow(Gtk.ApplicationWindow):
         normalized_styles = list(styles or [])
         normalized_sort_mode = str(sort_mode or "artist_title")
         normalized_limit = _normalize_release_limit(limit)
+        self._collection_summary.set_busy()
 
         if not background:
             payload = self._run_release_load_operation(
@@ -5404,13 +5756,89 @@ class DiscogsPlayerApp(Adw.Application):
         limit: int | None = None,
         preload_covers: bool = True,
         smoke_test: bool = False,
+        perf_report: bool = False,
+        idle_probe_seconds: int = 0,
     ) -> None:
         super().__init__(application_id="com.discogs_player.app")
         self._limit = _normalize_release_limit(limit)
         self._preload_covers = bool(preload_covers)
         self._smoke_test = bool(smoke_test)
+        self._perf_report = bool(perf_report)
+        self._idle_probe_seconds = max(0, int(idle_probe_seconds))
         self.exit_code = 0
         self._did_activate = False
+
+    def _performance_report(self) -> dict[str, object]:
+        profile = performance_profile()
+        usage = resource.getrusage(resource.RUSAGE_SELF) if resource is not None else None
+        return {
+            "performance_profile": profile.name,
+            "cover_workers": profile.cover_workers,
+            "carousel_prefetch_inflight": profile.carousel_prefetch_inflight,
+            "carousel_lookahead": profile.carousel_lookahead,
+            "carousel_backtrack": profile.carousel_backtrack,
+            "carousel_texture_cache": profile.carousel_texture_cache,
+            "gallery_initial_items": profile.gallery_initial_items,
+            "gallery_chunk_items": profile.gallery_chunk_items,
+            "rss_kb": int(usage.ru_maxrss) if usage is not None else None,
+            "user_cpu_s": round(float(usage.ru_utime), 4) if usage is not None else None,
+            "system_cpu_s": (
+                round(float(usage.ru_stime), 4) if usage is not None else None
+            ),
+        }
+
+    def _emit_idle_probe_report(
+        self,
+        window: MainWindow,
+        started_at: float,
+        started_usage: object | None,
+    ) -> bool:
+        usage = resource.getrusage(resource.RUSAGE_SELF) if resource is not None else None
+        started_user = (
+            float(getattr(started_usage, "ru_utime", 0.0))
+            if started_usage is not None
+            else 0.0
+        )
+        started_system = (
+            float(getattr(started_usage, "ru_stime", 0.0))
+            if started_usage is not None
+            else 0.0
+        )
+        user_cpu = float(getattr(usage, "ru_utime", 0.0)) if usage is not None else 0.0
+        system_cpu = float(getattr(usage, "ru_stime", 0.0)) if usage is not None else 0.0
+        report = {
+            "ok": True,
+            "idle_probe_seconds": self._idle_probe_seconds,
+            "wall_seconds": round(time.perf_counter() - started_at, 4),
+            "idle_user_cpu_s": round(user_cpu - started_user, 4),
+            "idle_system_cpu_s": round(system_cpu - started_system, 4),
+            "idle_total_cpu_s": round(
+                (user_cpu - started_user) + (system_cpu - started_system),
+                4,
+            ),
+            "rss_kb": int(getattr(usage, "ru_maxrss", 0)) if usage is not None else None,
+            "idle_state": window.idle_debug_state(),
+        }
+        report.update(self._performance_report())
+        print(json.dumps(report, sort_keys=True))
+        self.quit()
+        return False
+
+    def _start_idle_probe_sample(self, window: MainWindow) -> bool:
+        started_at = time.perf_counter()
+        started_usage = (
+            resource.getrusage(resource.RUSAGE_SELF)
+            if resource is not None
+            else None
+        )
+        GLib.timeout_add(
+            max(1, int(self._idle_probe_seconds)) * 1000,
+            self._emit_idle_probe_report,
+            window,
+            started_at,
+            started_usage,
+        )
+        return False
 
     def do_activate(self) -> None:  # pragma: no cover - driven by integration runtime
         if self._did_activate:
@@ -5424,6 +5852,7 @@ class DiscogsPlayerApp(Adw.Application):
             window = MainWindow(
                 self, limit=self._limit, preload_covers=self._preload_covers
             )
+            self._window = window
             window.present()
             titlebar_present = bool(window.get_titlebar() is not None)
             if self._smoke_test:
@@ -5442,7 +5871,9 @@ class DiscogsPlayerApp(Adw.Application):
             return
 
         try:
-            report = window.load_releases(background=not self._smoke_test)
+            report = window.load_releases(
+                background=not (self._smoke_test or self._idle_probe_seconds > 0)
+            )
         except Exception as exc:
             self.exit_code = 1
             report = {
@@ -5452,10 +5883,17 @@ class DiscogsPlayerApp(Adw.Application):
             }
         report.update(smoke_report)
         report["titlebar_present"] = titlebar_present
+        if self._perf_report:
+            report.update(self._performance_report())
 
         if self._smoke_test:
             print(json.dumps(report, sort_keys=True))
             self.quit()
+            return
+
+        if self._idle_probe_seconds > 0:
+            window.force_background_idle_for_probe()
+            GLib.timeout_add(1000, self._start_idle_probe_sample, window)
             return
 
         GLib.idle_add(window._check_first_run)

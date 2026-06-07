@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { getJson } from "./api";
+import { getJson, ProviderReadinessContract } from "./api";
 import { Nav } from "./components/Nav";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CollectionPage } from "./pages/CollectionPage";
@@ -13,6 +13,7 @@ import { WantlistPage } from "./pages/WantlistPage";
 
 type SetupPayload = {
   onboarding_stage: string;
+  provider_readiness?: ProviderReadinessContract;
 };
 
 function AppRoutes() {
@@ -23,7 +24,14 @@ function AppRoutes() {
   useEffect(() => {
     getJson<SetupPayload>("/setup")
       .then((payload) => {
-        if (payload.data?.onboarding_stage === "needs_discogs_token") {
+        const readinessSummary = payload.data?.provider_readiness?.summary;
+        const onboardingStage = readinessSummary?.onboarding_state ?? payload.data?.onboarding_stage;
+        const requiredConfigured = readinessSummary?.required_services_configured;
+        if (
+          onboardingStage === "needs_required_setup"
+          || onboardingStage === "needs_discogs_token"
+          || requiredConfigured === false
+        ) {
           navigate("/setup", { replace: true });
         }
       })

@@ -16,14 +16,14 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 
 Download the current stable GTK `.deb` directly:
 
-- [discogs-spinner-gtk4_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- [discogs-spinner-gtk4_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Then install it:
 
 ```bash
-sudo apt install ./discogs-spinner_*_amd64.deb
+sudo apt install ./discogs-spinner-gtk4_0.2.1_amd64.deb
 ```
 
 Launch **Discogs Spinner** from your app menu, or run:
@@ -48,15 +48,15 @@ What success looks like:
 
 Download the current stable AppImage directly:
 
-- [Discogs Spinner_0.2.0_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- [Discogs Spinner_0.2.1_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Then:
 
 ```bash
-chmod +x Discogs.Spinner_0.2.0_amd64.AppImage
-./Discogs.Spinner_0.2.0_amd64.AppImage
+chmod +x Discogs.Spinner_0.2.1_amd64.AppImage
+./Discogs.Spinner_0.2.1_amd64.AppImage
 ```
 
 - No root required; runs from any directory.
@@ -71,9 +71,15 @@ chmod +x Discogs.Spinner_0.2.0_amd64.AppImage
 
 If you want the Tauri desktop package instead of the GTK build, download:
 
-- [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt)
+- [discogs-spinner-tauri_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+
+Then install it:
+
+```bash
+sudo apt install ./discogs-spinner-tauri_0.2.1_amd64.deb
+```
 
 ---
 

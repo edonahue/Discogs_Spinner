@@ -46,18 +46,26 @@ def test_window_resize_handlers_present():
     with open(main_window_file, 'r') as f:
         content = f.read()
     
-    # Check for proper GTK4 resize handling
-    assert 'connect(\'notify::default-width\'' in content  # GTK4 proper resize handling
-    assert 'connect(\'notify::default-height\'' in content  # GTK4 proper resize handling
+    # Check for proper GTK4 resize handling. COSMIC/Wayland interactive resize
+    # should follow allocated window size, not internal default-size changes.
+    assert 'connect(\'notify::width\'' in content
+    assert 'connect(\'notify::height\'' in content
     assert 'def _on_window_resize(' in content  # Resize handler
     assert 'def _on_window_state_change(' in content  # State change handler
+    assert "self.add_tick_callback(self._handle_size_tick)" in content
+    assert "def _handle_size_tick(" in content
+    assert "self._schedule_allocation_reflow()" in content
+    assert "def _run_allocation_reflow(self) -> bool:" in content
+    assert "GLib.idle_add(self._apply_split_layout_from_current_size)" in content
+    assert 'connect(\'notify::default-width\'' not in content
+    assert 'connect(\'notify::default-height\'' not in content
     
     # Check that EventControllerMotion resize signal is NOT present (the bug)
     assert 'EventControllerMotion' not in content or 'resize' not in content.split('EventControllerMotion')[1].split('\n')[0]
     
     print("✓ Proper GTK4 window resize handlers are present")
-    print("  Found notify::default-width connection")
-    print("  Found notify::default-height connection")
+    print("  Found notify::width connection")
+    print("  Found notify::height connection")
     print("  Found _on_window_resize method")
     print("  Found _on_window_state_change method")
 
@@ -78,6 +86,8 @@ def test_split_layout_ratio_logic_present():
     assert "def _effective_layout_width(" in content
     assert "def _compute_detail_panel_width(" in content
     assert "def _apply_split_layout(" in content
+    assert "prefer_width: bool = False" in content
+    assert "self._apply_split_layout(width, prefer_width=True)" in content
     assert "def _sync_carousel_layout_hints(" in content
     assert "def _on_stack_size_change(" in content
     assert 'self._browse_stack.connect("notify::width", self._on_stack_size_change)' in content
@@ -146,7 +156,7 @@ def test_split_layout_resets_scrolled_max_width_before_min_width_updates():
 
 
 def test_better_default_window_size():
-    """Test that startup window sizing is monitor-aware and less aggressive."""
+    """Test that startup window sizing is monitor-aware and COSMIC-friendly."""
     
     from pathlib import Path
     
@@ -159,16 +169,30 @@ def test_better_default_window_size():
     
     assert "_STARTUP_WINDOW_DEFAULT_WIDTH = 1100" in content
     assert "_STARTUP_WINDOW_DEFAULT_HEIGHT = 760" in content
+    assert "_STARTUP_WINDOW_WORKAREA_WIDTH_RATIO = 0.70" in content
+    assert "_STARTUP_WINDOW_WORKAREA_HEIGHT_RATIO = 0.70" in content
+    assert "_STARTUP_WINDOW_MAX_WIDTH = 2400" in content
+    assert "_STARTUP_WINDOW_MAX_HEIGHT = 1100" in content
+    assert "_STARTUP_WINDOW_WORKAREA_WIDTH_CAP_RATIO = 0.92" in content
+    assert "_STARTUP_WINDOW_WORKAREA_HEIGHT_CAP_RATIO = 0.90" in content
     assert "_STARTUP_WINDOW_MIN_WIDTH = 820" in content
     assert "_STARTUP_WINDOW_MIN_HEIGHT = 620" in content
     assert "def _startup_target_window_size(self) -> tuple[int, int]:" in content
     assert "def _apply_startup_window_size(self) -> bool:" in content
+    assert "target_width, target_height = self._startup_target_window_size()" in content
     assert "self.set_default_size(target_width, target_height)" in content
-    assert "self.queue_resize()" in content
+    startup_helper = content[
+        content.index("def _apply_startup_window_size(") : content.index(
+            "def _cancel_idle_trim("
+        )
+    ]
+    assert "set_default_size" not in startup_helper
+    assert "queue_resize" not in startup_helper
+    assert "self._apply_split_layout_from_current_size()" in startup_helper
 
     print("✓ Better default window size")
     print("  Found monitor-aware startup sizing helpers")
-    print("  Found smaller startup and minimum window targets")
+    print("  Found large COSMIC-friendly startup and minimum window targets")
 
 
 if __name__ == "__main__":

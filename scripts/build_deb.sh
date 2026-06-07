@@ -101,6 +101,7 @@ INSTALL_PREFIX="/opt/discogs-spinner"
 VENV_PATH="${INSTALL_PREFIX}/venv"
 WHEEL_DIR="${STAGING_DIR}${INSTALL_PREFIX}/wheels"
 DESKTOP_FILE="${ROOT_DIR}/packaging/deb/dplayer-gui.desktop"
+METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"
 POSTINST_SCRIPT="${ROOT_DIR}/packaging/deb/postinst"
 ICON_SOURCE="${ROOT_DIR}/assets/icons/discogs-player.svg"
 
@@ -134,6 +135,7 @@ chmod 0755 "${BIN_DIR}/dplayer-api"
 
 cat >"${BIN_DIR}/dplayer-gui" <<'SH'
 #!/bin/bash
+export DP_PERF_PROFILE="${DP_PERF_PROFILE:-quiet}"
 exec /opt/discogs-spinner/venv/bin/python -m discogs_player.ui_main "$@"
 SH
 chmod 0755 "${BIN_DIR}/dplayer-gui"
@@ -142,6 +144,11 @@ chmod 0755 "${BIN_DIR}/dplayer-gui"
 APPS_DIR="${STAGING_DIR}/usr/share/applications"
 mkdir -p "$APPS_DIR"
 cp "$DESKTOP_FILE" "${APPS_DIR}/discogs-spinner.desktop"
+
+# AppStream metadata for software-center style package listings.
+METAINFO_DIR="${STAGING_DIR}/usr/share/metainfo"
+mkdir -p "$METAINFO_DIR"
+cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.DiscogsSpinner.metainfo.xml"
 
 # Icon
 ICON_DIR="${STAGING_DIR}/usr/share/icons/hicolor/scalable/apps"
@@ -162,6 +169,11 @@ else
     echo "Warning: metainfo not found at ${METAINFO_FILE}" >&2
 fi
 
+# Debian package metadata.
+DOC_DIR="${STAGING_DIR}/usr/share/doc/discogs-spinner"
+mkdir -p "$DOC_DIR"
+cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"
+
 # ---------------------------------------------------------------------------
 # Run fpm
 # ---------------------------------------------------------------------------
@@ -174,7 +186,7 @@ fpm \
     --name discogs-spinner \
     --version "$PACKAGE_VERSION" \
     --architecture "$ARCH" \
-    --maintainer "Discogs Spinner Contributors" \
+    --maintainer "Discogs Spinner Contributors <discogs_player+maintainer@users.noreply.github.com>" \
     --description "Browse your Discogs collection and control Spotify/YouTube Music playback." \
     --url "https://github.com/edonahue/Discogs_Spinner" \
     --license MIT \

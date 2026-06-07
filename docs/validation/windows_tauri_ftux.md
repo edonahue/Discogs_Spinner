@@ -5,7 +5,7 @@ Run this checklist once on a clean Windows machine before approving the Windows 
 ## Pre-conditions
 
 - [ ] Fresh Windows 10 or 11 machine (or clean VM), no Discogs token pre-configured
-- [ ] Downloaded `Discogs_Spinner_0.2.0_x64-setup.exe` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases)
+- [ ] Downloaded `Discogs.Spinner_0.2.1_x64-setup.exe` from [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases)
 
 ## Install
 

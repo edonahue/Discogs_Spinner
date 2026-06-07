@@ -10,6 +10,13 @@ from discogs_player.services.sync_manager import MissingDiscogsTokenError
 runner = CliRunner()
 
 
+def test_cli_version_option_reports_installed_version(monkeypatch):
+    monkeypatch.setattr(commands, "_package_version", lambda: "9.9.9-test")
+    result = runner.invoke(commands.app, ["--version"])
+    assert result.exit_code == 0
+    assert "9.9.9-test" in result.output
+
+
 def test_sync_missing_discogs_token_exits_3(isolated_xdg, monkeypatch):
     def _raise_missing_token(**kwargs):
         _ = kwargs
@@ -366,6 +373,15 @@ def test_setup_json_output(monkeypatch):
         "onboarding_stage": "ready",
         "discogs": {"configured": True, "token_source": "environment"},
         "collection": {"release_count_active": 10, "release_count_total": 10},
+        "provider_readiness": {
+            "summary": {
+                "required_services_configured": True,
+                "optional_provider_count": 2,
+                "ready_provider_count": 2,
+                "degraded_mode": False,
+                "onboarding_state": "ready",
+            }
+        },
         "spotify": {
             "addon_available": True,
             "configured": True,
@@ -385,6 +401,15 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
     expected = {
         "profile": "plus",
         "onboarding_stage": "needs_spotify_auth",
+        "provider_readiness": {
+            "summary": {
+                "required_services_configured": True,
+                "optional_provider_count": 2,
+                "ready_provider_count": 0,
+                "degraded_mode": True,
+                "onboarding_state": "core_ready_optional_pending",
+            }
+        },
         "discogs": {
             "configured": True,
             "token_source": "environment",
@@ -406,6 +431,10 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
             "spotify_dashboard_url": "https://developer.spotify.com/dashboard",
             "spotify_oauth_guide_url": "https://developer.spotify.com/documentation/web-api/tutorials/code-flow",
         },
+        "daily_use_actions": [
+            "Run dplayer spin",
+            "Run dplayer value gems --limit 10",
+        ],
         "next_steps": ["dplayer auth spotify-doctor"],
     }
     monkeypatch.setattr(commands, "run_setup_report", lambda: expected)
@@ -417,6 +446,9 @@ def test_setup_table_output_includes_setup_links(monkeypatch):
     assert "spotify_dashboard_url" in result.output
     assert "spotify_oauth_guide_url" in result.output
     assert "links_discogs_token_url" in result.output
+    assert "provider_readiness_state" in result.output
+    assert "provider_optional_ready_count" in result.output
+    assert "Daily Use Actions" in result.output
 
 
 def test_diagnostics_json_output(monkeypatch):
@@ -427,6 +459,11 @@ def test_diagnostics_json_output(monkeypatch):
         "env_presence": {"DISCOGS_TOKEN": False},
         "settings_presence": {},
         "capabilities": {"spotify": {"addon_available": False, "configured": False}},
+        "provider_readiness": {"summary": {"onboarding_state": "needs_required_setup"}},
+        "legacy_spotify_compatibility": {
+            "status_report_has_spotify_capability": True,
+            "setup_report_has_spotify_block": True,
+        },
         "status_report": {"release_count_total": 0},
         "setup_report": {"onboarding_stage": "needs_discogs_token"},
         "provider_diagnostics": {"null": {"diagnosis": "addon_missing"}},
@@ -449,6 +486,14 @@ def test_diagnostics_table_output(monkeypatch):
             "db_path": "/tmp/data/app.db",
             "db_exists": True,
         },
+        "provider_readiness": {
+            "summary": {
+                "onboarding_state": "core_ready_optional_pending",
+                "ready_provider_count": 0,
+                "optional_provider_count": 2,
+                "degraded_mode": True,
+            }
+        },
         "command_hint": "dplayer diagnostics --json",
     }
     monkeypatch.setattr(commands, "run_diagnostics_report", lambda: expected)
@@ -457,7 +502,176 @@ def test_diagnostics_table_output(monkeypatch):
 
     assert result.exit_code == 0
     assert "discogs_player diagnostics" in result.output
+    assert "provider_readiness_state" in result.output
+    assert "provider_optional_ready_count" in result.output
     assert "command_hint" in result.output
+
+
+def test_providers_json_output(monkeypatch):
+    status_payload = {
+        "provider_readiness": {
+            "schema_version": 2,
+            "summary": {
+                "required_services_configured": True,
+                "optional_provider_count": 2,
+                "ready_provider_count": 1,
+                "degraded_mode": True,
+                "onboarding_state": "core_ready_optional_pending",
+            },
+            "providers": [
+                {
+                    "provider_id": "spotify",
+                    "display_name": "Spotify",
+                    "readiness": "ready",
+                    "auth_state": "authenticated",
+                    "configured": True,
+                    "supported_capabilities": ["playback", "catalog_matching"],
+                    "status_message": "Spotify provider is ready.",
+                },
+                {
+                    "provider_id": "youtube_music",
+                    "display_name": "YouTube Music",
+                    "readiness": "unavailable",
+                    "auth_state": "not_required",
+                    "configured": False,
+                    "supported_capabilities": ["browser_playback"],
+                    "status_message": "Provider listed but disabled.",
+                },
+            ],
+        }
+    }
+    monkeypatch.setattr(commands, "get_status_report", lambda: status_payload)
+
+    result = runner.invoke(commands.app, ["providers", "--json"])
+
+    assert result.exit_code == 0
+    parsed = json.loads(result.output)
+    assert parsed["schema_version"] == 2
+    assert parsed["summary"]["onboarding_state"] == "core_ready_optional_pending"
+    assert len(parsed["providers"]) == 2
+    assert parsed["providers"][0]["provider_id"] == "spotify"
+
+
+def test_providers_table_output(monkeypatch):
+    status_payload = {
+        "provider_readiness": {
+            "schema_version": 2,
+            "summary": {
+                "required_services_configured": True,
+                "optional_provider_count": 1,
+                "ready_provider_count": 0,
+                "degraded_mode": True,
+                "onboarding_state": "core_ready_optional_pending",
+            },
+            "providers": [
+                {
+                    "provider_id": "spotify",
+                    "display_name": "Spotify",
+                    "readiness": "degraded",
+                    "auth_state": "unauthenticated",
+                    "configured": False,
+                    "supported_capabilities": ["playback", "catalog_matching"],
+                    "status_message": "Spotify addon is installed but not configured.",
+                },
+            ],
+        }
+    }
+    monkeypatch.setattr(commands, "get_status_report", lambda: status_payload)
+
+    result = runner.invoke(commands.app, ["providers"])
+
+    assert result.exit_code == 0
+    assert "provider readiness summary" in result.output
+    assert "schema_version" in result.output
+    assert "core_ready_optional_pending" in result.output
+    assert "Spotify" in result.output
+
+
+def test_insights_json_output(monkeypatch):
+    expected = {
+        "summary": {
+            "onboarding_state": "ready",
+            "health_score": 87,
+            "hidden_gems_count": 3,
+            "refresh_queue_count": 4,
+            "ready_for_daily_use": True,
+        },
+        "highlights": [
+            {
+                "kind": "discovery",
+                "title": "Tonight's hidden gem",
+                "message": "Artist - Album",
+                "command_hint": "dplayer value gems --limit 10 --json",
+            }
+        ],
+        "daily_use_actions": ["Run dplayer spin", "Run dplayer play --last-spin --open"],
+        "top_hidden_gems": [],
+        "refresh_queue_preview": [],
+        "legacy_spotify_compatibility": {
+            "status_report_has_spotify_capability": True,
+            "setup_report_has_spotify_block": True,
+        },
+    }
+    captured: dict[str, object] = {}
+
+    def _fake_run_collector_insights(**kwargs):
+        captured.update(kwargs)
+        return expected
+
+    monkeypatch.setattr(commands, "run_collector_insights", _fake_run_collector_insights)
+    result = runner.invoke(
+        commands.app,
+        ["insights", "--gems-limit", "4", "--queue-limit", "6", "--min-median", "35", "--json"],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == expected
+    assert captured == {"gems_limit": 4, "queue_limit": 6, "min_median": 35.0}
+
+
+def test_insights_table_output(monkeypatch):
+    expected = {
+        "summary": {
+            "onboarding_state": "core_ready_optional_pending",
+            "ready_for_daily_use": True,
+            "release_count_active": 200,
+            "mapped_count": 150,
+            "unmatched_count": 50,
+            "wantlist_count": 22,
+            "health_score": 79,
+            "hidden_gems_count": 2,
+            "refresh_queue_count": 9,
+            "market_value_last_updated": "2026-05-09T00:00:00Z",
+            "last_sync_time": "2026-05-09T00:00:00Z",
+        },
+        "highlights": [
+            {
+                "kind": "value",
+                "title": "Price refresh backlog",
+                "message": "9 releases are queued.",
+                "command_hint": "dplayer value queue --limit 25 --stale-days 30",
+            }
+        ],
+        "top_hidden_gems": [
+            {
+                "discogs_release_id": 99,
+                "artist": "Artist",
+                "title": "Album",
+                "market_median": 42.5,
+                "market_currency": "USD",
+                "num_for_sale": 2,
+                "reasons": ["high-value"],
+            }
+        ],
+        "daily_use_actions": ["Run dplayer spin"],
+    }
+    monkeypatch.setattr(commands, "run_collector_insights", lambda **kwargs: expected)
+    result = runner.invoke(commands.app, ["insights"])
+    assert result.exit_code == 0
+    assert "collector insights" in result.output
+    assert "highlights" in result.output
+    assert "top hidden gems" in result.output
+    assert "Daily Use Actions" in result.output
 
 
 def test_analytics_json_output(monkeypatch):

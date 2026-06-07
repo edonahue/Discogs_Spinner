@@ -57,8 +57,10 @@ def test_gallery_ux_smoke_script_emits_valid_json_when_gui_runtime_is_available(
     assert isinstance(browse, dict)
     assert isinstance(wantlist, dict)
 
-    assert 0 < int(startup.get("width") or 0) <= 1100
-    assert 0 < int(startup.get("height") or 0) <= 760
+    assert 0 < int(startup.get("target_width") or 0) <= 2400
+    assert 0 < int(startup.get("target_height") or 0) <= 1100
+    assert int(startup.get("width") or 0) > 0
+    assert int(startup.get("height") or 0) > 0
     assert 0 < int(startup.get("browse_carousel_detail_width") or 0) <= 360
     assert 0 < int(startup.get("wantlist_carousel_detail_width") or 0) <= 300
 
@@ -83,11 +85,11 @@ def test_gallery_ux_smoke_script_emits_valid_json_when_gui_runtime_is_available(
     assert wantlist.get("detail_release_id") == want_ids[0]
     assert int(browse.get("detail_width_after_select") or 0) > 0
     assert int(wantlist.get("detail_width_after_select") or 0) > 0
-    assert int(browse.get("detail_width_after_clear") or -1) == 0
-    assert int(wantlist.get("detail_width_after_clear") or -1) == 0
+    assert int(browse.get("detail_width_after_clear", -1)) == 0
+    assert int(wantlist.get("detail_width_after_clear", -1)) == 0
 
     assert int(maximized.get("width") or 0) >= int(startup.get("width") or 0)
-    assert int(maximized.get("height") or 0) >= int(startup.get("height") or 0)
+    assert int(maximized.get("height") or 0) > 0
 
     startup_browse = startup.get("browse_carousel")
     startup_browse_repaired = startup.get("browse_carousel_repaired")

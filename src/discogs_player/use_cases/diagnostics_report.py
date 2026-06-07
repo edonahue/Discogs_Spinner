@@ -10,6 +10,7 @@ from importlib.metadata import PackageNotFoundError, version
 from discogs_player.capabilities import get_capabilities, get_player_backend
 from discogs_player.core.paths import cache_dir, config_dir, data_dir, db_path
 from discogs_player.core.settings import list_settings
+from discogs_player.use_cases.cover_cache import run_cover_cache_stats
 from discogs_player.use_cases.setup_report import run_setup_report
 from discogs_player.use_cases.status_report import get_status_report
 
@@ -49,11 +50,19 @@ def _env_presence_snapshot() -> dict[str, bool]:
     }
 
 
+def _as_dict(value: object) -> dict[str, object]:
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
 def run_diagnostics_report() -> dict[str, object]:
     """Build a redacted diagnostics payload safe for issue reports."""
     capabilities = get_capabilities()
     spotify_capabilities = capabilities.spotify
     backend = get_player_backend()
+    status_payload = get_status_report()
+    setup_payload = run_setup_report()
 
     provider_diagnostics: dict[str, object]
     try:
@@ -100,6 +109,7 @@ def run_diagnostics_report() -> dict[str, object]:
             "db_path": str(db_path()),
             "db_exists": db_path().exists(),
         },
+        "cache_stats": run_cover_cache_stats(),
         "env_presence": _env_presence_snapshot(),
         "settings_presence": _settings_presence_snapshot(),
         "capabilities": {
@@ -111,8 +121,17 @@ def run_diagnostics_report() -> dict[str, object]:
             },
             "providers": providers_payload,
         },
-        "status_report": get_status_report(),
-        "setup_report": run_setup_report(),
+        "provider_readiness": _as_dict(status_payload.get("provider_readiness")),
+        "legacy_spotify_compatibility": {
+            "status_report_has_spotify_capability": isinstance(
+                status_payload.get("spotify_capability"), dict
+            ),
+            "setup_report_has_spotify_block": isinstance(
+                setup_payload.get("spotify"), dict
+            ),
+        },
+        "status_report": status_payload,
+        "setup_report": setup_payload,
         "provider_diagnostics": {
             backend.name: provider_diagnostics,
         },

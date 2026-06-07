@@ -17,10 +17,15 @@ def test_build_deb_script_bundles_offline_wheelhouse():
         "for candidate in python3.10 python3",
         "build_deb.sh must build the wheelhouse with Python 3.10",
         'WHEEL_DIR="${STAGING_DIR}${INSTALL_PREFIX}/wheels"',
+        'METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"',
+        'cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"',
         'awk -F\'"\'',
         '"$PYTHON_BIN" -m pip wheel --wheel-dir "$WHEEL_DIR" \'.[web]\'',
+        'cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.DiscogsSpinner.metainfo.xml"',
+        'Discogs Spinner Contributors <discogs_player+maintainer@users.noreply.github.com>',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.main "$@"',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.api_main "$@"',
+        'export DP_PERF_PROFILE="${DP_PERF_PROFILE:-quiet}"',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.ui_main "$@"',
     ):
         assert marker in source
@@ -56,16 +61,42 @@ def test_debian_clean_install_dockerfile_exercises_installed_runtime():
 
 def test_installer_workflow_builds_gtk4_deb_with_python_310():
     source = _read(".github/workflows/installer_build.yml")
-    marker = """build-gtk4-deb:
-    name: GTK4 .deb (fpm)
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    for marker in (
+        "build-gtk4-deb:",
+        "name: GTK4 .deb (fpm)",
+        "runs-on: ubuntu-22.04",
+        "uses: actions/setup-python@v5",
+        'python-version: "3.10"',
+    ):
+        assert marker in source
 
-      - name: Setup Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-"""
-    assert marker in source
+
+def test_linux_packaging_metadata_is_validated_before_release():
+    validator = _read("scripts/validate_linux_packaging_metadata.py")
+    metainfo = _read("packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml")
+    workflow = _read(".github/workflows/installer_build.yml")
+    hygiene = _read("scripts/prepublish_hygiene_check.sh")
+
+    for marker in (
+        "io.github.edonahue.DiscogsSpinner",
+        "discogs-spinner.desktop",
+        "Discogs personal access token",
+        "sync your collection and wantlist",
+        "spin a random record",
+        "screenshots",
+        "0.2.2",
+    ):
+        assert marker in metainfo
+        assert marker in validator
+
+    for marker in (
+        "Validate Linux desktop metadata",
+        "python3 scripts/validate_linux_packaging_metadata.py",
+        "Run GTK4 .deb lintian QA",
+        "lintian --allow-root",
+        "allowed_lintian_errors",
+        "unexpected error-level GTK .deb issues",
+    ):
+        assert marker in workflow
+
+    assert "scripts/validate_linux_packaging_metadata.py" in hygiene

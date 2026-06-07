@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 
@@ -11,11 +12,15 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 from gi.repository import Gdk, GLib, Gio, Gtk
 
+from discogs_player.performance import performance_profile
+from discogs_player.services.image_cache import ensure_cover_path_for_gtk
 from discogs_player.services.image_cache import get_or_fetch_cover_path
 
-_CAROUSEL_PREFETCH_LOOKAHEAD = 48
-_CAROUSEL_PREFETCH_BACKTRACK = 8
-_CAROUSEL_PREFETCH_MAX_WORKERS = 32
+_CAROUSEL_PREFETCH_LOOKAHEAD = 12
+_CAROUSEL_PREFETCH_BACKTRACK = 4
+_CAROUSEL_PREFETCH_MAX_WORKERS = 4
+_CAROUSEL_PREFETCH_MAX_INFLIGHT = 8
+_CAROUSEL_TEXTURE_CACHE_MAX_ITEMS = 64
 
 
 class CoverCarousel(Gtk.Box):
@@ -51,10 +56,12 @@ class CoverCarousel(Gtk.Box):
         self._items: list[dict[str, object]] = []
         self._id_to_index: dict[int, int] = {}
         self._index = -1
+        self._perf = performance_profile()
         self._prefetch_generation = 0
         self._prefetch_inflight: set[int] = set()
+        self._background_suspended = False
         self._prefetch_executor = ThreadPoolExecutor(
-            max_workers=_CAROUSEL_PREFETCH_MAX_WORKERS,
+            max_workers=max(1, int(self._perf.cover_workers)),
             thread_name_prefix="carousel-cover-prefetch",
         )
         self._center_spin_source_id: int | None = None
@@ -62,7 +69,7 @@ class CoverCarousel(Gtk.Box):
         self._center_spin_target_index: int | None = None
         self._center_spin_tick = 0
         self._center_spin_on_complete: Callable[[], None] | None = None
-        self._texture_cache: dict[str, Gdk.Texture] = {}
+        self._texture_cache: OrderedDict[str, Gdk.Texture] = OrderedDict()
         self._center_slot_width = int(self._CENTER_SLOT_SIZE)
         self._center_slot_height = int(self._CENTER_SLOT_SIZE)
         self._side_slot_width = int(self._SIDE_SLOT_SIZE)
@@ -129,6 +136,36 @@ class CoverCarousel(Gtk.Box):
         GLib.idle_add(self._apply_responsive_slot_sizes_from_current_size)
 
         self._render_current(emit=False)
+
+    def set_background_suspended(self, suspended: bool) -> None:
+        self._background_suspended = bool(suspended)
+        if not self._background_suspended:
+            self._prefetch_covers_near_index()
+            return
+        self._prefetch_generation += 1
+        self._prefetch_inflight.clear()
+        self._clear_center_spin_state()
+        if self._pending_resize_source_id is not None:
+            source_id = self._pending_resize_source_id
+            self._pending_resize_source_id = None
+            try:
+                GLib.source_remove(source_id)
+            except Exception:
+                pass
+
+    def trim_idle_resources(self) -> None:
+        self._texture_cache.clear()
+        self._prefetch_generation += 1
+        self._prefetch_inflight.clear()
+
+    def idle_debug_state(self) -> dict[str, object]:
+        return {
+            "background_suspended": self._background_suspended,
+            "prefetch_inflight": len(self._prefetch_inflight),
+            "texture_cache_items": len(self._texture_cache),
+            "center_spin_active": self._center_spin_source_id is not None,
+            "resize_pending": self._pending_resize_source_id is not None,
+        }
 
     def do_unroot(self) -> None:  # pragma: no cover - lifecycle callback
         self._clear_center_spin_state()
@@ -260,6 +297,10 @@ class CoverCarousel(Gtk.Box):
 
     def start_center_spin_animation(self, *, on_complete: Callable[[], None] | None = None) -> None:
         self._clear_center_spin_state()
+        if self._background_suspended:
+            if on_complete:
+                on_complete()
+            return
         if not self._items or self._index < 0 or len(self._items) < 2:
             if on_complete:
                 on_complete()
@@ -324,6 +365,7 @@ class CoverCarousel(Gtk.Box):
     def _get_cached_texture(self, cover_path: str) -> Gdk.Texture | None:
         texture = self._texture_cache.get(cover_path)
         if texture is not None:
+            self._texture_cache.move_to_end(cover_path)
             return texture
         try:
             gfile = Gio.File.new_for_path(cover_path)
@@ -331,6 +373,9 @@ class CoverCarousel(Gtk.Box):
         except Exception:
             return None
         self._texture_cache[cover_path] = texture
+        max_items = max(1, int(self._perf.carousel_texture_cache))
+        while len(self._texture_cache) > max_items:
+            self._texture_cache.popitem(last=False)
         return texture
 
     def _build_cover_widget(
@@ -342,17 +387,31 @@ class CoverCarousel(Gtk.Box):
         placeholder_caption: str,
     ) -> Gtk.Widget:
         if isinstance(item, dict):
-            cover_path = str(item.get("cover_path") or "").strip()
+            cover_url = str(item.get("cover_url") or "").strip() or None
+            current_cover_path = str(item.get("cover_path") or "").strip() or None
+            cover_path = ensure_cover_path_for_gtk(
+                cover_url,
+                current_cover_path,
+            )
+            if cover_path:
+                item["cover_path"] = cover_path
             if cover_path:
                 texture = self._get_cached_texture(cover_path)
+                if texture is None:
+                    recovered_path = ensure_cover_path_for_gtk(
+                        cover_url,
+                        None,
+                    )
+                    if recovered_path and recovered_path != cover_path:
+                        item["cover_path"] = recovered_path
+                        cover_path = recovered_path
+                        texture = self._get_cached_texture(cover_path)
                 if texture is not None:
                     picture = Gtk.Picture.new_for_paintable(texture)
-                else:
-                    picture = Gtk.Picture.new_for_filename(cover_path)
-                picture.set_can_shrink(True)
-                picture.set_size_request(width, height)
-                picture.set_content_fit(Gtk.ContentFit.COVER)
-                return picture
+                    picture.set_can_shrink(True)
+                    picture.set_size_request(width, height)
+                    picture.set_content_fit(Gtk.ContentFit.COVER)
+                    return picture
         icon_size = max(56, int(min(width, height) * 0.24))
         return self._build_cover_placeholder(placeholder_caption, icon_size=icon_size)
 
@@ -613,14 +672,18 @@ class CoverCarousel(Gtk.Box):
         item = self._items[index]
         if not str(item.get("cover_path") or "").strip():
             item["cover_path"] = cover_path
-            # Eagerly warm the texture cache so the spin animation
-            # doesn't have to decode JPEGs on its tight timer tick.
-            self._get_cached_texture(cover_path)
             if index in self._visible_indices():
+                self._get_cached_texture(cover_path)
                 self._render_current(emit=False)
         return False
 
     def _queue_cover_prefetch(self, index: int) -> None:
+        max_inflight = max(0, int(self._perf.carousel_prefetch_inflight))
+        if self._background_suspended or max_inflight <= 0:
+            return
+        if len(self._prefetch_inflight) >= max_inflight:
+            return
+
         release_id_obj = self._items[index].get("discogs_release_id")
         if not isinstance(release_id_obj, int):
             return
@@ -629,10 +692,13 @@ class CoverCarousel(Gtk.Box):
         if discogs_release_id in self._prefetch_inflight:
             return
 
+        cover_url_obj = self._items[index].get("cover_url")
+        cover_url = str(cover_url_obj or "").strip()
+        if not cover_url:
+            return
+
         self._prefetch_inflight.add(discogs_release_id)
         generation = self._prefetch_generation
-        cover_url_obj = self._items[index].get("cover_url")
-        cover_url = str(cover_url_obj or "")
 
         try:
             self._prefetch_executor.submit(
@@ -645,7 +711,7 @@ class CoverCarousel(Gtk.Box):
             self._prefetch_inflight.discard(discogs_release_id)
 
     def _prefetch_covers_near_index(self) -> None:
-        if not self._items or self._index < 0:
+        if self._background_suspended or not self._items or self._index < 0:
             return
 
         count = len(self._items)
@@ -655,9 +721,11 @@ class CoverCarousel(Gtk.Box):
             if isinstance(slot_index, int):
                 priority.append(slot_index)
 
-        for offset in range(2, _CAROUSEL_PREFETCH_LOOKAHEAD + 1):
+        lookahead = max(0, int(self._perf.carousel_lookahead))
+        backtrack = max(0, int(self._perf.carousel_backtrack))
+        for offset in range(2, lookahead + 1):
             priority.append((self._index + offset) % count)
-        for offset in range(2, _CAROUSEL_PREFETCH_BACKTRACK + 1):
+        for offset in range(2, backtrack + 1):
             priority.append((self._index - offset) % count)
 
         seen: set[int] = set()

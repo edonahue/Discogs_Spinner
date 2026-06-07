@@ -67,6 +67,32 @@ def _as_dict_list(value: object | None) -> list[dict[str, object]]:
     return rows
 
 
+def _extract_format_flags(
+    basic: dict[str, object],
+) -> tuple[bool | None, bool | None]:
+    formats_raw = basic.get("formats")
+    if not isinstance(formats_raw, list):
+        return None, None
+
+    has_lp = False
+    has_45 = False
+
+    for format_item in formats_raw:
+        if not isinstance(format_item, dict):
+            continue
+        descriptions = format_item.get("descriptions")
+        if not isinstance(descriptions, list):
+            continue
+        for description in descriptions:
+            normalized = str(description or "").strip().upper()
+            if normalized == "LP":
+                has_lp = True
+            if normalized in {"45", "45 RPM"}:
+                has_45 = True
+
+    return has_lp, has_45
+
+
 @dataclass
 class DiscogsClient:
     token: str
@@ -479,6 +505,7 @@ class DiscogsClient:
 
         thumb_url = basic.get("thumb")
         cover_url = basic.get("cover_image")
+        has_lp, has_45 = _extract_format_flags(basic)
 
         return {
             "discogs_release_id": release_id,
@@ -491,6 +518,8 @@ class DiscogsClient:
             "cover_url": str(cover_url) if cover_url else None,
             "added_at": added_at,
             "last_synced_at": synced_at,
+            "has_lp": has_lp,
+            "has_45": has_45,
             "is_active": 1,
         }
 

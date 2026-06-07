@@ -242,6 +242,15 @@ MIGRATIONS: tuple[tuple[int, str], ...] = (
           ON spotify_mapping(provider_id);
         """,
     ),
+    (
+        10,
+        """
+        ALTER TABLE releases ADD COLUMN has_lp INTEGER;
+        ALTER TABLE releases ADD COLUMN has_45 INTEGER;
+        ALTER TABLE wantlist ADD COLUMN has_lp INTEGER;
+        ALTER TABLE wantlist ADD COLUMN has_45 INTEGER;
+        """,
+    ),
 )
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1][0]
 

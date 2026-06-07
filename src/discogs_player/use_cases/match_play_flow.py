@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from discogs_player.provider_mapping import with_provider_mapping_aliases
 from discogs_player.use_cases.ensure_mapping import (
     SAFE_AUTO_APPLY_THRESHOLD,
     run_match_audit,
@@ -101,7 +102,8 @@ def run_match_action(
                 f"{spotify_album_id or 'none'}."
             )
 
-    return {
+    return with_provider_mapping_aliases(
+        {
         "ok": True,
         "action": "match",
         "discogs_release_id": discogs_release_id,
@@ -112,7 +114,8 @@ def run_match_action(
         "candidate_summary": candidate_summary,
         "status_message": status_message,
         "raw": raw,
-    }
+        }
+    )
 
 
 def run_match_audit_action(
@@ -256,7 +259,8 @@ def run_override_action(
     discogs_release_id: int, spotify_album_id: str
 ) -> dict[str, object]:
     raw = run_match_override(discogs_release_id, spotify_album_id)
-    return {
+    return with_provider_mapping_aliases(
+        {
         "ok": True,
         "action": "override",
         "discogs_release_id": discogs_release_id,
@@ -268,7 +272,8 @@ def run_override_action(
             f"{raw.get('spotify_album_id')}"
         ),
         "raw": raw,
-    }
+        }
+    )
 
 
 def run_play_action(
@@ -295,7 +300,8 @@ def run_play_action(
         if fallback_url:
             status_message = f"{status_message} Open URL: {fallback_url}"
 
-    return {
+    return with_provider_mapping_aliases(
+        {
         "ok": True,
         "action": "play",
         "discogs_release_id": discogs_release_id,
@@ -305,4 +311,5 @@ def run_play_action(
         "fallback_open_url": raw.get("fallback_open_url"),
         "status_message": status_message,
         "raw": raw,
-    }
+        }
+    )

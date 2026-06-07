@@ -14,10 +14,12 @@ def test_install_desktop_app_launcher_includes_logging_and_runtime_fallback():
     source = _script_text("scripts/install_desktop_app.sh")
     for marker in (
         'LOG_PATH="${LOG_DIR}/gui-launch.log"',
+        'export DP_PERF_PROFILE="${DP_PERF_PROFILE:-game}"',
         "notify_failure()",
         "run_with_python()",
         'run_with_python "${VENV_PY}" "venv"',
+        'SYS_PYTHON="/usr/bin/python3"',
         'run_with_python "${SYS_PYTHON}" "system"',
-        'echo "Discogs Player launcher failed. See ${LOG_PATH}" >&2',
+        'echo "Discogs Spinner launcher failed. See ${LOG_PATH}" >&2',
     ):
         assert marker in source

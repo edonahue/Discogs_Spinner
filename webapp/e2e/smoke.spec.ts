@@ -16,7 +16,10 @@ import { test, expect, Page, Route } from "@playwright/test";
 import {
   STUB_SETUP,
   STUB_STATUS,
+  STUB_COLLECTOR_INSIGHTS,
   STUB_COLLECTION,
+  STUB_COLLECTION_SUMMARY,
+  STUB_COLLECTION_SUMMARY_AFTER_SYNC,
   STUB_COLLECTION_AFTER_SYNC,
   STUB_COLLECTION_DETAIL,
   STUB_COLLECTION_SYNC_SUMMARY,
@@ -26,6 +29,7 @@ import {
   STUB_WANTLIST_SYNC_SUMMARY,
   STUB_VALUE_DASHBOARD,
   STUB_VALUE_QUEUE,
+  STUB_HIDDEN_GEMS,
   STUB_HEALTH,
   STUB_RECENT,
   STUB_ANALYTICS,
@@ -70,6 +74,9 @@ async function mockSetup(page: Page) {
 }
 
 async function mockCollectionRoutes(page: Page) {
+  await page.route("**/api/v1/releases/summary?**", (r) =>
+    fulfill(r, STUB_COLLECTION_SUMMARY)
+  );
   await page.route("**/api/v1/releases/1?with_value=true", (r) =>
     fulfill(r, STUB_COLLECTION_DETAIL)
   );
@@ -98,6 +105,18 @@ async function mockWantlistRoutes(page: Page) {
   await page.route("**/api/v1/wantlist?**", (r) => fulfill(r, STUB_WANTLIST));
 }
 
+async function mockValueRoutes(page: Page) {
+  await page.route("**/api/v1/value/dashboard**", (r) =>
+    fulfill(r, STUB_VALUE_DASHBOARD)
+  );
+  await page.route("**/api/v1/value/queue**", (r) =>
+    fulfill(r, STUB_VALUE_QUEUE)
+  );
+  await page.route("**/api/v1/value/gems**", (r) =>
+    fulfill(r, STUB_HIDDEN_GEMS)
+  );
+}
+
 async function saveScreenshot(page: Page, filename: string) {
   if (!SAVE_SCREENSHOTS) return;
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
@@ -114,6 +133,8 @@ test("Collection page renders release list", async ({ page }) => {
   await expect(page.locator("h1")).toHaveText("Collection");
   await expect(page.locator("li")).toHaveCount(3);
   await expect(page.locator("li").first()).toContainText("Miles Davis");
+  await expect(page.getByLabel("Collection summary")).toContainText("LPs");
+  await expect(page.getByLabel("Collection summary")).toContainText("55.49");
 
   await saveScreenshot(page, "01-collection.png");
 });
@@ -135,16 +156,34 @@ test("Wantlist page renders wantlist entries", async ({ page }) => {
 test("Value page renders top releases", async ({ page }) => {
   await mockSetup(page);
   await mockCollectionRoutes(page);
+  await mockValueRoutes(page);
+
+  await page.goto("/value");
+  await expect(page.locator("h1")).toHaveText("Collection Value");
+  await expect(page.getByText("Kind of Blue")).toBeVisible();
+  await expect(page.getByText("Hidden Gems")).toBeVisible();
+  await expect(
+    page.locator("section").filter({ hasText: "Hidden Gems" }).getByText("Innervisions")
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "View in Collection" }).first()).toBeVisible();
+});
+
+test("Value page keeps top releases visible if Hidden Gems fails", async ({ page }) => {
+  await mockSetup(page);
+  await mockCollectionRoutes(page);
   await page.route("**/api/v1/value/dashboard**", (r) =>
     fulfill(r, STUB_VALUE_DASHBOARD)
   );
   await page.route("**/api/v1/value/queue**", (r) =>
     fulfill(r, STUB_VALUE_QUEUE)
   );
+  await page.route("**/api/v1/value/gems**", (r) =>
+    fulfillError(r, "Hidden Gems unavailable.", 503)
+  );
 
   await page.goto("/value");
-  await expect(page.locator("h1")).toHaveText("Collection Value");
   await expect(page.getByText("Kind of Blue")).toBeVisible();
+  await expect(page.getByText("Hidden Gems are temporarily unavailable")).toBeVisible();
   await expect(page.getByRole("link", { name: "View in Collection" }).first()).toBeVisible();
 });
 
@@ -217,12 +256,7 @@ test("Tracklist modal opens on release click", async ({ page }) => {
 test("Value page handoff opens focused collection detail", async ({ page }) => {
   await mockSetup(page);
   await mockCollectionRoutes(page);
-  await page.route("**/api/v1/value/dashboard**", (r) =>
-    fulfill(r, STUB_VALUE_DASHBOARD)
-  );
-  await page.route("**/api/v1/value/queue**", (r) =>
-    fulfill(r, STUB_VALUE_QUEUE)
-  );
+  await mockValueRoutes(page);
 
   await page.goto("/value");
   await page.getByRole("link", { name: "View in Collection" }).first().click();
@@ -271,6 +305,7 @@ test("Home page sync buttons await completion and refresh status", async ({ page
   });
 
   await page.route("**/api/v1/status", (r) => fulfill(r, statusPayload));
+  await page.route("**/api/v1/insights**", (r) => fulfill(r, STUB_COLLECTOR_INSIGHTS));
   await page.route("**/api/v1/sync/collection", async (r) => {
     await collectionSyncGate;
     statusPayload = {
@@ -327,15 +362,20 @@ test("Collection page sync reloads releases and preserves focused detail", async
   await mockSetup(page);
 
   let collectionPayload = STUB_COLLECTION;
+  let collectionSummaryPayload = STUB_COLLECTION_SUMMARY;
   await page.route("**/api/v1/releases/1?with_value=true", (r) =>
     fulfill(r, STUB_COLLECTION_DETAIL)
   );
   await page.route("**/api/v1/releases/1/tracklist**", (r) =>
     fulfill(r, STUB_TRACKLIST)
   );
+  await page.route("**/api/v1/releases/summary?**", (r) =>
+    fulfill(r, collectionSummaryPayload)
+  );
   await page.route("**/api/v1/releases?**", (r) => fulfill(r, collectionPayload));
   await page.route("**/api/v1/sync/collection", async (r) => {
     collectionPayload = STUB_COLLECTION_AFTER_SYNC;
+    collectionSummaryPayload = STUB_COLLECTION_SUMMARY_AFTER_SYNC;
     await fulfill(r, STUB_COLLECTION_SYNC_SUMMARY);
   });
 
@@ -349,6 +389,7 @@ test("Collection page sync reloads releases and preserves focused detail", async
   await expect(page).toHaveURL(/\/collection\?focus=1$/);
   await expect(page.getByText("Focused Collection Detail")).toBeVisible();
   await expect(page.locator('li[aria-current="true"]')).toContainText("Miles Davis");
+  await expect(page.getByLabel("Collection summary")).toContainText("88.49");
 });
 
 test("Wantlist page sync reloads entries and preserves focused detail", async ({ page }) => {
@@ -409,12 +450,7 @@ test.describe("responsive layouts", () => {
   test("Value page keeps handoff actions visible at 900px wide", async ({ page }) => {
     await mockSetup(page);
     await mockCollectionRoutes(page);
-    await page.route("**/api/v1/value/dashboard**", (r) =>
-      fulfill(r, STUB_VALUE_DASHBOARD)
-    );
-    await page.route("**/api/v1/value/queue**", (r) =>
-      fulfill(r, STUB_VALUE_QUEUE)
-    );
+    await mockValueRoutes(page);
 
     await page.goto("/value");
     await expect(page.getByRole("link", { name: "View in Collection" }).first()).toBeVisible();

@@ -92,6 +92,8 @@ def test_import_collection_merge_updates_and_adds(isolated_xdg, tmp_path):
     assert counts["release_count_total"] == 3
     assert imported is not None
     assert imported["artist"] == "Nirvana"
+    assert imported["has_lp"] is None
+    assert imported["has_45"] is None
     assert existing is not None
     assert existing["artist"] == "Existing"
     assert mapping is not None
@@ -176,6 +178,8 @@ def test_import_collection_replace_replaces_data_and_settings(isolated_xdg, tmp_
         "releases": [
             {
                 **_release(41, artist="New", title="Record"),
+                "has_lp": True,
+                "has_45": False,
                 "spotify_album_id": "spotify:album:new",
                 "spotify_confidence": 0.99,
                 "spotify_last_checked_at": "2026-02-07T00:00:00Z",
@@ -217,6 +221,8 @@ def test_import_collection_replace_replaces_data_and_settings(isolated_xdg, tmp_
     assert counts["release_count_total"] == 1
     assert old_release is None
     assert new_release is not None
+    assert new_release["has_lp"] is True
+    assert new_release["has_45"] is False
     assert new_mapping is not None
     assert new_mapping["spotify_album_id"] == "spotify:album:new"
     assert old_market is None

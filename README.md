@@ -1,6 +1,6 @@
 # Discogs Spinner
 
-> Your vinyl collection, supercharged.
+> Pick what to play, rediscover your shelves, and understand what your records are worth.
 
 <p align="center">
   <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml/badge.svg"></a>
@@ -15,31 +15,101 @@
   <img src="docs/media/gif/product-demo.gif" alt="Discogs Spinner product demo" width="100%">
 </p>
 
-Native Discogs collector app for vinyl fans who want to stop juggling browser tabs. Install on Linux, Windows, or macOS, sync your collection with a personal token, spin a random pick, and see value, wantlist, and playback context in one place.
+Discogs Spinner is a local-first desktop companion for vinyl collectors who already keep a Discogs collection. Install it, connect your Discogs personal access token, sync once, then browse your shelf, spin a random record, inspect market value, and keep wantlist context close without living in browser tabs.
+
+_Part of my [Open Workbench](https://erichdonahue.com/workbench); featured on [erichdonahue.com/music](https://erichdonahue.com/music)._
 
 > **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
+>
+> **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
+>
+> **Release note:** The download links below point to the latest stable public release, `v0.2.1`. The `main` branch may describe unreleased improvements that will ship after the next packaging pass.
 
 ---
 
 ## Why Discogs Spinner?
 
-Your Discogs collection probably lives in a browser tab today. You scroll it when you cannot decide
-what to spin, check market prices in another tab, and bounce into Spotify when you finally make a
-decision. Discogs Spinner turns that into one focused desktop experience: your collection, random
-picks, wantlist context, and market value in one local app. No subscription. No extra cloud
-account. Just your collection on your machine.
+Your Discogs collection probably lives in a browser tab today. You scroll when you cannot decide what to play, check market prices in another tab, and open yet another app when you finally choose. Discogs Spinner turns that daily collector loop into one focused utility: your collection, random picks, wantlist context, and market value in one local app. No subscription. No extra cloud account. Just your records on your machine.
+
+Use it when you want to:
+
+- choose tonight's record without scrolling forever
+- find neglected albums, hidden gems, and stale market values
+- see whether a wantlist item is worth chasing
+- keep a quick local dashboard of collection health and value
+- hand a selected release off to Spotify or YouTube Music when optional playback is configured
 
 ---
 
 ## What You Get
 
-- **Browse & Spin** — gallery, carousel, or text-menu view with a one-click random pick
+- **Browse & Spin** — gallery, carousel, or text-menu view with a one-click random pick that honors your current filters
+- **Collection Summary** — LP/45 counts, median collection value, and most-recently-added context on the browse surface
 - **Market Value Tracking** — price history, snapshot diffs, value movers, a refresh priority queue (`dplayer value queue`), and a market value dashboard
-- **Collection Health** — scored summary of mapping coverage and staleness (`dplayer health`)
+- **Value Workspace** — search synced releases, inspect selected-release value detail, and jump from Browse to Value with the selected release carried over
 - **Wantlist Management** — priority signals, opportunity comparisons, and filtered views
-- **Playback Control** *(optional)* — Spotify Connect or YouTube Music (open-in-browser)
+- **Tracklist at a Glance** — cached track lists in the detail panel and in a quick-view modal, no round trip to Discogs
+- **Playback Control** *(optional)* — Spotify Connect or YouTube Music (native album search with browser handoff)
 - **Setup Wizard** — first-run token configuration, no terminal required
 - **CLI-first & SSH-ready** — every workflow available from `dplayer` in a terminal
+
+### Power Tools
+
+- **Analytics & Recent pages** (web) — collection trends and a recently-added view
+- **Hidden Gems** — value + scarcity signals for owned releases that may deserve attention
+- **Cache management** — `dplayer cache stats | prune | warm` to inspect, trim, or pre-fetch cover art
+- **Share & export** — `dplayer share collection | value` emits CSV or Markdown for pasting into notes, issues, or spreadsheets
+- **Match audit & review queue** — `dplayer review` workflow for approving Spotify / YouTube Music album matches in bulk
+- **Collection Health scoring** — `dplayer health` to spot mapping gaps and staleness
+
+---
+
+## First 10 Minutes
+
+Before launching, have this ready:
+
+- a Discogs account with a collection or wantlist
+- a Discogs personal access token from [Settings → Developers](https://www.discogs.com/settings/developers)
+- optional Spotify credentials only if you want playback control
+
+Your first run should look like this:
+
+1. Install the app for your OS.
+2. Open Discogs Spinner and paste your Discogs token into the setup wizard.
+3. Start the first sync.
+4. Browse your collection, hit **Spin**, and inspect the selected record.
+5. Check Value, Wantlist, or Insights when you want market and collection context.
+
+## Daily Collector Loop
+
+After setup, the daily flow should stay simple:
+
+1. **Sync occasionally** (`dplayer sync`) to keep collection + wantlist fresh
+2. **Pick something quickly** (`dplayer spin` or native/web browse)
+3. **Check context** (value, hidden gems, health, wantlist pressure)
+4. **Play or open** (`dplayer play --last-spin --open`) if optional playback is connected
+
+If you prefer a compact terminal briefing, run:
+
+```bash
+dplayer insights
+```
+
+---
+
+## What Works Without Spotify
+
+Spotify (and other playback providers) are optional.
+
+Without Spotify configured, you still get:
+
+- full Discogs collection + wantlist sync
+- browse, filters, and spin workflows
+- value dashboard, hidden gems, and health scoring
+- local cache and export/share tooling
+- provider readiness + setup diagnostics for optional integrations
+
+You only lose direct playback control handoff until an optional provider is connected.
 
 ---
 
@@ -76,19 +146,21 @@ account. Just your collection on your machine.
 
 ## Download Now
 
+These installers are meant to get a collector to value quickly: install, paste a Discogs token, sync, browse, and spin.
+
 - [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-- Windows: use the guided installer first: [Discogs Spinner_0.2.0_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64-setup.exe). Use [Discogs Spinner_0.2.0_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64_en-US.msi) only if you specifically want MSI deployment tooling.
-- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_x64.dmg).
-- Debian/Ubuntu: start with the GTK desktop build: [discogs-spinner-gtk4_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-gtk4_0.2.0_amd64.deb).
-- Linux portable fallback: [Discogs Spinner_0.2.0_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/Discogs.Spinner_0.2.0_amd64.AppImage).
-- Linux alternate desktop build: [discogs-spinner-tauri_0.2.0_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/discogs-spinner-tauri_0.2.0_amd64.deb).
-- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.0/CHECKSUMS-INSTALLERS.txt).
+- Windows: use the guided installer first: [Discogs Spinner_0.2.1_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe). Use [Discogs Spinner_0.2.1_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi) only if you specifically want MSI deployment tooling.
+- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg).
+- Debian/Ubuntu: start with the GTK desktop build: [discogs-spinner-gtk4_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb).
+- Linux portable fallback: [Discogs Spinner_0.2.1_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage).
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb).
+- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt).
 
 What first launch should feel like:
 
 - The app opens into a simple setup wizard if no Discogs token is configured yet.
 - You paste your token once, start your first sync, and wait for the collection view to load.
-- A good first run ends with your collection visible in the app, not a blank screen or a terminal prompt.
+- A good first run ends with your records visible, a working **Spin** button, and clear next steps for optional playback.
 
 Quick install notes:
 
@@ -99,6 +171,7 @@ Quick install notes:
 Sending this to a friend?
 
 - Use the [Friend Trial Guide](docs/friend_trial.md) for the shortest install/setup checklist.
+- Use the [Friend Trial Checklist](docs/friend_trial_checklist.md) for a fast pass/fail validation run.
 - Ask them to report install, setup, or playback friction with OS, installer used, exact warning text, and a screenshot if possible.
 - GitHub issue templates: [install](https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml), [auth/setup](https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml), [playback](https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml)
 
@@ -142,13 +215,14 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 - [Web App Quickstart](docs/quickstart_web.md)
 - [Token Setup (Discogs + Spotify)](docs/token_setup.md)
 - [Friend Trial Guide](docs/friend_trial.md)
+- [Friend Trial Checklist](docs/friend_trial_checklist.md)
 - [Windows + WSL2 GUI Quickstart](docs/quickstart_wsl2.md)
 
 ---
 
 ## Help & Reference
 
-- [Release Notes (v0.2.0)](docs/releases/v0.2.0.md)
+- [Release Notes (v0.2.1)](docs/releases/v0.2.1.md)
 - [Support Matrix](docs/SUPPORT_MATRIX.md)
 - [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
 

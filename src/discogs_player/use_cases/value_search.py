@@ -21,6 +21,29 @@ _DISCOGS_RELEASE_URL_RE = re.compile(
 )
 
 
+def _as_int(value: object) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return int(text)
+        except ValueError:
+            return None
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
 def _parse_discogs_release_query(query: str) -> tuple[str, int | None]:
     normalized = str(query or "").strip()
     if not normalized:
@@ -72,7 +95,7 @@ def run_search_value_releases(
     try:
         if parsed_release_id is not None:
             results: list[dict[str, object]] = []
-            collection = _normalize_active_result(
+            collection_result = _normalize_active_result(
                 "collection",
                 get_release_by_id(
                     conn,
@@ -80,10 +103,10 @@ def run_search_value_releases(
                     include_market=True,
                 ),
             )
-            if collection is not None:
-                results.append(collection)
+            if collection_result is not None:
+                results.append(collection_result)
 
-            wantlist = _normalize_active_result(
+            wantlist_result = _normalize_active_result(
                 "wantlist",
                 get_wantlist_by_id(
                     conn,
@@ -91,10 +114,10 @@ def run_search_value_releases(
                     include_market=True,
                 ),
             )
-            if wantlist is not None:
-                results.append(wantlist)
+            if wantlist_result is not None:
+                results.append(wantlist_result)
         else:
-            collection = [
+            collection_results = [
                 build_value_release_record("collection", item)
                 for item in query_releases(
                     conn,
@@ -103,7 +126,7 @@ def run_search_value_releases(
                     include_market=True,
                 )
             ]
-            wantlist = [
+            wantlist_results = [
                 build_value_release_record("wantlist", item)
                 for item in query_wantlist(
                     conn,
@@ -113,12 +136,12 @@ def run_search_value_releases(
                 )
             ]
             results = sorted(
-                [*collection, *wantlist],
+                [*collection_results, *wantlist_results],
                 key=lambda item: (
                     str(item.get("artist") or "").lower(),
                     str(item.get("title") or "").lower(),
                     str(item.get("source") or ""),
-                    int(item.get("discogs_release_id") or 0),
+                    _as_int(item.get("discogs_release_id")) or 0,
                 ),
             )
     finally:

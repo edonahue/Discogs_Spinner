@@ -11,6 +11,7 @@ from discogs_player.integrations.player_backend import (
     PlayerBackend,
     PlayerDependencyError,
     PlayerPlaybackError,
+    ProviderDescriptor,
 )
 from discogs_player.integrations.spotify.oauth import (
     SpotifyAuthError,
@@ -92,6 +93,29 @@ class SpotifyPlayerBackend(PlayerBackend):
     @classmethod
     def addon_available(cls) -> bool:
         return importlib.util.find_spec("keyring") is not None
+
+    @classmethod
+    def provider_descriptor(cls) -> ProviderDescriptor:
+        return {
+            "auth_required": True,
+            "supported_capabilities": [
+                "playback",
+                "device_selection",
+                "catalog_matching",
+                "oauth_login",
+                "auth_diagnostics",
+            ],
+            "setup_url": "https://developer.spotify.com/dashboard",
+            "oauth_guide_url": (
+                "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
+            ),
+            "next_actions_when_unconfigured": [
+                "Run `dplayer auth spotify-doctor`.",
+                "Run `dplayer auth spotify --open-browser`.",
+            ],
+            "can_skip_setup": True,
+            "can_retry_setup": True,
+        }
 
     def _ensure_addon(self) -> None:
         if not self.addon_available():
