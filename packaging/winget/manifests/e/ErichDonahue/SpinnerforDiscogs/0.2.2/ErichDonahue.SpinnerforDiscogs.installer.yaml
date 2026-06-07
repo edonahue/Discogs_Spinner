@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
-PackageIdentifier: EricDonahue.SpinnerforDiscogs
+PackageIdentifier: ErichDonahue.SpinnerforDiscogs
 PackageVersion: 0.2.2
 MinimumOSVersion: "10.0.17763.0"
 InstallerType: nullsoft

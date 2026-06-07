@@ -1,15 +1,15 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
-PackageIdentifier: EricDonahue.SpinnerforDiscogs
+PackageIdentifier: ErichDonahue.SpinnerforDiscogs
 PackageVersion: 0.2.2
 PackageLocale: en-US
-Publisher: Eric Donahue
+Publisher: Erich Donahue
 PublisherUrl: https://github.com/edonahue
 PublisherSupportUrl: https://github.com/edonahue/Discogs_Spinner/issues
 PackageName: Spinner for Discogs
 PackageUrl: https://github.com/edonahue/Discogs_Spinner
 License: MIT
 LicenseUrl: https://github.com/edonahue/Discogs_Spinner/blob/main/LICENSE
-Copyright: Copyright (c) Eric Donahue
+Copyright: Copyright (c) Erich Donahue
 ShortDescription: Third-party Discogs collection browser and Spotify playback controller
 Description: |-
   Spinner for Discogs is an unofficial third-party desktop client for Discogs.
