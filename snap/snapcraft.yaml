@@ -59,7 +59,7 @@ parts:
     override-build: |
       craftctl default
       sed -i 's|^Exec=.*|Exec=spinner-for-discogs|' \
-        "${CRAFT_PART_INSTALL}/usr/share/applications/discogs-spinner.desktop"
+        "${CRAFT_PART_INSTALL}/packaging/deb/dplayer-gui.desktop"
 
 apps:
   spinner-for-discogs:
