@@ -187,12 +187,25 @@ def test_snap_store_listing_metadata_and_assets_are_ready():
         assert marker in snapcraft
 
     for marker in (
+        "### Current status",
+        "Public listing verified in an unauthenticated browser on 2026-06-09",
+        "Store install smoke verified on Pop!_OS/COSMIC",
         "### Listing metadata",
         "Primary category: `Music and Audio`",
         "Secondary category: `Utilities`",
         "Snap icon: `desktop_shell/icons/icon.png`",
         "docs/media/screenshots/01-browse-gallery.png",
         "docs/media/screenshots/05-setup-wizard.png",
+        "### Automated publishing",
+        ".github/workflows/snap_publish.yml",
+        "SNAPCRAFT_STORE_CREDENTIALS",
+        "**Settings**",
+        "**Secrets and variables**",
+        "**Actions**",
+        "snapcraft export-login --snaps spinner-for-discogs --channels stable",
+        "### Future Snap polish goals",
+        "featured banner",
+        "hosted demo video",
     ):
         assert marker in store_submissions
 

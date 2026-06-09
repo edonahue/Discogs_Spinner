@@ -146,6 +146,17 @@ Flathub review typically takes 1-4 weeks.
 
 **File:** `snap/snapcraft.yaml`
 
+### Current status
+
+- Public listing verified in an unauthenticated browser on 2026-06-09.
+- Store install smoke verified on Pop!_OS/COSMIC with:
+  `sudo snap install spinner-for-discogs` and `spinner-for-discogs`.
+- The app launched successfully, but first-run polish still needs work. Known
+  launch noise includes GTK/GIO/libproxy warnings, repeated GLib schema symlink
+  messages, a COSMIC dconf profile fallback, and missing IM/media module
+  warnings. Treat these as polish debt unless a user-visible launch failure
+  appears.
+
 ### Listing metadata
 
 Keep the Snap dashboard listing aligned with `snap/snapcraft.yaml`.
@@ -192,7 +203,40 @@ Notes:
 - This is an unofficial third-party app and is not affiliated with Discogs.
 ```
 
-**Recommended: GitHub-connected build service (no local tooling needed)**
+### Automated publishing
+
+**Recommended: GitHub Actions tag publishing.**
+
+Workflow: `.github/workflows/snap_publish.yml`
+
+The workflow runs on `v*` tag pushes and manual dispatches. It builds the snap
+with `snapcore/action-build@v1` and publishes it to `stable` with
+`snapcore/action-publish@v1`.
+
+Required GitHub repository secret:
+
+- `SNAPCRAFT_STORE_CREDENTIALS`
+
+Check or add it in GitHub:
+
+1. Open `edonahue/Discogs_Spinner` on GitHub.
+2. Go to **Settings** → **Secrets and variables** → **Actions**.
+3. Open **Repository secrets**.
+4. Confirm `SNAPCRAFT_STORE_CREDENTIALS` exists, or add it with
+   **New repository secret**.
+
+Generate credentials locally with Snapcraft, then paste the file contents into
+that repository secret:
+
+```bash
+snapcraft login
+snapcraft export-login --snaps spinner-for-discogs --channels stable snapcraft-credentials.txt
+```
+
+Keep `snapcraft-credentials.txt` out of git. It is ignored locally and should be
+deleted or moved outside the repository after the GitHub secret is set.
+
+**Alternative: Snapcraft connected build service**
 
 1. Create account at https://snapcraft.io/create-account
 2. Register snap name: snapcraft.io → My snaps → **New snap** → name: `spinner-for-discogs`
@@ -210,6 +254,15 @@ snapcraft login
 snapcraft --destructive-mode
 snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
 ```
+
+### Future Snap polish goals
+
+- Tune the first-time user experience so a fresh snap launch immediately explains
+  the Discogs token requirement and next step.
+- Reduce harmless terminal warning noise from GTK/GIO/libproxy/schema setup where
+  practical.
+- Add a featured banner sized for Snapcraft once the visual direction is stable.
+- Add a short hosted demo video after the first-run flow is polished.
 
 ---
 
