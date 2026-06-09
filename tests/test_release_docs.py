@@ -102,7 +102,7 @@ def test_release_notes_template_references_quickstarts_and_diagnostics():
 def test_readme_links_user_facing_docs_not_internal_runbooks():
     source = _read("README.md")
     for marker in (
-        "docs/releases/v0.2.1.md",
+        "docs/releases/v0.2.2.md",
         "docs/friend_trial.md",
         "docs/SUPPORT_MATRIX.md",
     ):
@@ -125,10 +125,12 @@ def test_readme_promotes_download_now_and_first_launch_value():
         "Discogs token required",
         "install, paste a Discogs token, sync, browse, and spin",
         "What first launch should feel like:",
-        "Discogs.Spinner_0.2.1_x64-setup.exe",
-        "Discogs.Spinner_0.2.1_aarch64.dmg",
-        "discogs-spinner-gtk4_0.2.1_amd64.deb",
-        "Discogs.Spinner_0.2.1_amd64.AppImage",
+        "https://snapcraft.io/spinner-for-discogs",
+        "sudo snap install spinner-for-discogs",
+        "Discogs.Spinner_0.2.2_x64-setup.exe",
+        "Discogs.Spinner_0.2.2_aarch64.dmg",
+        "discogs-spinner-gtk4_0.2.2_amd64.deb",
+        "Discogs.Spinner_0.2.2_amd64.AppImage",
         "docs/friend_trial.md",
     ):
         assert marker in source
@@ -264,26 +266,32 @@ def test_start_here_and_friend_trial_are_installer_first():
     assert "A no-install browser fallback" in start_here
     assert "Discogs account and personal access token" in start_here
     assert "install, paste your Discogs token, sync once" in start_here
-    assert "Discogs.Spinner_0.2.1_x64-setup.exe" in friend_trial
-    assert "discogs-spinner-gtk4_0.2.1_amd64.deb" in friend_trial
+    assert "Snap Store app" in start_here
+    assert "https://snapcraft.io/spinner-for-discogs" in friend_trial
+    assert "sudo snap install spinner-for-discogs" in friend_trial
+    assert "Discogs.Spinner_0.2.2_x64-setup.exe" in friend_trial
+    assert "discogs-spinner-gtk4_0.2.2_amd64.deb" in friend_trial
     assert "Discogs Spinner_*_x64-setup.exe" not in friend_trial
 
 
 def test_current_release_notes_pin_verified_stable_asset_links():
-    source = _read("docs/releases/v0.2.1.md")
+    source = _read("docs/releases/v0.2.2.md")
     for marker in (
-        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe",
-        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi",
-        "releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb",
-        "releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb",
-        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage",
-        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg",
-        "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg",
-        "releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt",
+        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe",
+        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi",
+        "releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb",
+        "releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb",
+        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage",
+        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg",
+        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg",
+        "releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt",
+        "https://snapcraft.io/spinner-for-discogs",
+        "sudo snap install spinner-for-discogs",
         "Who This Is For",
         "Discogs personal access token",
         "Installer workflow: pass",
         "Release asset verification: pass",
+        "Snap Store install smoke: pass",
     ):
         assert marker in source
 

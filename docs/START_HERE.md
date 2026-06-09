@@ -12,7 +12,7 @@ You will need a Discogs account and personal access token before the app can syn
 
 - **Windows** → go to Question 2
 - **macOS** → go to Question 3
-- **Linux (Debian/Ubuntu)** → [Debian Quickstart](quickstart_debian.md) (~10 min)
+- **Linux** → [Debian/Linux Quickstart](quickstart_debian.md) (~10 min)
 
 ### Question 2 — Windows: do you want a full desktop GUI?
 
@@ -40,7 +40,7 @@ You will need a Discogs account and personal access token before the app can syn
 | Any | Web browser | Fallback / no-install path | [Web App Quickstart](quickstart_web.md) | ~10 min |
 | Windows | Native installer | Any | [Windows Quickstart](quickstart_windows.md) | ~5 min |
 | Windows | Desktop GUI | Comfortable with WSL2 | [WSL2 Quickstart](quickstart_wsl2.md) | ~15 min |
-| Linux | Desktop GUI + CLI | Any | [Debian Quickstart](quickstart_debian.md) | ~10 min |
+| Linux | Desktop GUI + CLI | Any | [Debian/Linux Quickstart](quickstart_debian.md) | ~10 min |
 | macOS | Native installer | Any | [macOS Quickstart](quickstart_macos.md) | ~5 min |
 | macOS | CLI | Comfortable with Terminal | [macOS Quickstart](quickstart_macos.md) | ~10 min |
 
@@ -59,7 +59,7 @@ Installer finishes, the Setup Wizard appears on first launch, and your first syn
 Proving it works: you can browse your collection in the app, and `dplayer status` in PowerShell also shows your collection count.
 
 ### Linux desktop GUI (~10 min)
-The GTK desktop app opens, the setup flow accepts your token, and the collection view loads after sync.
+The Snap Store app, GTK desktop package, or portable AppImage opens, the setup flow accepts your token, and the collection view loads after sync.
 Proving it works: the app shows your collection and `dplayer status` shows collection count and last sync date.
 
 ### WSL2 GUI (~15 min)

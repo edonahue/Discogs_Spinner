@@ -1,6 +1,6 @@
 # Quickstart (Debian Linux)
 
-This guide targets first-time users installing `discogs_player` on Debian/Ubuntu.
+This guide targets first-time users installing `discogs_player` on Linux, with Debian/Ubuntu direct packages available as fallbacks.
 
 ## 1) Prerequisites
 
@@ -10,20 +10,42 @@ This guide targets first-time users installing `discogs_player` on Debian/Ubuntu
 - Discogs account + personal token ([how to get one](token_setup.md))
 - Optional: Spotify account (for playback/matching features — [how to set up](token_setup.md#spotify-api-credentials))
 
-## 2) Install from GitHub Releases
+## 2) Install the Linux desktop app
 
-### Option A: GTK desktop `.deb` installer (recommended)
+### Option A: Snap Store install (recommended)
+
+Install from the Snap Store:
+
+```bash
+sudo snap install spinner-for-discogs
+```
+
+Launch **Spinner for Discogs** from your app menu, or run:
+
+```bash
+spinner-for-discogs
+```
+
+If your distribution does not have `snapd` installed yet, use the distro-specific instructions on the [Spinner for Discogs Snap Store page](https://snapcraft.io/spinner-for-discogs).
+
+What success looks like:
+
+- the desktop app launches from your app menu
+- the setup flow accepts your Discogs token
+- your first sync ends with the collection and wantlist views loaded
+
+### Option B: GTK desktop `.deb` installer
 
 Download the current stable GTK `.deb` directly:
 
-- [discogs-spinner-gtk4_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
+- [discogs-spinner-gtk4_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Then install it:
 
 ```bash
-sudo apt install ./discogs-spinner-gtk4_0.2.1_amd64.deb
+sudo apt install ./discogs-spinner-gtk4_0.2.2_amd64.deb
 ```
 
 Launch **Discogs Spinner** from your app menu, or run:
@@ -44,19 +66,19 @@ What success looks like:
 - the setup flow accepts your Discogs token
 - your first sync ends with the collection and wantlist views loaded
 
-### Option B: Portable AppImage (no install required)
+### Option C: Portable AppImage (no install required)
 
 Download the current stable AppImage directly:
 
-- [Discogs Spinner_0.2.1_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
+- [Discogs Spinner_0.2.2_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Then:
 
 ```bash
-chmod +x Discogs.Spinner_0.2.1_amd64.AppImage
-./Discogs.Spinner_0.2.1_amd64.AppImage
+chmod +x Discogs.Spinner_0.2.2_amd64.AppImage
+./Discogs.Spinner_0.2.2_amd64.AppImage
 ```
 
 - No root required; runs from any directory.
@@ -67,18 +89,18 @@ chmod +x Discogs.Spinner_0.2.1_amd64.AppImage
   ```
 - On first run, if no Discogs token is configured the app opens a Setup screen to guide you through token setup.
 
-### Option C: Tauri `.deb` installer (alternate desktop build)
+### Option D: Tauri `.deb` installer (alternate desktop build)
 
 If you want the Tauri desktop package instead of the GTK build, download:
 
-- [discogs-spinner-tauri_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
+- [discogs-spinner-tauri_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Then install it:
 
 ```bash
-sudo apt install ./discogs-spinner-tauri_0.2.1_amd64.deb
+sudo apt install ./discogs-spinner-tauri_0.2.2_amd64.deb
 ```
 
 ---
@@ -94,7 +116,8 @@ On first launch, the app should open directly into setup if no token is configur
 
 Recommended path:
 
-- start with the GTK `.deb` if you want the simplest Debian/Ubuntu desktop install
+- start with the Snap Store if you want the simplest Linux desktop install
+- use the GTK `.deb` if you prefer a direct Debian/Ubuntu package
 - use the AppImage if you want a portable no-install path
 - use the Tauri `.deb` only if you specifically want the alternate Tauri desktop build
 

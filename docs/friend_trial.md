@@ -5,14 +5,15 @@ For a shorter pass/fail runbook, use [`docs/friend_trial_checklist.md`](friend_t
 
 ## What To Download
 
-- Windows: use the guided installer first: [Discogs Spinner_0.2.1_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe)
-- Windows fallback for managed installs: [Discogs Spinner_0.2.1_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi)
-- macOS Apple Silicon: [Discogs Spinner_0.2.1_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg)
-- macOS Intel: [Discogs Spinner_0.2.1_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg)
-- Debian/Ubuntu desktop: [discogs-spinner-gtk4_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb)
-- Linux portable fallback: [Discogs Spinner_0.2.1_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage)
-- Linux alternate desktop build: [discogs-spinner-tauri_0.2.1_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt)
+- Windows: use the guided installer first: [Discogs Spinner_0.2.2_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe)
+- Windows fallback for managed installs: [Discogs Spinner_0.2.2_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi)
+- macOS Apple Silicon: [Discogs Spinner_0.2.2_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg)
+- macOS Intel: [Discogs Spinner_0.2.2_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg)
+- Linux Snap Store: [Spinner for Discogs on Snapcraft](https://snapcraft.io/spinner-for-discogs), or `sudo snap install spinner-for-discogs` if `snapd` is already set up
+- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb)
+- Linux portable fallback: [Discogs Spinner_0.2.2_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage)
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt)
 
 If you would rather browse the full release page first, start here: [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 

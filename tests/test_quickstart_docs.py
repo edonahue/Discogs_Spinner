@@ -46,15 +46,15 @@ def test_quickstarts_link_clean_machine_validation_checklists():
     assert "validation/windows_tauri_ftux.md" in windows
     assert "validation/macos_installer_ftux.md" in macos
     assert "validation/debian_installer_ftux.md" in debian
-    assert "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64-setup.exe" in windows
-    assert "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64_en-US.msi" in windows
-    assert "releases/download/v0.2.1/Discogs.Spinner_0.2.1_aarch64.dmg" in macos
-    assert "releases/download/v0.2.1/Discogs.Spinner_0.2.1_x64.dmg" in macos
-    assert "releases/download/v0.2.1/discogs-spinner-gtk4_0.2.1_amd64.deb" in debian
-    assert "releases/download/v0.2.1/discogs-spinner-tauri_0.2.1_amd64.deb" in debian
-    assert "releases/download/v0.2.1/Discogs.Spinner_0.2.1_amd64.AppImage" in debian
-    assert "releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt" in windows
-    assert "releases/download/v0.2.1/CHECKSUMS-INSTALLERS.txt" in debian
+    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe" in windows
+    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi" in windows
+    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg" in macos
+    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg" in macos
+    assert "releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb" in debian
+    assert "releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb" in debian
+    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage" in debian
+    assert "releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt" in windows
+    assert "releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt" in debian
 
 
 def test_quickstarts_call_out_recommended_installer_and_first_run_success():
@@ -67,8 +67,10 @@ def test_quickstarts_call_out_recommended_installer_and_first_run_success():
 
     assert "Recommended installer:" in windows
     assert "Recommended for most modern Macs:" in macos
-    assert "GTK desktop `.deb` installer (recommended)" in debian
-    assert "start with the GTK `.deb`" in debian
+    assert "Snap Store install (recommended)" in debian
+    assert "https://snapcraft.io/spinner-for-discogs" in debian
+    assert "sudo snap install spinner-for-discogs" in debian
+    assert "start with the Snap Store" in debian
 
 
 def test_readme_links_os_quickstarts():
