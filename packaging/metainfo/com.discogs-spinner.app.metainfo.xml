@@ -3,7 +3,7 @@
   <id>com.discogs-spinner.app</id>
 
   <name>Spinner for Discogs</name>
-  <summary>Browse your Discogs vinyl collection and control music playback</summary>
+  <summary>Pick, browse, and value your Discogs vinyl collection</summary>
 
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
@@ -12,21 +12,34 @@
 
   <description>
     <p>
-      Spinner for Discogs is an unofficial third-party desktop client for Discogs.
-      Connect your Discogs account to browse your vinyl collection, spin a random
-      record, and control Spotify or YouTube Music playback — all from one app.
+      Spinner for Discogs is a local-first desktop companion for vinyl
+      collectors who keep their shelves in Discogs.
     </p>
-    <p>Features:</p>
+    <p>
+      Connect your Discogs account with a personal access token, sync your
+      collection, then browse your records, spin a random album, inspect release
+      details, track market value, and keep wantlist context close without
+      living in browser tabs.
+    </p>
+    <p>What you can do:</p>
     <ul>
       <li>Browse and search your Discogs collection and wantlist</li>
-      <li>Spin the wheel to pick a random album to play</li>
-      <li>Control Spotify playback directly from the app</li>
-      <li>View release details, tracklists, and market prices</li>
-      <li>Sync your collection in the background with progress feedback</li>
+      <li>Spin a random record when you cannot decide what to play</li>
+      <li>View cover art, release details, tracklists, and market prices</li>
+      <li>Check collection value and wantlist context from one desktop app</li>
+      <li>Optionally hand playback to Spotify or YouTube Music</li>
     </ul>
     <p>
-      A free Discogs Personal Access Token is required. Optional Spotify
-      integration requires a Spotify account and internet connection.
+      First run is designed to be quick: install the app, paste your Discogs
+      personal access token into the setup wizard, sync once, and start browsing
+      your records.
+    </p>
+    <p>
+      A free Discogs account and personal access token are required. Spotify and
+      YouTube Music are optional integrations. Spinner for Discogs does not
+      stream audio itself; it controls or opens external playback services when
+      configured. This is an unofficial third-party app and is not affiliated
+      with Discogs.
     </p>
   </description>
 

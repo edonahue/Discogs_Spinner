@@ -43,7 +43,12 @@ webapp/.npmrc
 *.secret
 *.secrets
 *.credentials
+snapcraft-credentials.txt
 secrets/
+
+# Local Snapcraft shims/state; canonical manifest lives in snap/snapcraft.yaml
+/snapcraft.yaml
+*.snap
 
 # Local app data/logs
 *.db

@@ -146,6 +146,52 @@ Flathub review typically takes 1-4 weeks.
 
 **File:** `snap/snapcraft.yaml`
 
+### Listing metadata
+
+Keep the Snap dashboard listing aligned with `snap/snapcraft.yaml`.
+
+- Title: `Spinner for Discogs`
+- Primary category: `Music and Audio`
+- Secondary category: `Utilities`
+- Summary: `Pick, browse, and value your Discogs vinyl collection`
+- License: `MIT`
+- Primary website: https://github.com/edonahue/Discogs_Spinner
+- Source code: https://github.com/edonahue/Discogs_Spinner
+- Issues: https://github.com/edonahue/Discogs_Spinner/issues
+- Contacts: https://github.com/edonahue/Discogs_Spinner/issues
+- Snap icon: `desktop_shell/icons/icon.png`
+- Screenshots, in order:
+  - `docs/media/screenshots/01-browse-gallery.png`
+  - `docs/media/screenshots/02-spin-result.png`
+  - `docs/media/screenshots/03-market-value-dashboard.png`
+  - `docs/media/screenshots/04-wantlist-view.png`
+  - `docs/media/screenshots/05-setup-wizard.png`
+
+Description:
+
+```markdown
+Spinner for Discogs is a local-first desktop companion for vinyl collectors who keep their shelves in Discogs.
+
+Connect your Discogs account with a personal access token, sync your collection, then browse your records, spin a random album, inspect release details, track market value, and keep wantlist context close without living in browser tabs.
+
+What you can do:
+
+- Browse and search your Discogs collection and wantlist
+- Spin a random record when you cannot decide what to play
+- View cover art, release details, tracklists, and market prices
+- Check collection value and wantlist context from one desktop app
+- Optionally hand playback to Spotify or YouTube Music
+
+First run is designed to be quick: install the app, paste your Discogs personal access token into the setup wizard, sync once, and start browsing your records.
+
+Notes:
+
+- A free Discogs account and personal access token are required.
+- Spotify and YouTube Music are optional integrations.
+- Spinner for Discogs does not stream audio itself; it controls or opens external playback services when configured.
+- This is an unofficial third-party app and is not affiliated with Discogs.
+```
+
 **Recommended: GitHub-connected build service (no local tooling needed)**
 
 1. Create account at https://snapcraft.io/create-account

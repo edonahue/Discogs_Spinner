@@ -162,6 +162,65 @@ def test_installer_metadata_sells_record_collector_value_and_token_setup():
         assert marker in postinst
 
 
+def test_snap_store_listing_metadata_and_assets_are_ready():
+    snapcraft = _read("snap/snapcraft.yaml")
+    store_submissions = _read("docs/STORE_SUBMISSIONS.md")
+    metainfo = _read("packaging/metainfo/com.discogs-spinner.app.metainfo.xml")
+    gitignore = _read(".gitignore")
+
+    for marker in (
+        "title: Spinner for Discogs",
+        "summary: Pick, browse, and value your Discogs vinyl collection",
+        "local-first desktop companion for vinyl collectors",
+        "personal access token",
+        "does not stream audio itself",
+        "not affiliated with Discogs",
+        "license: MIT",
+        "website: https://github.com/edonahue/Discogs_Spinner",
+        "source-code: https://github.com/edonahue/Discogs_Spinner",
+        "issues: https://github.com/edonahue/Discogs_Spinner/issues",
+        "contact: https://github.com/edonahue/Discogs_Spinner/issues",
+        "icon: desktop_shell/icons/icon.png",
+        "desktop-assets:",
+        "usr/share/metainfo/com.discogs-spinner.app.metainfo.xml",
+    ):
+        assert marker in snapcraft
+
+    for marker in (
+        "### Listing metadata",
+        "Primary category: `Music and Audio`",
+        "Secondary category: `Utilities`",
+        "Snap icon: `desktop_shell/icons/icon.png`",
+        "docs/media/screenshots/01-browse-gallery.png",
+        "docs/media/screenshots/05-setup-wizard.png",
+    ):
+        assert marker in store_submissions
+
+    for marker in (
+        "<summary>Pick, browse, and value your Discogs vinyl collection</summary>",
+        "local-first desktop companion for vinyl",
+        "personal access token",
+        "does not",
+        "stream audio itself",
+        "not affiliated",
+        "Discogs",
+    ):
+        assert marker in metainfo
+
+    for rel_path in (
+        "desktop_shell/icons/icon.png",
+        "docs/media/screenshots/01-browse-gallery.png",
+        "docs/media/screenshots/02-spin-result.png",
+        "docs/media/screenshots/03-market-value-dashboard.png",
+        "docs/media/screenshots/04-wantlist-view.png",
+        "docs/media/screenshots/05-setup-wizard.png",
+    ):
+        assert (ROOT / rel_path).exists()
+
+    assert "snapcraft-credentials.txt" in gitignore
+    assert "/snapcraft.yaml" in gitignore
+
+
 def test_active_installer_docs_have_resolvable_local_links_and_assets():
     _assert_local_links_exist(
         (
@@ -172,6 +231,7 @@ def test_active_installer_docs_have_resolvable_local_links_and_assets():
             "docs/PUBLIC_RELEASE_RUNBOOK.md",
             "docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md",
             "docs/RELEASE_NOTES_TEMPLATE.md",
+            "docs/STORE_SUBMISSIONS.md",
             "docs/START_HERE.md",
             "docs/friend_trial.md",
             "docs/releases/v0.2.1.md",
