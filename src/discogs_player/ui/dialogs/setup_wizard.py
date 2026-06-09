@@ -175,7 +175,7 @@ class SetupWizard(Adw.Window):
             msg = str(exc)
             if "token" in msg.lower() or "auth" in msg.lower() or "401" in msg:
                 self._token_status.set_text(
-                    f"Token rejected — visit discogs.com/settings/developers to generate a valid token."
+                    "Token rejected — visit discogs.com/settings/developers to generate a valid token."
                 )
             else:
                 self._token_status.set_text(f"Could not save token: {msg}")
