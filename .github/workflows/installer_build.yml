@@ -116,7 +116,7 @@ jobs:
             tauri_targets: dmg
           - os: windows-2022
             target_triple: x86_64-pc-windows-msvc
-            tauri_targets: msi,nsis,msix
+            tauri_targets: msi,nsis
 
     steps:
       - name: Checkout
@@ -277,7 +277,6 @@ jobs:
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe
-            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msix/*.msix
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -443,7 +442,6 @@ jobs:
           mapfile -d '' -t dmgs < <(find "$RELEASE_RAW_DIR"/installer-macos-* -type f -name '*.dmg' -print0 | sort -z)
           mapfile -d '' -t msis < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.msi' -print0 | sort -z)
           mapfile -d '' -t exes < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.exe' -print0 | sort -z)
-          mapfile -d '' -t msixs < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.msix' -print0 | sort -z)
 
           copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
           copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
@@ -460,9 +458,6 @@ jobs:
           for exe in "${exes[@]}"; do
             copy_single_asset "$exe" "$(basename "$exe")"
           done
-          for msix in "${msixs[@]}"; do
-            copy_single_asset "$msix" "$(basename "$msix")"
-          done
 
       - name: Validate release asset inventory
         shell: bash
@@ -474,7 +469,6 @@ jobs:
           ls "$RELEASE_PUBLISH_DIR"/*.dmg >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null
-          ls "$RELEASE_PUBLISH_DIR"/*.msix >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.AppImage >/dev/null
 
       - name: Generate SHA256 checksums
@@ -553,6 +547,5 @@ jobs:
           grep -F ".dmg" <<<"$asset_names"
           grep -F ".msi" <<<"$asset_names"
           grep -F ".exe" <<<"$asset_names"
-          grep -F ".msix" <<<"$asset_names"
           grep -Fx "CHECKSUMS-INSTALLERS.txt" <<<"$asset_names"
           grep -Fx "INSTALLER-MANIFEST.txt" <<<"$asset_names"

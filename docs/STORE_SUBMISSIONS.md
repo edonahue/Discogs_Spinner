@@ -171,19 +171,19 @@ snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
 
 ---
 
-## Channel 5: Microsoft Store (MSIX)
+## Channel 5: Microsoft Store
 
-**Prerequisites:** Microsoft Partner Center account, Publisher Display Name configured in `tauri.conf.json`.
+**Prerequisites:** Microsoft Partner Center account ($19 one-time).
 
-The MSIX artifact is now built automatically by the CI on every tagged release. After
-a tag push completes, the `.msix` file is available in the GitHub Release assets.
+Tauri v2 does not produce MSIX directly. Partner Center accepts the NSIS `.exe` installer
+for Desktop Bridge packaging — no separate MSIX build step needed.
 
-1. Download the `.msix` file from the GitHub Release
+1. Download the `Discogs.Spinner_<VERSION>_x64-setup.exe` from the GitHub Release
 2. Log in to https://partner.microsoft.com/dashboard
 3. Go to **Windows & Xbox** → **Overview** → **Spinner for Discogs**
 4. Click **Start a submission** → **Packages**
-5. Upload the `.msix` file — Partner Center will validate and re-sign it for Store distribution
-6. Fill in: store listing, screenshots, age rating (3+), pricing (free), categories (Music)
+5. Upload the `.exe` — Partner Center wraps it in an MSIX and re-signs it for Store distribution
+6. Fill in: store listing, screenshots (reuse Snap Store screenshots), age rating (3+), pricing (free), category Music
 7. Submit for review (~3-5 business days)
 
 ---
@@ -218,9 +218,9 @@ git push origin main --tags
 #         to manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
 #       - Open PR titled: "Update ErichDonahue.SpinnerforDiscogs to 0.3.0"
 
-#    b. Upload the .msix to Microsoft Partner Center (once account exists)
-#       Download from GitHub Release → Partner Center → Spinner for Discogs
-#       → Start submission → Packages → upload .msix
+#    b. Upload the NSIS .exe to Microsoft Partner Center (once account exists)
+#       Download Discogs.Spinner_X.Y.Z_x64-setup.exe from GitHub Release
+#       → Partner Center → Spinner for Discogs → Start submission → Packages → upload .exe
 
 #    (Snap Store auto-rebuilds from the pushed tag via snap_publish.yml — no manual step)
 ```
