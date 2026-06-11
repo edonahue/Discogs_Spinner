@@ -41,16 +41,10 @@ Once secrets are set, the next CI run on a version tag will produce notarized `.
 Verify with: `spctl --assess --verbose /Applications/DiscogSpinner.app`
 
 ### Microsoft Partner Center
-Required for: Microsoft Store (MSIX) submission.
+Required for: Microsoft Store submission.
 - Register at https://partner.microsoft.com/dashboard ($19 one-time)
 - Reserve the app name **"Spinner for Discogs"**
-- On the app overview → **App identity** page, note:
-  - **Publisher display name** (as registered)
-  - **Package/Identity Name** (e.g. `ErichDonahue.SpinnerforDiscogs` or a GUID-based string)
-- Update `desktop_shell/src-tauri/tauri.conf.json` → `bundle.windows.msix`:
-  - `identityName` → the exact Package/Identity Name from App identity page
-  - `publisherDisplayName` → your registered Publisher Display Name
-- Commit and push — CI will build a fresh MSIX with the correct identity on the next tag
+- No code changes needed — CI already produces the NSIS `.exe` that Partner Center accepts directly
 
 ---
 
