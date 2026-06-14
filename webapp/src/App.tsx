@@ -22,25 +22,37 @@ function AppRoutes() {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    getJson<SetupPayload>("/setup")
-      .then((payload) => {
-        const readinessSummary = payload.data?.provider_readiness?.summary;
-        const onboardingStage = readinessSummary?.onboarding_state ?? payload.data?.onboarding_stage;
-        const requiredConfigured = readinessSummary?.required_services_configured;
-        if (
-          onboardingStage === "needs_required_setup"
-          || onboardingStage === "needs_discogs_token"
-          || requiredConfigured === false
-        ) {
-          navigate("/setup", { replace: true });
-        }
-      })
-      .catch(() => {
-        // If API is unreachable, let routes render normally
-      })
-      .finally(() => {
-        setChecked(true);
-      });
+    // Retry the setup check to handle the Tauri startup race: the FastAPI
+    // sidecar is spawned in the background and the webview loads immediately,
+    // so the first request often fires before the API is ready.
+    const MAX_ATTEMPTS = 4;
+    const RETRY_DELAY_MS = 1000;
+
+    function checkSetup(attemptsLeft: number): Promise<void> {
+      return getJson<SetupPayload>("/setup")
+        .then((payload) => {
+          const readinessSummary = payload.data?.provider_readiness?.summary;
+          const onboardingStage = readinessSummary?.onboarding_state ?? payload.data?.onboarding_stage;
+          const requiredConfigured = readinessSummary?.required_services_configured;
+          if (
+            onboardingStage === "needs_required_setup"
+            || onboardingStage === "needs_discogs_token"
+            || requiredConfigured === false
+          ) {
+            navigate("/setup", { replace: true });
+          }
+        })
+        .catch(() => {
+          if (attemptsLeft > 1) {
+            return new Promise<void>((resolve) => {
+              setTimeout(() => { resolve(checkSetup(attemptsLeft - 1)); }, RETRY_DELAY_MS);
+            });
+          }
+          // All retries exhausted — API unreachable; let routes render normally.
+        });
+    }
+
+    checkSetup(MAX_ATTEMPTS).finally(() => { setChecked(true); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!checked) {

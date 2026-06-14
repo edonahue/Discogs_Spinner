@@ -29,6 +29,9 @@ export function Nav() {
         <NavLink to="/analytics" className={({ isActive }) => navClass(isActive)}>
           Analytics
         </NavLink>
+        <NavLink to="/setup" className={({ isActive }) => navClass(isActive)}>
+          Setup
+        </NavLink>
       </div>
     </nav>
   );

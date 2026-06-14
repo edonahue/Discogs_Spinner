@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   CollectorInsightsPayload,
   fetchCollectorInsights,
@@ -185,11 +186,20 @@ export function HomePage() {
       {status?.provider_readiness ? (
         <section className="app-surface app-card" style={{ marginTop: "1.25rem" }}>
           <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Setup Guidance</h2>
-          <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
-            {status.provider_readiness.summary.required_services_configured
-              ? "Discogs required setup is complete."
-              : "Discogs required setup is incomplete."}
-          </p>
+          {!status.provider_readiness.summary.required_services_configured ? (
+            <div style={{ marginBottom: "1rem" }}>
+              <p className="app-message app-message--error" style={{ marginBottom: "0.75rem" }}>
+                Discogs setup is required before you can browse your collection.
+              </p>
+              <Link to="/setup" className="app-button app-button--primary" style={{ display: "inline-block" }}>
+                Go to Setup
+              </Link>
+            </div>
+          ) : (
+            <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
+              Discogs required setup is complete.
+            </p>
+          )}
           {status.provider_readiness.summary.degraded_mode ? (
             <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
               Degraded mode: collection browsing still works without optional playback providers.

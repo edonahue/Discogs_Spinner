@@ -24,7 +24,7 @@ _Part of my [Open Workbench](https://erichdonahue.com/workbench); featured on [e
 >
 > **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
 >
-> **Release note:** The download links below point to the latest stable public release, `v0.2.2`. The Snap Store listing is live for Linux users who prefer a software-store install path.
+> **Release note:** The download links below point to the latest stable public release, `v0.2.2`. The Snap Store listing is live for Linux users who prefer a software-store install path. WinGet manifests are prepared but the package has not yet been submitted to `microsoft/winget-pkgs` — use the direct installer links below for Windows.
 
 ---
 

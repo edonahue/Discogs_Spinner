@@ -62,6 +62,21 @@ This implies:
 - signing/notarization and clean-machine FTUX are 1.0 release gates, not post-1.0 polish
 - if these gates are not closed, continue shipping `0.x` releases rather than forcing a `1.0` increment
 
+## Distribution Channels
+
+| Channel | Platform | Status | Notes |
+|---------|----------|--------|-------|
+| GitHub Releases (direct download) | Windows, macOS, Linux | **Live** | NSIS exe + MSI (Windows), .dmg (macOS), .deb + AppImage (Linux) |
+| Snap Store (`spinner-for-discogs`) | Linux | **Live** | `sudo snap install spinner-for-discogs`; auto-published via CI on tag |
+| WinGet (`ErichDonahue.SpinnerforDiscogs`) | Windows | **Manifests ready, not yet submitted** | Manifests at `packaging/winget/`; PR to `microsoft/winget-pkgs` not yet filed |
+| Homebrew Cask | macOS | **Formula ready, not yet submitted** | Awaiting notarized `.dmg` (requires Apple Developer enrollment) |
+| Flathub | Linux | **Template ready, not yet submitted** | Awaiting AppStream screenshots + Python dep JSON |
+| Microsoft Store | Windows | **Not started** | Requires Partner Center account + MSIX conversion |
+
+Reference: `docs/STORE_SUBMISSIONS.md` for end-to-end submission steps and per-channel checklists.
+
+---
+
 ## Current Capability Snapshot
 
 ### Core Platform
