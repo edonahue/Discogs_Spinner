@@ -41,16 +41,10 @@ Once secrets are set, the next CI run on a version tag will produce notarized `.
 Verify with: `spctl --assess --verbose /Applications/DiscogSpinner.app`
 
 ### Microsoft Partner Center
-Required for: Microsoft Store (MSIX) submission.
+Required for: Microsoft Store submission.
 - Register at https://partner.microsoft.com/dashboard ($19 one-time)
 - Reserve the app name **"Spinner for Discogs"**
-- On the app overview → **App identity** page, note:
-  - **Publisher display name** (as registered)
-  - **Package/Identity Name** (e.g. `ErichDonahue.SpinnerforDiscogs` or a GUID-based string)
-- Update `desktop_shell/src-tauri/tauri.conf.json` → `bundle.windows.msix`:
-  - `identityName` → the exact Package/Identity Name from App identity page
-  - `publisherDisplayName` → your registered Publisher Display Name
-- Commit and push — CI will build a fresh MSIX with the correct identity on the next tag
+- No code changes needed — CI already produces the NSIS `.exe` that Partner Center accepts directly
 
 ---
 
@@ -272,18 +266,21 @@ snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
 
 ## Channel 5: Microsoft Store
 
-**Prerequisites:** Microsoft Partner Center account ($19 one-time).
+**Prerequisites:** Microsoft Partner Center account ($19 one-time), Windows machine with
+[MSIX Packaging Tool](https://apps.microsoft.com/detail/9n5lw3jbcxkf) (free, from Microsoft Store).
 
-Tauri v2 does not produce MSIX directly. Partner Center accepts the NSIS `.exe` installer
-for Desktop Bridge packaging — no separate MSIX build step needed.
+Tauri v2 does not produce MSIX directly. The NSIS `.exe` from CI must be converted to MSIX
+using the MSIX Packaging Tool before submission. No Windows code signing certificate is needed —
+Partner Center signs the package for Store distribution.
 
 1. Download the `Discogs.Spinner_<VERSION>_x64-setup.exe` from the GitHub Release
-2. Log in to https://partner.microsoft.com/dashboard
-3. Go to **Windows & Xbox** → **Overview** → **Spinner for Discogs**
-4. Click **Start a submission** → **Packages**
-5. Upload the `.exe` — Partner Center wraps it in an MSIX and re-signs it for Store distribution
-6. Fill in: store listing, screenshots (reuse Snap Store screenshots), age rating (3+), pricing (free), category Music
-7. Submit for review (~3-5 business days)
+2. Open **MSIX Packaging Tool** → "Application package" → point it at the `.exe`
+3. Follow the wizard: install the app in a VM/clean environment, capture the installation, export `.msix`
+4. Log in to https://partner.microsoft.com/dashboard
+5. Go to **Windows & Xbox** → **Overview** → **Spinner for Discogs**
+6. Click **Start a submission** → **Packages** → upload the `.msix`
+7. Fill in: store listing, screenshots (reuse Snap Store screenshots), age rating (3+), pricing (free), category Music
+8. Submit for review (~3-5 business days)
 
 ---
 
@@ -317,9 +314,10 @@ git push origin main --tags
 #         to manifests/e/ErichDonahue/SpinnerforDiscogs/0.3.0/
 #       - Open PR titled: "Update ErichDonahue.SpinnerforDiscogs to 0.3.0"
 
-#    b. Upload the NSIS .exe to Microsoft Partner Center (once account exists)
+#    b. Microsoft Store (once Partner Center account exists):
 #       Download Discogs.Spinner_X.Y.Z_x64-setup.exe from GitHub Release
-#       → Partner Center → Spinner for Discogs → Start submission → Packages → upload .exe
+#       → Convert to .msix with MSIX Packaging Tool (free, from Microsoft Store)
+#       → Partner Center → Spinner for Discogs → Start submission → Packages → upload .msix
 
 #    (Snap Store auto-rebuilds from the pushed tag via snap_publish.yml — no manual step)
 ```
