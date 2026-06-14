@@ -68,7 +68,7 @@ This implies:
 |---------|----------|--------|-------|
 | GitHub Releases (direct download) | Windows, macOS, Linux | **Live** | NSIS exe + MSI (Windows), .dmg (macOS), .deb + AppImage (Linux) |
 | Snap Store (`spinner-for-discogs`) | Linux | **Live** | `sudo snap install spinner-for-discogs`; auto-published via CI on tag |
-| WinGet (`ErichDonahue.SpinnerforDiscogs`) | Windows | **Manifests ready, not yet submitted** | Manifests at `packaging/winget/`; PR to `microsoft/winget-pkgs` not yet filed |
+| WinGet (`ErichDonahue.SpinnerforDiscogs`) | Windows | **Live** | `winget install ErichDonahue.SpinnerforDiscogs`; PR [#384707](https://github.com/microsoft/winget-pkgs/pull/384707) merged to `microsoft/winget-pkgs` on 2026-06-13 |
 | Homebrew Cask | macOS | **Formula ready, not yet submitted** | Awaiting notarized `.dmg` (requires Apple Developer enrollment) |
 | Flathub | Linux | **Template ready, not yet submitted** | Awaiting AppStream screenshots + Python dep JSON |
 | Microsoft Store | Windows | **Not started** | Requires Partner Center account + MSIX conversion |

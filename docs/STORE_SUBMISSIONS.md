@@ -68,7 +68,7 @@ Required for: Microsoft Store submission.
 
 **Prerequisites:** None (no signing required for WinGet).
 
-**Current status:** Manifests for v0.2.2 are prepared at `packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/0.2.2/`. The PR to `microsoft/winget-pkgs` has **not yet been submitted**. `winget install ErichDonahue.SpinnerforDiscogs` does not yet work for end users. File the PR when ready to make the package publicly installable via winget.
+**Current status: Live.** PR [microsoft/winget-pkgs#384707](https://github.com/microsoft/winget-pkgs/pull/384707) was merged on 2026-06-13. `winget install ErichDonahue.SpinnerforDiscogs` works for end users now. The wingetbot publish pipeline confirmed success.
 
 **Files:** `packaging/winget/manifests/e/ErichDonahue/SpinnerforDiscogs/<VERSION>/`
 

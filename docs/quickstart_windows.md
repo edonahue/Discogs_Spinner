@@ -12,17 +12,20 @@ This guide targets first-time users installing `discogs_player` on Windows.
 
 ## 2) Install the native app
 
-Download the current stable Windows installer directly:
+**Option A — WinGet (recommended if you already use winget):**
+
+```powershell
+winget install ErichDonahue.SpinnerforDiscogs
+```
+
+This installs the same signed package available on GitHub Releases and keeps the app updatable via `winget upgrade`.
+
+**Option B — Direct download:**
 
 - Recommended installer: [Discogs Spinner_0.2.2_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe)
 - MSI installer: [Discogs Spinner_0.2.2_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi)
 - Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-
-Choose either installer:
-
-- `Discogs Spinner_0.2.2_x64-setup.exe` for the standard guided installer flow
-- `Discogs Spinner_0.2.2_x64_en-US.msi` if you prefer MSI deployment tooling
 
 Run the installer and launch **Discogs Spinner** from the Start menu.
 
