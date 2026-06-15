@@ -321,6 +321,38 @@ jobs:
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
+      - name: Stage Windows app files (for MSIX)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $relDir = "desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release"
+          $stageDir = "dist/windows-app-stage"
+          New-Item -Force -ItemType Directory $stageDir | Out-Null
+
+          $appExe = Join-Path $relDir "Discogs Spinner.exe"
+          if (-not (Test-Path $appExe)) { Write-Error "Main app binary not found: $appExe"; exit 1 }
+          Copy-Item $appExe $stageDir
+          Write-Host "Staged: Discogs Spinner.exe"
+
+          Get-ChildItem $relDir -Filter "*.dll" -File | ForEach-Object {
+            Copy-Item $_.FullName $stageDir
+            Write-Host "Staged: $($_.Name)"
+          }
+
+          $resDir = Join-Path $relDir "resources"
+          if (Test-Path $resDir) {
+            Copy-Item $resDir (Join-Path $stageDir "resources") -Recurse
+            Write-Host "Staged resources/"
+          }
+
+      - name: Upload Windows app stage (for MSIX)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-app-stage
+          path: dist/windows-app-stage/
+          if-no-files-found: error
+
   # ---------------------------------------------------------------------------
   # Phase C: MSIX package for Microsoft Store (Windows, x64)
   # ---------------------------------------------------------------------------
@@ -338,30 +370,11 @@ jobs:
           $version = (Get-Content desktop_shell/src-tauri/tauri.conf.json | ConvertFrom-Json).version
           echo "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Download Windows Tauri artifacts
+      - name: Download Windows app stage
         uses: actions/download-artifact@v4
         with:
-          pattern: installer-windows-*
-          merge-multiple: true
-          path: dist/tauri-windows
-
-      - name: Locate app binary from NSIS bundle
-        shell: pwsh
-        run: |
-          # NSIS installer is a self-extracting archive; we extract it to get the .exe
-          $exe = Get-ChildItem -Recurse dist/tauri-windows -Filter "*setup.exe" | Select-Object -First 1
-          if (-not $exe) { Write-Error "No NSIS setup.exe found"; exit 1 }
-          Write-Host "Found installer: $($exe.FullName)"
-
-          # Use 7-Zip (available on windows-2022 runners) to extract the NSIS payload
-          7z x "$($exe.FullName)" -odist/nsis-extracted -y | Out-Null
-
-          # Find the main app executable in the extracted payload
-          $appExe = Get-ChildItem -Recurse dist/nsis-extracted -Filter "Discogs Spinner.exe" | Select-Object -First 1
-          if (-not $appExe) { Write-Error "Could not find 'Discogs Spinner.exe' in NSIS payload"; exit 1 }
-          Write-Host "App binary: $($appExe.FullName)"
-          echo "APP_EXE_PATH=$($appExe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "APP_EXE_DIR=$($appExe.DirectoryName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          name: windows-app-stage
+          path: dist/windows-app-stage/
 
       - name: Stage MSIX package directory
         shell: pwsh
@@ -369,8 +382,8 @@ jobs:
           $pkgDir = "dist/msix-stage"
           New-Item -ItemType Directory -Force $pkgDir | Out-Null
 
-          # Copy all app files from the extracted NSIS payload
-          Copy-Item -Recurse "$env:APP_EXE_DIR\*" "$pkgDir\" -Force
+          # Copy the pre-staged app files (main exe + DLLs + resources)
+          Copy-Item -Recurse "dist/windows-app-stage\*" "$pkgDir\" -Force
 
           # Update manifest version to match app version (x.y.z.0 format)
           $manifest = Get-Content packaging/msix/Package.appxmanifest -Raw
