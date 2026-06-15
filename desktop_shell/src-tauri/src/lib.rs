@@ -2,6 +2,7 @@ use std::{sync::Mutex, thread, time::Duration};
 
 use tauri::{AppHandle, Manager, WindowEvent};
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
+use tauri_plugin_updater::UpdaterExt;
 
 // ---------------------------------------------------------------------------
 // Sidecar state
@@ -73,6 +74,23 @@ fn kill_sidecar(app_handle: &AppHandle) {
 }
 
 // ---------------------------------------------------------------------------
+// Tauri commands
+// ---------------------------------------------------------------------------
+
+/// Check for an available update and return the new version string, or None.
+/// Called from the React frontend via invoke('check_update').
+#[tauri::command]
+async fn check_update(app: AppHandle) -> Option<String> {
+    match app.updater() {
+        Ok(updater) => match updater.check().await {
+            Ok(Some(update)) => Some(update.version.clone()),
+            _ => None,
+        },
+        Err(_) => None,
+    }
+}
+
+// ---------------------------------------------------------------------------
 // App entry point
 // ---------------------------------------------------------------------------
 
@@ -80,7 +98,9 @@ fn kill_sidecar(app_handle: &AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(SidecarState(Mutex::new(None)))
+        .invoke_handler(tauri::generate_handler![check_update])
         .setup(|app| {
             spawn_sidecar(app)?;
 

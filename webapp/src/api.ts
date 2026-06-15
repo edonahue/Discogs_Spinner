@@ -501,3 +501,45 @@ export function fetchTracklist(
 ): Promise<ApiEnvelope<TracklistPayload>> {
   return getJson<TracklistPayload>(`/releases/${releaseId}/tracklist`);
 }
+
+export function refreshTracklist(
+  releaseId: number,
+): Promise<ApiEnvelope<TracklistPayload>> {
+  return postJson<TracklistPayload>(`/releases/${releaseId}/tracklist/refresh`, {});
+}
+
+export interface SpinResult {
+  discogs_release_id: number;
+  status_message: string;
+}
+
+export interface SpinParams {
+  q?: string;
+  year?: string;
+  genre?: string;
+  unmatched?: boolean;
+}
+
+export function spinCollection(
+  params: SpinParams,
+): Promise<ApiEnvelope<SpinResult>> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.year) qs.set("year", params.year);
+  if (params.genre) qs.set("genre", params.genre);
+  if (params.unmatched) qs.set("unmatched", "true");
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return postJson<SpinResult>(`/releases/spin${suffix}`, {});
+}
+
+export function spinWantlist(
+  params: SpinParams,
+): Promise<ApiEnvelope<SpinResult>> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.year) qs.set("year", params.year);
+  if (params.genre) qs.set("genre", params.genre);
+  if (params.unmatched) qs.set("unmatched", "true");
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return postJson<SpinResult>(`/wantlist/spin${suffix}`, {});
+}

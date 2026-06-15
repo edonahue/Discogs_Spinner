@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchTracklist, Track } from "../api";
+import { fetchTracklist, refreshTracklist, Track } from "../api";
 
 interface Props {
   releaseId: number;
@@ -13,9 +13,10 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
   const [hasCached, setHasCached] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  function loadTracklist() {
     setLoading(true);
     setError("");
     fetchTracklist(releaseId)
@@ -28,7 +29,26 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
         setError(err instanceof Error ? err.message : "Failed to load tracklist.")
       )
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadTracklist();
   }, [releaseId]);
+
+  function handleRefresh() {
+    setRefreshing(true);
+    setError("");
+    refreshTracklist(releaseId)
+      .then((payload) => {
+        const d = payload.data;
+        setTracks(d?.tracks ?? []);
+        setHasCached(d?.has_cached_tracklist ?? false);
+      })
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : "Failed to refresh tracklist.")
+      )
+      .finally(() => setRefreshing(false));
+  }
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -69,13 +89,18 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
         {loading ? <p className="app-message app-message--subtle">Loading…</p> : null}
 
         {!loading && !error && !hasCached ? (
-          <p className="app-message app-message--subtle">
-            No tracklist cached — run{" "}
-            <code style={{ background: "#f0f0f0", padding: "0 0.3rem", borderRadius: "3px" }}>
-              dplayer tracks refresh
-            </code>{" "}
-            to populate it.
-          </p>
+          <div className="app-message app-message--subtle" style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            <span>Tracklist not yet loaded.</span>
+            <button
+              type="button"
+              className="app-button app-button--ghost"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              style={{ padding: "0.25rem 0.65rem", fontSize: "0.85rem" }}
+            >
+              {refreshing ? "Refreshing…" : "Refresh Tracklist"}
+            </button>
+          </div>
         ) : null}
 
         {!loading && !error && hasCached && audioTracks.length === 0 ? (

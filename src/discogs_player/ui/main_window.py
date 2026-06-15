@@ -82,6 +82,9 @@ from discogs_player.use_cases.wantlist_value_refresh import (
     run_refresh_wantlist_market_value,
 )
 from discogs_player.use_cases.collection_health import run_collection_health
+from discogs_player.use_cases.collector_insights import run_collector_insights
+from discogs_player.use_cases.list_recent import run_recent_releases
+from discogs_player.use_cases.collection_analytics import run_collection_analytics
 from discogs_player.use_cases.release_collection_summary import (
     run_release_collection_summary,
 )
@@ -134,6 +137,9 @@ from discogs_player.ui.widgets.spin_wheel import SpinWheel
 from discogs_player.ui.widgets.text_menu import ReleaseTextMenu
 from discogs_player.ui.widgets.collection_summary import CollectionSummaryWidget
 from discogs_player.ui.widgets.health_score import HealthScoreWidget
+from discogs_player.ui.widgets.home_dashboard import HomeDashboardWidget
+from discogs_player.ui.widgets.recent_releases import RecentReleasesWidget
+from discogs_player.ui.widgets.analytics_panel import AnalyticsPanelWidget
 from discogs_player.ui.widgets.value_workspace import ValueWorkspace
 from discogs_player.ui.widgets.wantlist_detail import WantlistDetail
 from discogs_player.ui.widgets.wantlist_filters import WantlistFilterBar
@@ -1056,6 +1062,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self._force_background_suspended = False
         self._idle_trim_source_id: int | None = None
         self._value_dashboard_loaded = False
+        self._home_dashboard_loaded = False
+        self._recent_releases_loaded = False
+        self._analytics_loaded = False
         self._actions_executor = ThreadPoolExecutor(
             max_workers=4,
             thread_name_prefix="ui-actions",
@@ -1551,6 +1560,54 @@ class MainWindow(Gtk.ApplicationWindow):
             self._health_score_scroll, "health", "Health"
         )
 
+        # Home / Dashboard tab
+        self._home_dashboard_widget = HomeDashboardWidget(
+            on_refresh=self._handle_home_dashboard_refresh,
+        )
+        self._home_dashboard_widget.add_css_class("ipod-panel")
+        self._home_dashboard_scroll = Gtk.ScrolledWindow()
+        self._home_dashboard_scroll.set_hexpand(True)
+        self._home_dashboard_scroll.set_vexpand(True)
+        self._home_dashboard_scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        self._home_dashboard_scroll.set_child(self._home_dashboard_widget)
+        self._main_stack.add_titled(
+            self._home_dashboard_scroll, "home", "Home"
+        )
+
+        # Recently Added tab
+        self._recent_releases_widget = RecentReleasesWidget(
+            on_load=self._handle_recent_releases_load,
+        )
+        self._recent_releases_widget.add_css_class("ipod-panel")
+        self._recent_releases_scroll = Gtk.ScrolledWindow()
+        self._recent_releases_scroll.set_hexpand(True)
+        self._recent_releases_scroll.set_vexpand(True)
+        self._recent_releases_scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        self._recent_releases_scroll.set_child(self._recent_releases_widget)
+        self._main_stack.add_titled(
+            self._recent_releases_scroll, "recent", "Recent"
+        )
+
+        # Analytics tab
+        self._analytics_panel_widget = AnalyticsPanelWidget(
+            on_refresh=self._handle_analytics_refresh,
+        )
+        self._analytics_panel_widget.add_css_class("ipod-panel")
+        self._analytics_panel_scroll = Gtk.ScrolledWindow()
+        self._analytics_panel_scroll.set_hexpand(True)
+        self._analytics_panel_scroll.set_vexpand(True)
+        self._analytics_panel_scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        self._analytics_panel_scroll.set_child(self._analytics_panel_widget)
+        self._main_stack.add_titled(
+            self._analytics_panel_scroll, "analytics", "Analytics"
+        )
+
         self._main_stack.set_visible_child_name("browse")
 
         initial_status = "Ready."
@@ -1819,6 +1876,94 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _handle_health_score_refresh(self) -> None:
         self._refresh_health_score()
+
+    # ------------------------------------------------------------------
+    # Home dashboard
+    # ------------------------------------------------------------------
+
+    def _handle_home_dashboard_refresh(self) -> None:
+        self._home_dashboard_loaded = False
+        self._refresh_home_dashboard(update_status=True)
+
+    def _refresh_home_dashboard(self, *, update_status: bool = True) -> None:
+        self._home_dashboard_widget.set_busy()
+        if update_status:
+            self._set_status("Loading home dashboard…")
+        self._start_async_action(
+            action_key="home_dashboard",
+            busy_message="Loading home dashboard…",
+            runner=lambda: dict(run_collector_insights()),
+            on_success=self._on_home_dashboard_success,
+            on_error=self._on_home_dashboard_error,
+        )
+
+    def _on_home_dashboard_success(self, data: dict[str, object]) -> None:
+        self._home_dashboard_loaded = True
+        self._home_dashboard_widget.set_insights(data)
+        self._set_status("Home dashboard loaded.")
+
+    def _on_home_dashboard_error(self, message: str) -> None:
+        self._home_dashboard_widget.set_error(message)
+        self._set_status(f"Home dashboard unavailable: {message}")
+
+    # ------------------------------------------------------------------
+    # Recently Added
+    # ------------------------------------------------------------------
+
+    def _handle_recent_releases_load(self, days: int) -> None:
+        self._recent_releases_loaded = False
+        self._refresh_recent_releases(days=days, update_status=True)
+
+    def _refresh_recent_releases(self, *, days: int = 7, update_status: bool = True) -> None:
+        self._recent_releases_widget.set_busy()
+        if update_status:
+            self._set_status(f"Loading releases added in the last {days} days…")
+        self._start_async_action(
+            action_key="recent_releases",
+            busy_message=f"Loading recent releases ({days}d)…",
+            runner=lambda: dict(run_recent_releases(days=days, limit=50, include_market=False)),
+            on_success=self._on_recent_releases_success,
+            on_error=self._on_recent_releases_error,
+        )
+
+    def _on_recent_releases_success(self, data: dict[str, object]) -> None:
+        self._recent_releases_loaded = True
+        self._recent_releases_widget.set_releases(data)
+        count = len(data.get("releases") or [])
+        self._set_status(f"Showing {count} recently added release{'s' if count != 1 else ''}.")
+
+    def _on_recent_releases_error(self, message: str) -> None:
+        self._recent_releases_widget.set_error(message)
+        self._set_status(f"Recently added unavailable: {message}")
+
+    # ------------------------------------------------------------------
+    # Analytics
+    # ------------------------------------------------------------------
+
+    def _handle_analytics_refresh(self) -> None:
+        self._analytics_loaded = False
+        self._refresh_analytics(update_status=True)
+
+    def _refresh_analytics(self, *, update_status: bool = True) -> None:
+        self._analytics_panel_widget.set_busy()
+        if update_status:
+            self._set_status("Loading collection analytics…")
+        self._start_async_action(
+            action_key="analytics",
+            busy_message="Loading collection analytics…",
+            runner=lambda: dict(run_collection_analytics(limit=10)),
+            on_success=self._on_analytics_success,
+            on_error=self._on_analytics_error,
+        )
+
+    def _on_analytics_success(self, data: dict[str, object]) -> None:
+        self._analytics_loaded = True
+        self._analytics_panel_widget.set_analytics(data)
+        self._set_status("Collection analytics loaded.")
+
+    def _on_analytics_error(self, message: str) -> None:
+        self._analytics_panel_widget.set_error(message)
+        self._set_status(f"Analytics unavailable: {message}")
 
     def _refresh_health_score(self) -> None:
         self._health_score_widget.set_busy()
@@ -3450,6 +3595,18 @@ class MainWindow(Gtk.ApplicationWindow):
                 self._refresh_value_dashboard(update_status=False)
         elif active_view == "health":
             self._set_status("Switched to Health view")
+        elif active_view == "home":
+            self._set_status("Switched to Home view")
+            if not self._home_dashboard_loaded:
+                self._refresh_home_dashboard(update_status=False)
+        elif active_view == "recent":
+            self._set_status("Switched to Recently Added view")
+            if not self._recent_releases_loaded:
+                self._refresh_recent_releases(days=7, update_status=False)
+        elif active_view == "analytics":
+            self._set_status("Switched to Analytics view")
+            if not self._analytics_loaded:
+                self._refresh_analytics(update_status=False)
 
         self._apply_visible_widget_suspension()
         # Reapply responsive split sizing when tabs change so hidden paned widgets

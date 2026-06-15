@@ -24,7 +24,7 @@ _Part of my [Open Workbench](https://erichdonahue.com/workbench); featured on [e
 >
 > **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
 >
-> **Release note:** The download links below point to the latest stable public release, `v0.2.2`. The Snap Store listing is live for Linux users who prefer a software-store install path.
+> **Release note:** The download links below point to the latest stable public release, `v0.2.2`. The Snap Store is live for Linux and WinGet is live for Windows — both are listed below alongside the direct download links.
 
 ---
 
@@ -150,7 +150,8 @@ You only lose direct playback control handoff until an optional provider is conn
 These installers are meant to get a collector to value quickly: install, paste a Discogs token, sync, browse, and spin.
 
 - [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
-- Windows: use the guided installer first: [Discogs Spinner_0.2.2_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe). Use [Discogs Spinner_0.2.2_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi) only if you specifically want MSI deployment tooling.
+- Windows via WinGet: `winget install ErichDonahue.SpinnerforDiscogs` — no browser required, auto-updates with `winget upgrade`.
+- Windows direct download: [Discogs Spinner_0.2.2_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe) (recommended installer). Use [Discogs Spinner_0.2.2_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi) only if you specifically want MSI deployment tooling.
 - macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg).
 - Linux via Snap Store: [install Spinner for Discogs from Snapcraft](https://snapcraft.io/spinner-for-discogs), or run `sudo snap install spinner-for-discogs` if `snapd` is already set up.
 - Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb).

@@ -1,19 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJson, postJson, ProviderReadinessContract } from "../api";
+import { getJson, postJson } from "../api";
 
 type SetupResponse = {
   onboarding_stage: string;
   discogs: { configured: boolean };
-  provider_readiness?: ProviderReadinessContract;
 };
-
-function setupNextActions(readiness: ProviderReadinessContract): string[] {
-  if (readiness.summary.next_actions.length > 0) {
-    return readiness.summary.next_actions;
-  }
-  return readiness.next_actions;
-}
 
 export function SetupPage() {
   const navigate = useNavigate();
@@ -62,25 +54,6 @@ export function SetupPage() {
         </a>
         .
       </p>
-      {setupState?.provider_readiness ? (
-        <div className="app-message app-message--subtle" style={{ marginBottom: "1rem" }}>
-          <div>
-            Onboarding state: {setupState.provider_readiness.summary.onboarding_state || setupState.onboarding_stage}
-          </div>
-          <div>
-            Optional providers ready: {setupState.provider_readiness.summary.ready_provider_count}/
-            {setupState.provider_readiness.summary.optional_provider_count}
-          </div>
-          {setupState.provider_readiness.summary.degraded_mode ? (
-            <div>Degraded mode is available: collection browsing still works without optional providers.</div>
-          ) : null}
-          {setupNextActions(setupState.provider_readiness).length > 0 ? (
-            <div style={{ marginTop: "0.5rem" }}>
-              Next actions: {setupNextActions(setupState.provider_readiness).join(" | ")}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
       <form onSubmit={(e) => { void handleSubmit(e); }}>
         <div style={{ marginBottom: "1rem" }}>
           <label htmlFor="token" className="app-stack-label">

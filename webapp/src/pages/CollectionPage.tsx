@@ -7,6 +7,7 @@ import {
   ReleaseCollectionSummary,
   SyncSummary,
   syncCollection,
+  spinCollection,
 } from "../api";
 import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
 import { TracklistModal } from "../components/TracklistModal";
@@ -110,6 +111,9 @@ export function CollectionPage() {
   const [reloadToken, setReloadToken] = useState(0);
   const [pendingFocusValidation, setPendingFocusValidation] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<TracklistTarget | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [spinError, setSpinError] = useState("");
+  const [spinAnimating, setSpinAnimating] = useState(false);
   const pageVisible = usePageVisible();
   const focusedReleaseId = parseFocusId(searchParams.get("focus"));
 
@@ -233,6 +237,33 @@ export function CollectionPage() {
     setSearchParams(next, { replace: true });
   }
 
+  function handleSpin() {
+    setSpinning(true);
+    setSpinError("");
+    spinCollection({
+      q: debouncedQuery || undefined,
+      year: debouncedYear || undefined,
+      genre: debouncedGenre || undefined,
+      unmatched: unmatchedOnly || undefined,
+    })
+      .then((payload) => {
+        const id = payload.data?.discogs_release_id;
+        if (id) {
+          const next = new URLSearchParams(searchParams);
+          next.set("focus", String(id));
+          setSearchParams(next, { replace: true });
+          setSpinAnimating(true);
+          setTimeout(() => setSpinAnimating(false), 800);
+        }
+      })
+      .catch((err: unknown) => {
+        setSpinError(err instanceof Error ? err.message : "Spin failed.");
+      })
+      .finally(() => {
+        setSpinning(false);
+      });
+  }
+
   function handleSyncCollection() {
     setSyncState("syncing");
     setSyncMessage("");
@@ -269,9 +300,6 @@ export function CollectionPage() {
       <header className="app-page__header">
         <div>
           <h1 className="app-page__title">Collection</h1>
-          <p className="app-page__subtitle">
-            Browse your synced releases, keep text readable at narrower window widths, and jump back here when another section promises more detail.
-          </p>
         </div>
       </header>
 
@@ -280,6 +308,7 @@ export function CollectionPage() {
           releaseId={focusedReleaseId}
           scope="collection"
           onClear={clearFocus}
+          spinAnimating={spinAnimating}
           onOpenTracklist={(release) =>
             openTracklist({
               discogs_release_id: release.discogs_release_id,
@@ -395,6 +424,14 @@ export function CollectionPage() {
           </button>
           <button
             type="button"
+            className="app-button app-button--primary"
+            onClick={handleSpin}
+            disabled={spinning}
+          >
+            {spinning ? <><span className="app-spinner" />Spinning…</> : "Spin"}
+          </button>
+          <button
+            type="button"
             className="app-button"
             onClick={handleSyncCollection}
             disabled={syncState === "syncing"}
@@ -409,6 +446,7 @@ export function CollectionPage() {
           {syncMessage}
         </p>
       ) : null}
+      {spinError ? <p className="app-message app-message--error">{spinError}</p> : null}
       {error ? <p className="app-message app-message--error">{error}</p> : null}
       {summaryError ? <p className="app-message app-message--error">{summaryError}</p> : null}
       {summaryLoading ? (

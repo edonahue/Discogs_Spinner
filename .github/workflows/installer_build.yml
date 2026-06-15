@@ -260,7 +260,9 @@ jobs:
           name: installer-linux-${{ matrix.target_triple }}
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/deb/*.deb
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/deb/*.deb.sig
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/appimage/*.AppImage
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/appimage/*.AppImage.sig
           if-no-files-found: error
 
       - name: Upload Tauri installers (macOS)
@@ -270,6 +272,7 @@ jobs:
           name: installer-macos-${{ matrix.target_triple }}
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/dmg/*.dmg
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/dmg/*.dmg.sig
           if-no-files-found: error
 
       - name: Upload Tauri installers (Windows)
@@ -279,11 +282,100 @@ jobs:
           name: installer-windows-${{ matrix.target_triple }}
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi.sig
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
-  # Phase C: GTK4 .deb via fpm (Debian/Ubuntu native, no Tauri)
+  # Phase C: MSIX package for Microsoft Store (Windows, x64)
+  # ---------------------------------------------------------------------------
+  build-msix:
+    name: MSIX (Microsoft Store)
+    needs: build-tauri
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        shell: pwsh
+        run: |
+          $version = (Get-Content desktop_shell/src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          echo "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Download Windows Tauri artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: installer-windows-*
+          merge-multiple: true
+          path: dist/tauri-windows
+
+      - name: Locate app binary from NSIS bundle
+        shell: pwsh
+        run: |
+          # NSIS installer is a self-extracting archive; we extract it to get the .exe
+          $exe = Get-ChildItem -Recurse dist/tauri-windows -Filter "*setup.exe" | Select-Object -First 1
+          if (-not $exe) { Write-Error "No NSIS setup.exe found"; exit 1 }
+          Write-Host "Found installer: $($exe.FullName)"
+
+          # Use 7-Zip (available on windows-2022 runners) to extract the NSIS payload
+          7z x "$($exe.FullName)" -odist/nsis-extracted -y | Out-Null
+
+          # Find the main app executable in the extracted payload
+          $appExe = Get-ChildItem -Recurse dist/nsis-extracted -Filter "Discogs Spinner.exe" | Select-Object -First 1
+          if (-not $appExe) { Write-Error "Could not find 'Discogs Spinner.exe' in NSIS payload"; exit 1 }
+          Write-Host "App binary: $($appExe.FullName)"
+          echo "APP_EXE_PATH=$($appExe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "APP_EXE_DIR=$($appExe.DirectoryName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Stage MSIX package directory
+        shell: pwsh
+        run: |
+          $pkgDir = "dist/msix-stage"
+          New-Item -ItemType Directory -Force $pkgDir | Out-Null
+
+          # Copy all app files from the extracted NSIS payload
+          Copy-Item -Recurse "$env:APP_EXE_DIR\*" "$pkgDir\" -Force
+
+          # Update manifest version to match app version (x.y.z.0 format)
+          $manifest = Get-Content packaging/msix/Package.appxmanifest -Raw
+          $manifest = $manifest -replace 'Version="[^"]*"', "Version=`"$env:APP_VERSION.0`""
+          $manifest | Set-Content "$pkgDir\AppxManifest.xml"
+
+          # Copy tile assets
+          New-Item -ItemType Directory -Force "$pkgDir\assets" | Out-Null
+          Copy-Item packaging/msix/assets\* "$pkgDir\assets\" -Force
+
+          Write-Host "MSIX stage contents:"
+          Get-ChildItem -Recurse $pkgDir | Select-Object FullName
+
+      - name: Build MSIX with makeappx
+        shell: pwsh
+        run: |
+          # Locate makeappx.exe from the Windows SDK (available on windows-2022)
+          $sdk = "C:\Program Files (x86)\Windows Kits\10\bin"
+          $makeappx = Get-ChildItem -Recurse $sdk -Filter "makeappx.exe" |
+            Where-Object { $_.FullName -match "x64" } |
+            Sort-Object -Descending |
+            Select-Object -First 1
+          if (-not $makeappx) { Write-Error "makeappx.exe not found in Windows SDK"; exit 1 }
+          Write-Host "Using $($makeappx.FullName)"
+
+          $outFile = "dist/Discogs.Spinner_$env:APP_VERSION_x64.msix"
+          & "$($makeappx.FullName)" pack /d dist/msix-stage /p $outFile /nv
+          Write-Host "Built: $outFile"
+          echo "MSIX_PATH=$outFile" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-msix-windows
+          path: dist/Discogs.Spinner_*_x64.msix
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Phase D: GTK4 .deb via fpm (Debian/Ubuntu native, no Tauri)
   # ---------------------------------------------------------------------------
   build-gtk4-deb:
     name: GTK4 .deb (fpm)
@@ -365,6 +457,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
     needs:
       - build-tauri
+      - build-msix
       - build-gtk4-deb
       - validate-deb
     runs-on: ubuntu-latest
@@ -445,6 +538,7 @@ jobs:
           mapfile -d '' -t dmgs < <(find "$RELEASE_RAW_DIR"/installer-macos-* -type f -name '*.dmg' -print0 | sort -z)
           mapfile -d '' -t msis < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.msi' -print0 | sort -z)
           mapfile -d '' -t exes < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.exe' -print0 | sort -z)
+          mapfile -d '' -t msix_files < <(find "$RELEASE_RAW_DIR"/installer-msix-* -type f -name '*.msix' -print0 2>/dev/null | sort -z || true)
 
           copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
           copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
@@ -461,6 +555,87 @@ jobs:
           for exe in "${exes[@]}"; do
             copy_single_asset "$exe" "$(basename "$exe")"
           done
+          for msix in "${msix_files[@]}"; do
+            copy_single_asset "$msix" "$(basename "$msix")"
+          done
+
+      - name: Generate Tauri updater manifest (latest.json)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Only generate if signing was active (sig files present).
+          sig_count=$(find "$RELEASE_RAW_DIR" -name '*.sig' | wc -l)
+          if [[ "$sig_count" -eq 0 ]]; then
+            echo "INFO: No .sig files found — skipping latest.json generation (updater key not configured)."
+            exit 0
+          fi
+
+          pub_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          base_url="https://github.com/edonahue/Discogs_Spinner/releases/download/${RELEASE_TAG}"
+
+          read_sig() {
+            local f="$1"
+            if [[ -f "$f" ]]; then
+              cat "$f"
+            else
+              echo ""
+            fi
+          }
+
+          # Locate signed artifacts
+          appimage_file="$(find "$RELEASE_RAW_DIR" -name '*.AppImage' ! -name '*.sig' | sort | head -1 || true)"
+          appimage_sig="$(find "$RELEASE_RAW_DIR" -name '*.AppImage.sig' | sort | head -1 || true)"
+          dmg_arm_file="$(find "$RELEASE_RAW_DIR" -name '*aarch64.dmg' ! -name '*.sig' | sort | head -1 || true)"
+          dmg_arm_sig="$(find "$RELEASE_RAW_DIR" -name '*aarch64.dmg.sig' | sort | head -1 || true)"
+          dmg_x64_file="$(find "$RELEASE_RAW_DIR" -name '*x64.dmg' ! -name '*.sig' | sort | head -1 || true)"
+          dmg_x64_sig="$(find "$RELEASE_RAW_DIR" -name '*x64.dmg.sig' | sort | head -1 || true)"
+          nsis_file="$(find "$RELEASE_RAW_DIR" -name '*setup.exe' ! -name '*.sig' | sort | head -1 || true)"
+          nsis_sig="$(find "$RELEASE_RAW_DIR" -name '*setup.exe.sig' | sort | head -1 || true)"
+
+          build_platform_entry() {
+            local url="$1" sig_file="$2"
+            if [[ -z "$sig_file" || ! -f "$sig_file" ]]; then return; fi
+            local sig; sig="$(cat "$sig_file")"
+            printf '{"url":"%s","signature":"%s"}' "$url" "$sig"
+          }
+
+          platforms="{}"
+
+          if [[ -n "$appimage_file" && -n "$appimage_sig" ]]; then
+            fname="$(basename "$appimage_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$appimage_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['linux-x86_64']=${entry}; print(json.dumps(d))")"
+          fi
+          if [[ -n "$dmg_arm_file" && -n "$dmg_arm_sig" ]]; then
+            fname="$(basename "$dmg_arm_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$dmg_arm_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['darwin-aarch64']=${entry}; print(json.dumps(d))")"
+          fi
+          if [[ -n "$dmg_x64_file" && -n "$dmg_x64_sig" ]]; then
+            fname="$(basename "$dmg_x64_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$dmg_x64_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['darwin-x86_64']=${entry}; print(json.dumps(d))")"
+          fi
+          if [[ -n "$nsis_file" && -n "$nsis_sig" ]]; then
+            fname="$(basename "$nsis_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$nsis_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['windows-x86_64']=${entry}; print(json.dumps(d))")"
+          fi
+
+          python3 - <<PYEOF
+          import json
+          platforms = json.loads('''$platforms''')
+          manifest = {
+              "version": "${RELEASE_TAG}",
+              "notes": "See https://github.com/edonahue/Discogs_Spinner/releases/tag/${RELEASE_TAG}",
+              "pub_date": "${pub_date}",
+              "platforms": platforms,
+          }
+          with open("$RELEASE_PUBLISH_DIR/latest.json", "w") as f:
+              json.dump(manifest, f, indent=2)
+          print("INFO: latest.json written with platforms:", list(platforms.keys()))
+          PYEOF
 
       - name: Validate release asset inventory
         shell: bash
@@ -473,6 +648,7 @@ jobs:
           ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.AppImage >/dev/null
+          ls "$RELEASE_PUBLISH_DIR"/*.msix >/dev/null
 
       - name: Generate SHA256 checksums
         shell: bash
@@ -550,5 +726,6 @@ jobs:
           grep -F ".dmg" <<<"$asset_names"
           grep -F ".msi" <<<"$asset_names"
           grep -F ".exe" <<<"$asset_names"
+          grep -F ".msix" <<<"$asset_names"
           grep -Fx "CHECKSUMS-INSTALLERS.txt" <<<"$asset_names"
           grep -Fx "INSTALLER-MANIFEST.txt" <<<"$asset_names"

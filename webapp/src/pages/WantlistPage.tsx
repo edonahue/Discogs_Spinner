@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchWantlist, Release, SyncSummary, syncWantlist } from "../api";
+import { fetchWantlist, Release, SyncSummary, syncWantlist, spinWantlist } from "../api";
 import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
 import { usePageVisible } from "../hooks/usePageVisible";
 
@@ -57,6 +57,9 @@ export function WantlistPage() {
   const [syncMessage, setSyncMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [pendingFocusValidation, setPendingFocusValidation] = useState(false);
+  const [spinning, setSpinning] = useState(false);
+  const [spinError, setSpinError] = useState("");
+  const [spinAnimating, setSpinAnimating] = useState(false);
   const pageVisible = usePageVisible();
   const focusedReleaseId = parseFocusId(searchParams.get("focus"));
 
@@ -148,6 +151,30 @@ export function WantlistPage() {
     setSearchParams(next, { replace: true });
   }
 
+  function handleSpin() {
+    setSpinning(true);
+    setSpinError("");
+    spinWantlist({
+      q: debouncedQuery || undefined,
+      year: debouncedYear || undefined,
+      genre: debouncedGenre || undefined,
+    })
+      .then((payload) => {
+        const id = payload.data?.discogs_release_id;
+        if (id) {
+          setFocus(id);
+          setSpinAnimating(true);
+          setTimeout(() => setSpinAnimating(false), 800);
+        }
+      })
+      .catch((err: unknown) => {
+        setSpinError(err instanceof Error ? err.message : "Spin failed.");
+      })
+      .finally(() => {
+        setSpinning(false);
+      });
+  }
+
   function handleSyncWantlist() {
     setSyncState("syncing");
     setSyncMessage("");
@@ -173,9 +200,6 @@ export function WantlistPage() {
       <header className="app-page__header">
         <div>
           <h1 className="app-page__title">Wantlist</h1>
-          <p className="app-page__subtitle">
-            Keep the browsing view readable at narrower sizes and use the focused detail panel for richer wantlist context without leaving the page.
-          </p>
         </div>
       </header>
 
@@ -184,6 +208,7 @@ export function WantlistPage() {
           releaseId={focusedReleaseId}
           scope="wantlist"
           onClear={clearFocus}
+          spinAnimating={spinAnimating}
         />
       ) : null}
 
@@ -241,6 +266,14 @@ export function WantlistPage() {
           </button>
           <button
             type="button"
+            className="app-button app-button--primary"
+            onClick={handleSpin}
+            disabled={spinning}
+          >
+            {spinning ? <><span className="app-spinner" />Spinning…</> : "Spin"}
+          </button>
+          <button
+            type="button"
             className="app-button"
             onClick={handleSyncWantlist}
             disabled={syncState === "syncing"}
@@ -255,6 +288,7 @@ export function WantlistPage() {
           {syncMessage}
         </p>
       ) : null}
+      {spinError ? <p className="app-message app-message--error">{spinError}</p> : null}
       {error ? <p className="app-message app-message--error">{error}</p> : null}
       {loading && entries.length === 0 ? <p className="app-message app-message--subtle">Loading wantlist…</p> : null}
       {!loading && !error && entries.length === 0 ? <p className="app-message app-message--subtle">No wantlist entries found.</p> : null}

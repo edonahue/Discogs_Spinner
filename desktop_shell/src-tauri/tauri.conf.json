@@ -23,6 +23,14 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "untrusted comment: minisign public key: 3B35710D89882D5D\nRWRdLYiJDXE1O7epikxqHaGFYHentreO/zrqUS0s2s83RELwXEEpPwzR\n",
+      "endpoints": [
+        "https://github.com/edonahue/Discogs_Spinner/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": ["deb", "appimage", "msi", "nsis", "dmg"],
