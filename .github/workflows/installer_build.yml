@@ -376,6 +376,7 @@ jobs:
     name: MSIX (Microsoft Store)
     needs: build-tauri
     runs-on: windows-2022
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -711,7 +712,12 @@ jobs:
           ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.AppImage >/dev/null
-          ls "$RELEASE_PUBLISH_DIR"/*.msix >/dev/null
+          # .msix is optional — build-msix is non-blocking (continue-on-error)
+          if ls "$RELEASE_PUBLISH_DIR"/*.msix >/dev/null 2>&1; then
+            echo "INFO: .msix present"
+          else
+            echo "INFO: .msix not present (MSIX build pending Partner Center setup)"
+          fi
 
       - name: Generate SHA256 checksums
         shell: bash
@@ -789,6 +795,7 @@ jobs:
           grep -F ".dmg" <<<"$asset_names"
           grep -F ".msi" <<<"$asset_names"
           grep -F ".exe" <<<"$asset_names"
-          grep -F ".msix" <<<"$asset_names"
+          # .msix is optional — omitted when MSIX build is pending Partner Center setup
+          grep -F ".msix" <<<"$asset_names" || echo "INFO: .msix not published (Partner Center setup pending)"
           grep -Fx "CHECKSUMS-INSTALLERS.txt" <<<"$asset_names"
           grep -Fx "INSTALLER-MANIFEST.txt" <<<"$asset_names"
