@@ -2,13 +2,17 @@
 <!--
   MSIX Package Manifest for Discogs Spinner
   ==========================================
-  Before submitting to the Microsoft Store, replace the PLACEHOLDER values:
+  Before submitting to the Microsoft Store, update the Identity and Publisher
+  values below with the ones assigned by Partner Center:
 
   1. Identity/@Name        — assigned by Partner Center during app reservation
-                             e.g. "ErichDonahue.SpinnerforDiscogs"
   2. Identity/@Publisher   — your Partner Center Publisher CN string
                              e.g. "CN=Erich Donahue, O=Erich Donahue, L=Portland, S=Oregon, C=US"
   3. Properties/PublisherDisplayName — your display name as entered in Partner Center
+
+  The current values are syntactically valid stand-ins so CI can build and
+  test the packaging pipeline before the app is reserved in Partner Center.
+  Replace them once you have your real Partner Center Identity/Name and Publisher CN.
 
   The Microsoft Store signs the MSIX at submission time; no Windows EV cert is
   required when distributing exclusively through the Store.
@@ -24,8 +28,8 @@
   IgnorableNamespaces="mp uap uap3 rescap">
 
   <Identity
-    Name="PLACEHOLDER_PARTNER_CENTER_PACKAGE_NAME"
-    Publisher="PLACEHOLDER_PARTNER_CENTER_PUBLISHER_CN"
+    Name="ErichDonahue.SpinnerforDiscogs"
+    Publisher="CN=ErichDonahue"
     Version="0.2.2.0"
     ProcessorArchitecture="x64" />
 
@@ -35,7 +39,7 @@
 
   <Properties>
     <DisplayName>Spinner for Discogs</DisplayName>
-    <PublisherDisplayName>PLACEHOLDER_PUBLISHER_DISPLAY_NAME</PublisherDisplayName>
+    <PublisherDisplayName>Erich Donahue</PublisherDisplayName>
     <Logo>assets\StoreLogo.png</Logo>
   </Properties>
 
