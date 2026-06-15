@@ -189,12 +189,51 @@ jobs:
           fi
           python3 "${args[@]}"
 
+      # -- Configure optional platform code-signing --
+      # Only export cert env vars when the secret is actually non-empty. Passing
+      # them as empty strings makes Tauri's bundler treat them as "present" (since
+      # std::env::var returns Ok("")), which makes it attempt `security import` on
+      # empty data and fail. Truly-absent vars let Tauri skip signing cleanly and
+      # produce unsigned bundles (acceptable until Apple/Windows certs are added).
+      - name: Configure optional code-signing env
+        shell: bash
+        env:
+          SECRET_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          SECRET_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          SECRET_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          SECRET_APPLE_ID: ${{ secrets.APPLE_ID }}
+          SECRET_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          SECRET_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          SECRET_WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          SECRET_WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          export_if_set() {
+            local name="$1"
+            local value="$2"
+            if [[ -n "$value" ]]; then
+              {
+                echo "${name}<<__SIGN_EOF__"
+                echo "$value"
+                echo "__SIGN_EOF__"
+              } >> "$GITHUB_ENV"
+              echo "INFO: ${name} configured for signing"
+            else
+              echo "INFO: ${name} not set — skipping (unsigned)"
+            fi
+          }
+          export_if_set APPLE_CERTIFICATE "${SECRET_APPLE_CERTIFICATE:-}"
+          export_if_set APPLE_CERTIFICATE_PASSWORD "${SECRET_APPLE_CERTIFICATE_PASSWORD:-}"
+          export_if_set APPLE_SIGNING_IDENTITY "${SECRET_APPLE_SIGNING_IDENTITY:-}"
+          export_if_set APPLE_ID "${SECRET_APPLE_ID:-}"
+          export_if_set APPLE_TEAM_ID "${SECRET_APPLE_TEAM_ID:-}"
+          export_if_set APPLE_APP_SPECIFIC_PASSWORD "${SECRET_APPLE_APP_SPECIFIC_PASSWORD:-}"
+          export_if_set WINDOWS_CERTIFICATE "${SECRET_WINDOWS_CERTIFICATE:-}"
+          export_if_set WINDOWS_CERTIFICATE_PASSWORD "${SECRET_WINDOWS_CERTIFICATE_PASSWORD:-}"
+
       # -- macOS: import signing certificate into keychain before build --
       - name: Import Apple signing certificate (macOS)
         if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
         run: |
           echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
           security create-keychain -p "ci-keychain" build.keychain
@@ -217,18 +256,13 @@ jobs:
       - name: Build Tauri installers
         working-directory: desktop_shell/src-tauri
         env:
+          # Updater signing (minisign) — independent of Apple/Windows codesign.
+          # These are configured and drive the .sig files used by latest.json.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
-          # macOS code signing (Apple Developer Program) — empty until certs are provisioned
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '' }}
-          APPLE_ID: ${{ secrets.APPLE_ID || '' }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '' }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
-          # Windows code signing — empty until cert is provisioned
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE || '' }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD || '' }}
+          # Apple/Windows code-signing vars are injected via $GITHUB_ENV by the
+          # "Configure optional code-signing env" step ONLY when their secrets are
+          # set, so they stay truly absent (not empty) here when no cert exists.
         run: cargo tauri build --target ${{ matrix.target_triple }} --bundles ${{ matrix.tauri_targets }}
 
       - name: Validate Linux Tauri bundles
