@@ -329,10 +329,26 @@ jobs:
           $stageDir = "dist/windows-app-stage"
           New-Item -Force -ItemType Directory $stageDir | Out-Null
 
-          $appExe = Join-Path $relDir "Discogs Spinner.exe"
-          if (-not (Test-Path $appExe)) { Write-Error "Main app binary not found: $appExe"; exit 1 }
-          Copy-Item $appExe $stageDir
-          Write-Host "Staged: Discogs Spinner.exe"
+          # Cargo names the binary after the package ("discogs-spinner.exe");
+          # the manifest expects the productName ("Discogs Spinner.exe"), so rename.
+          $cargoExe = Join-Path $relDir "discogs-spinner.exe"
+          if (-not (Test-Path $cargoExe)) {
+            Write-Host "EXEs in release dir:"
+            Get-ChildItem $relDir -Filter "*.exe" -File | Select-Object Name
+            Write-Error "Main app binary not found: $cargoExe"; exit 1
+          }
+          Copy-Item $cargoExe (Join-Path $stageDir "Discogs Spinner.exe")
+          Write-Host "Staged: discogs-spinner.exe -> Discogs Spinner.exe"
+
+          # Sidecar: strip the target-triple suffix that Tauri adds to source binaries.
+          # At runtime the app looks for "dplayer-api.exe" in its own directory.
+          $sidecarSrc = "desktop_shell/src-tauri/binaries/dplayer-api-${{ matrix.target_triple }}.exe"
+          if (Test-Path $sidecarSrc) {
+            Copy-Item $sidecarSrc (Join-Path $stageDir "dplayer-api.exe")
+            Write-Host "Staged: dplayer-api.exe (sidecar)"
+          } else {
+            Write-Error "Sidecar not found: $sidecarSrc"; exit 1
+          }
 
           Get-ChildItem $relDir -Filter "*.dll" -File | ForEach-Object {
             Copy-Item $_.FullName $stageDir
