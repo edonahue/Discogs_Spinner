@@ -260,7 +260,9 @@ jobs:
           name: installer-linux-${{ matrix.target_triple }}
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/deb/*.deb
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/deb/*.deb.sig
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/appimage/*.AppImage
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/appimage/*.AppImage.sig
           if-no-files-found: error
 
       - name: Upload Tauri installers (macOS)
@@ -270,6 +272,7 @@ jobs:
           name: installer-macos-${{ matrix.target_triple }}
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/dmg/*.dmg
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/dmg/*.dmg.sig
           if-no-files-found: error
 
       - name: Upload Tauri installers (Windows)
@@ -279,7 +282,9 @@ jobs:
           name: installer-windows-${{ matrix.target_triple }}
           path: |
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/msi/*.msi.sig
             desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe
+            desktop_shell/src-tauri/target/${{ matrix.target_triple }}/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -461,6 +466,84 @@ jobs:
           for exe in "${exes[@]}"; do
             copy_single_asset "$exe" "$(basename "$exe")"
           done
+
+      - name: Generate Tauri updater manifest (latest.json)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Only generate if signing was active (sig files present).
+          sig_count=$(find "$RELEASE_RAW_DIR" -name '*.sig' | wc -l)
+          if [[ "$sig_count" -eq 0 ]]; then
+            echo "INFO: No .sig files found — skipping latest.json generation (updater key not configured)."
+            exit 0
+          fi
+
+          pub_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          base_url="https://github.com/edonahue/Discogs_Spinner/releases/download/${RELEASE_TAG}"
+
+          read_sig() {
+            local f="$1"
+            if [[ -f "$f" ]]; then
+              cat "$f"
+            else
+              echo ""
+            fi
+          }
+
+          # Locate signed artifacts
+          appimage_file="$(find "$RELEASE_RAW_DIR" -name '*.AppImage' ! -name '*.sig' | sort | head -1 || true)"
+          appimage_sig="$(find "$RELEASE_RAW_DIR" -name '*.AppImage.sig' | sort | head -1 || true)"
+          dmg_arm_file="$(find "$RELEASE_RAW_DIR" -name '*aarch64.dmg' ! -name '*.sig' | sort | head -1 || true)"
+          dmg_arm_sig="$(find "$RELEASE_RAW_DIR" -name '*aarch64.dmg.sig' | sort | head -1 || true)"
+          dmg_x64_file="$(find "$RELEASE_RAW_DIR" -name '*x64.dmg' ! -name '*.sig' | sort | head -1 || true)"
+          dmg_x64_sig="$(find "$RELEASE_RAW_DIR" -name '*x64.dmg.sig' | sort | head -1 || true)"
+          nsis_file="$(find "$RELEASE_RAW_DIR" -name '*setup.exe' ! -name '*.sig' | sort | head -1 || true)"
+          nsis_sig="$(find "$RELEASE_RAW_DIR" -name '*setup.exe.sig' | sort | head -1 || true)"
+
+          build_platform_entry() {
+            local url="$1" sig_file="$2"
+            if [[ -z "$sig_file" || ! -f "$sig_file" ]]; then return; fi
+            local sig; sig="$(cat "$sig_file")"
+            printf '{"url":"%s","signature":"%s"}' "$url" "$sig"
+          }
+
+          platforms="{}"
+
+          if [[ -n "$appimage_file" && -n "$appimage_sig" ]]; then
+            fname="$(basename "$appimage_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$appimage_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['linux-x86_64']=${entry}; print(json.dumps(d))")"
+          fi
+          if [[ -n "$dmg_arm_file" && -n "$dmg_arm_sig" ]]; then
+            fname="$(basename "$dmg_arm_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$dmg_arm_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['darwin-aarch64']=${entry}; print(json.dumps(d))")"
+          fi
+          if [[ -n "$dmg_x64_file" && -n "$dmg_x64_sig" ]]; then
+            fname="$(basename "$dmg_x64_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$dmg_x64_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['darwin-x86_64']=${entry}; print(json.dumps(d))")"
+          fi
+          if [[ -n "$nsis_file" && -n "$nsis_sig" ]]; then
+            fname="$(basename "$nsis_file")"
+            entry="$(build_platform_entry "${base_url}/${fname}" "$nsis_sig")"
+            platforms="$(printf '%s' "$platforms" | python3 -c "import json,sys; d=json.load(sys.stdin); d['windows-x86_64']=${entry}; print(json.dumps(d))")"
+          fi
+
+          python3 - <<PYEOF
+          import json
+          platforms = json.loads('''$platforms''')
+          manifest = {
+              "version": "${RELEASE_TAG}",
+              "notes": "See https://github.com/edonahue/Discogs_Spinner/releases/tag/${RELEASE_TAG}",
+              "pub_date": "${pub_date}",
+              "platforms": platforms,
+          }
+          with open("$RELEASE_PUBLISH_DIR/latest.json", "w") as f:
+              json.dump(manifest, f, indent=2)
+          print("INFO: latest.json written with platforms:", list(platforms.keys()))
+          PYEOF
 
       - name: Validate release asset inventory
         shell: bash

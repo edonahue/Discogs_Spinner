@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { getJson, ProviderReadinessContract } from "./api";
+
+const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+async function checkTauriUpdate(): Promise<string | null> {
+  if (!isTauri) return null;
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const version = await invoke<string | null>("check_update");
+    return version ?? null;
+  } catch {
+    return null;
+  }
+}
 import { Nav } from "./components/Nav";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CollectionPage } from "./pages/CollectionPage";
@@ -15,6 +28,39 @@ type SetupPayload = {
   onboarding_stage: string;
   provider_readiness?: ProviderReadinessContract;
 };
+
+function UpdateBanner() {
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    checkTauriUpdate().then(setUpdateVersion);
+  }, []);
+
+  if (!updateVersion || dismissed) return null;
+
+  return (
+    <div className="app-update-banner">
+      <span>Version {updateVersion} is available.</span>
+      <a
+        href="https://github.com/edonahue/Discogs_Spinner/releases/latest"
+        target="_blank"
+        rel="noreferrer"
+        className="app-link"
+      >
+        Download
+      </a>
+      <button
+        type="button"
+        className="app-button app-button--ghost app-update-banner__dismiss"
+        onClick={() => setDismissed(true)}
+        aria-label="Dismiss update notification"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 function AppRoutes() {
   const navigate = useNavigate();
@@ -68,6 +114,7 @@ function AppRoutes() {
   return (
     <div className="app-shell">
       {showNav ? <Nav /> : null}
+      <UpdateBanner />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/setup" element={<SetupPage />} />
