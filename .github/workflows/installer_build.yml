@@ -403,7 +403,7 @@ jobs:
 
           # Update manifest version to match app version (x.y.z.0 format)
           $manifest = Get-Content packaging/msix/Package.appxmanifest -Raw
-          $manifest = $manifest -replace 'Version="[^"]*"', "Version=`"$env:APP_VERSION.0`""
+          $manifest = $manifest -creplace 'Version="[^"]*"', "Version=`"$env:APP_VERSION.0`""
           $manifest | Set-Content "$pkgDir\AppxManifest.xml"
 
           # Copy tile assets
