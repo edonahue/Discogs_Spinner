@@ -12,6 +12,7 @@ type Props = {
   scope: FocusScope;
   onClear: () => void;
   onOpenTracklist?: (release: ReleaseDetail) => void;
+  spinAnimating?: boolean;
 };
 
 function formatCurrency(value: number | null | undefined, currency: string | null | undefined): string {
@@ -55,7 +56,7 @@ function discogsReleaseUrl(releaseId: number): string {
   return `https://www.discogs.com/release/${releaseId}`;
 }
 
-export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist }: Props) {
+export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist, spinAnimating }: Props) {
   const [release, setRelease] = useState<ReleaseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,7 +96,7 @@ export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist 
   const scopeLabel = scope === "wantlist" ? "Focused Wantlist Detail" : "Focused Collection Detail";
 
   return (
-    <section className="app-surface app-focus-card" aria-live="polite">
+    <section className={`app-surface app-focus-card${spinAnimating ? " app-focus-card--spin-result" : ""}`} aria-live="polite">
       <p className="app-focus-card__eyebrow">{scopeLabel}</p>
       {loading ? <p className="app-message app-message--subtle">Loading release #{releaseId}…</p> : null}
       {error ? <p className="app-message app-message--error">{error}</p> : null}

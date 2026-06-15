@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react";
 import { CollectionAnalytics, fetchAnalytics } from "../api";
 
-const thStyle: React.CSSProperties = {
-  padding: "0.4rem 0.75rem 0.4rem 0",
-  textAlign: "left",
-};
-const tdStyle: React.CSSProperties = {
-  padding: "0.35rem 0.75rem 0.35rem 0",
-};
-const tdRight: React.CSSProperties = { ...tdStyle, textAlign: "right", paddingRight: 0 };
-
 function RankTable({
   title,
   rows,
@@ -29,17 +20,17 @@ function RankTable({
           <table className="app-table app-table--compact responsive-stack app-rank-table">
           <thead>
             <tr>
-              <th style={thStyle}>Rank</th>
-              <th style={thStyle}>Name</th>
-              <th style={{ ...thStyle, textAlign: "right", paddingRight: 0 }}>Releases</th>
+              <th>Rank</th>
+              <th>Name</th>
+              <th className="is-right">Releases</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => (
               <tr key={String(row[labelKey])}>
-                <td data-label="Rank" style={{ ...tdStyle, color: "#aaa", width: "2rem" }}>{i + 1}</td>
-                <td data-label="Name" style={tdStyle}>{String(row[labelKey])}</td>
-                <td data-label="Releases" style={tdRight}>{row.count}</td>
+                <td data-label="Rank" style={{ color: "#aaa", width: "2rem" }}>{i + 1}</td>
+                <td data-label="Name">{String(row[labelKey])}</td>
+                <td data-label="Releases" className="is-right">{row.count}</td>
               </tr>
             ))}
           </tbody>
@@ -67,15 +58,15 @@ function YearTable({
           <table className="app-table app-table--compact responsive-stack app-rank-table">
           <thead>
             <tr>
-              <th style={thStyle}>Year</th>
-              <th style={{ ...thStyle, textAlign: "right", paddingRight: 0 }}>Releases</th>
+              <th>Year</th>
+              <th className="is-right">Releases</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.year}>
-                <td data-label="Year" style={tdStyle}>{row.year}</td>
-                <td data-label="Releases" style={tdRight}>{row.count}</td>
+                <td data-label="Year">{row.year}</td>
+                <td data-label="Releases" className="is-right">{row.count}</td>
               </tr>
             ))}
           </tbody>
@@ -107,9 +98,6 @@ export function AnalyticsPage() {
       <header className="app-page__header">
         <div>
           <h1 className="app-page__title">Collection Analytics</h1>
-          <p className="app-page__subtitle">
-            Analytics stays aggregate-only, but the dense ranking tables now stack cleanly instead of clipping at smaller desktop widths.
-          </p>
         </div>
       </header>
 

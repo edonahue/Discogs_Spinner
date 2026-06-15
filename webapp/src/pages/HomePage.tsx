@@ -127,7 +127,7 @@ export function HomePage() {
         <div>
           <h1 className="app-page__title">Discogs Spinner</h1>
           <p className="app-page__subtitle">
-            Desktop collection control without browser tab sprawl. This shell now reflows more predictably when the window narrows.
+            Your records, your market. Browse your collection, spin something to play, and keep wantlist and value context close.
           </p>
         </div>
       </header>
@@ -228,7 +228,7 @@ export function HomePage() {
       ) : null}
       {insights ? (
         <section className="app-surface app-card" style={{ marginTop: "1.25rem" }}>
-          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Tonight's Collector Insights</h2>
+          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Collector Insights</h2>
           <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
             Health {insights.summary.health_score}/100 · Hidden gems {insights.summary.hidden_gems_count} · Value queue {insights.summary.refresh_queue_count}
           </p>

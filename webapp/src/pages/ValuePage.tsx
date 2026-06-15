@@ -33,6 +33,7 @@ export function ValuePage() {
   const [gemsError, setGemsError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState("");
+  const [refreshError, setRefreshError] = useState(false);
   const pageVisible = usePageVisible();
 
   function loadDashboard(signal?: AbortSignal) {
@@ -78,9 +79,11 @@ export function ValuePage() {
   function handleRefresh() {
     setRefreshing(true);
     setRefreshMsg("");
+    setRefreshError(false);
     postJson<unknown>("/value/refresh", { from_missing: false, limit: 50, stale_days: 7 })
       .then(() => {
         setRefreshMsg("Refresh started. Reloading data…");
+        setRefreshError(false);
         setTimeout(() => {
           setRefreshMsg("");
           if (document.hidden) return;
@@ -89,6 +92,7 @@ export function ValuePage() {
       })
       .catch((err: unknown) => {
         setRefreshMsg(err instanceof Error ? err.message : "Refresh failed.");
+        setRefreshError(true);
       })
       .finally(() => setRefreshing(false));
   }
@@ -120,7 +124,7 @@ export function ValuePage() {
       </header>
 
       {refreshMsg ? (
-        <p className={`app-message ${refreshMsg.toLowerCase().includes("fail") ? "app-message--error" : "app-message--success"}`}>
+        <p className={`app-message ${refreshError ? "app-message--error" : "app-message--success"}`}>
           {refreshMsg}
         </p>
       ) : null}

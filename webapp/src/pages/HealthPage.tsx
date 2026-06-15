@@ -26,9 +26,6 @@ export function HealthPage() {
       <header className="app-page__header">
         <div>
           <h1 className="app-page__title">Collection Health</h1>
-          <p className="app-page__subtitle">
-            Health remains summary-only, but the page now reflows cleanly at smaller desktop widths instead of forcing clipped table columns.
-          </p>
         </div>
       </header>
 

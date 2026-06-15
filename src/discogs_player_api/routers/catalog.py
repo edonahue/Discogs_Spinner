@@ -12,6 +12,8 @@ from discogs_player.use_cases.release_collection_summary import (
 )
 from discogs_player.use_cases.list_releases import run_list_releases
 from discogs_player.use_cases.list_wantlist import run_list_wantlist
+from discogs_player.use_cases.spin_release import run_spin_release
+from discogs_player.use_cases.spin_wantlist import run_spin_wantlist
 from discogs_player.use_cases.tracklist_show import run_release_tracklist_show
 from discogs_player_api.runtime import run_use_case
 
@@ -87,6 +89,47 @@ def api_get_tracklist(
 ) -> dict[str, object]:
     return run_use_case(
         lambda: run_release_tracklist_show(discogs_release_id, refresh=False)
+    )
+
+
+@router.post("/releases/{discogs_release_id}/tracklist/refresh")
+def api_refresh_tracklist(discogs_release_id: int) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_release_tracklist_show(discogs_release_id, refresh=True)
+    )
+
+
+@router.post("/releases/spin")
+def api_spin_collection(
+    q: str | None = None,
+    year: str | None = None,
+    genre: str | None = None,
+    unmatched: bool = False,
+) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_spin_release(
+            q=q,
+            year=year,
+            genres=[genre] if genre else None,
+            unmatched=unmatched,
+        )
+    )
+
+
+@router.post("/wantlist/spin")
+def api_spin_wantlist(
+    q: str | None = None,
+    year: str | None = None,
+    genre: str | None = None,
+    unmatched: bool = False,
+) -> dict[str, object]:
+    return run_use_case(
+        lambda: run_spin_wantlist(
+            q=q,
+            year=year,
+            genres=[genre] if genre else None,
+            unmatched=unmatched,
+        )
     )
 
 
