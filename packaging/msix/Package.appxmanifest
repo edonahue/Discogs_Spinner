@@ -64,7 +64,6 @@
         Square44x44Logo="assets\Square44x44Logo.png">
         <uap:DefaultTile
           Square71x71Logo="assets\Square71x71Logo.png"
-          Square310x310Logo="assets\Square310x310Logo.png"
           ShortName="Discogs Spinner" />
       </uap:VisualElements>
     </Application>
