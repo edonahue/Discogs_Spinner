@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
 
 from discogs_player.data.db import get_connection
 
@@ -28,7 +27,7 @@ def _load_dotenv_if_available() -> None:
         load_dotenv(dotenv_path=repo_env, override=False)
 
 
-def get_discogs_token(conn=None) -> Optional[str]:
+def get_discogs_token(conn=None) -> str | None:
     _load_dotenv_if_available()
     env_value = str(os.environ.get(DISCOGS_TOKEN_ENV) or "").strip()
     if env_value:
@@ -45,7 +44,7 @@ def discogs_token_missing_message() -> str:
     return DISCOGS_TOKEN_MISSING_MESSAGE
 
 
-def get_setting(key: str, default: Optional[str] = None, conn=None) -> Optional[str]:
+def get_setting(key: str, default: str | None = None, conn=None) -> str | None:
     owns_conn = conn is None
     if owns_conn:
         conn = get_connection()
@@ -62,7 +61,7 @@ def get_setting(key: str, default: Optional[str] = None, conn=None) -> Optional[
             conn.close()
 
 
-def set_setting(key: str, value: Optional[str], conn=None) -> None:
+def set_setting(key: str, value: str | None, conn=None) -> None:
     owns_conn = conn is None
     if owns_conn:
         conn = get_connection()

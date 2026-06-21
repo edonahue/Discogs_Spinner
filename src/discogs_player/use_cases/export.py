@@ -11,6 +11,8 @@ import io
 from pathlib import Path
 from typing import cast
 
+from discogs_player.use_cases._coerce import to_float as _to_float
+from discogs_player.use_cases._coerce import to_int as _to_int
 from discogs_player.use_cases.collection_analytics import run_collection_analytics
 from discogs_player.use_cases.value_status import run_market_value_status
 
@@ -31,38 +33,6 @@ def _as_rows(value: object) -> list[dict[str, object]]:
         if isinstance(item, dict):
             rows.append(cast(dict[str, object], item))
     return rows
-
-
-def _to_int(value: object, *, default: int = 0) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if text:
-            try:
-                return int(text)
-            except ValueError:
-                return default
-    return default
-
-
-def _to_float(value: object, *, default: float = 0.0) -> float:
-    if isinstance(value, bool):
-        return float(int(value))
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if text:
-            try:
-                return float(text)
-            except ValueError:
-                return default
-    return default
 
 
 # ---------------------------------------------------------------------------

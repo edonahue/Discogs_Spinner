@@ -20,6 +20,9 @@ from discogs_player.ui.utils.formatting import (
 from discogs_player.ui.widgets.hidden_gems_card import HiddenGemsCard
 from discogs_player.ui.widgets.value_dashboard import ValueDashboard
 
+from discogs_player.ui.utils.coerce import as_int as _as_int
+from discogs_player.ui.utils.coerce import as_str as _as_str
+
 _WORKSPACE_STACK_BREAKPOINT = 920
 
 
@@ -29,30 +32,6 @@ def _clear_box_children(box: Gtk.Box) -> None:
         next_child = child.get_next_sibling()
         box.remove(child)
         child = next_child
-
-
-def _as_str(value: object | None) -> str:
-    if value is None:
-        return ""
-    return str(value).strip()
-
-
-def _as_int(value: object | None) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return 0
-        try:
-            return int(text)
-        except ValueError:
-            return 0
-    return 0
 
 
 def _source_label(source: object | None) -> str:

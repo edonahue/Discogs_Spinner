@@ -382,12 +382,12 @@ def ensure_cover_path_for_gtk(
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import threading
-from typing import Dict
+
 
 # Global executor for image operations
 _image_executor: ThreadPoolExecutor | None = None
 _image_executor_lock = threading.Lock()
-_pending_requests: Dict[str, asyncio.Future] = {}
+_pending_requests: dict[str, asyncio.Future] = {}
 
 def get_image_executor() -> ThreadPoolExecutor:
     global _image_executor

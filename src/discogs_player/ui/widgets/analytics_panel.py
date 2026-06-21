@@ -9,19 +9,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-
-def _as_str(value: object | None, fallback: str = "—") -> str:
-    if value is None:
-        return fallback
-    return str(value).strip() or fallback
-
-
-def _as_int(value: object | None) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, (int, float)):
-        return int(value)
-    return 0
+from discogs_player.ui.utils.coerce import as_int as _as_int
+from discogs_player.ui.utils.coerce import as_str as _as_str
 
 
 class AnalyticsPanelWidget(Gtk.Box):
@@ -210,7 +199,7 @@ class AnalyticsPanelWidget(Gtk.Box):
             rank_lbl.set_size_request(18, -1)
             row_box.append(rank_lbl)
 
-            name_lbl = Gtk.Label(label=_as_str(row.get(label_key)))
+            name_lbl = Gtk.Label(label=_as_str(row.get(label_key), "—"))
             name_lbl.set_xalign(0.0)
             name_lbl.set_hexpand(True)
             name_lbl.set_ellipsize(3)
@@ -254,7 +243,7 @@ class AnalyticsPanelWidget(Gtk.Box):
             row_box.set_margin_top(2)
             row_box.set_margin_bottom(2)
 
-            year_lbl = Gtk.Label(label=_as_str(row.get("year")))
+            year_lbl = Gtk.Label(label=_as_str(row.get("year"), "—"))
             year_lbl.set_xalign(0.0)
             year_lbl.set_hexpand(True)
             row_box.append(year_lbl)

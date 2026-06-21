@@ -3,41 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { fetchWantlist, Release, SyncSummary, syncWantlist, spinWantlist } from "../api";
 import { FocusedReleaseCard } from "../components/FocusedReleaseCard";
 import { usePageVisible } from "../hooks/usePageVisible";
+import { formatSyncSummary, parseFocusId, PILL_STYLE as pillStyle, SortKey, sortReleases } from "../utils/helpers";
 
 const PAGE_SIZE = 25;
 
-type SortKey = "artist_asc" | "artist_desc" | "title_asc" | "year_desc" | "year_asc" | "value_desc";
 type SyncState = "idle" | "syncing" | "done" | "error";
-
-function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
-  return [...releases].sort((a, b) => {
-    switch (sortKey) {
-      case "artist_asc": return a.artist.localeCompare(b.artist);
-      case "artist_desc": return b.artist.localeCompare(a.artist);
-      case "title_asc": return a.title.localeCompare(b.title);
-      case "year_desc": return (Number(b.year) || 0) - (Number(a.year) || 0);
-      case "year_asc": return (Number(a.year) || 0) - (Number(b.year) || 0);
-      case "value_desc": return (b.value?.price_median ?? 0) - (a.value?.price_median ?? 0);
-    }
-  });
-}
-
-const pillStyle: React.CSSProperties = {
-  display: "inline-flex",
-};
-
-function parseFocusId(raw: string | null): number | null {
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
-function formatSyncSummary(summary: SyncSummary): string {
-  return (
-    `Wantlist sync complete: fetched ${summary.fetched_count}, `
-    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
-  );
-}
 
 export function WantlistPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -185,7 +155,7 @@ export function WantlistPage() {
           throw new Error("Wantlist sync completed without a summary.");
         }
         setSyncState("done");
-        setSyncMessage(formatSyncSummary(summary));
+        setSyncMessage(formatSyncSummary(summary, "Wantlist"));
         setPendingFocusValidation(true);
         setReloadToken((value) => value + 1);
       })

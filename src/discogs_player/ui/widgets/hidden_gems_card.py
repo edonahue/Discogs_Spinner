@@ -14,52 +14,10 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
+from discogs_player.ui.utils.coerce import as_optional_float as _as_float
+from discogs_player.ui.utils.coerce import as_optional_int as _as_int
+from discogs_player.ui.utils.coerce import as_str as _as_str
 from discogs_player.ui.utils.formatting import format_price
-
-
-def _as_int(value: object | None) -> int | None:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            return int(text)
-        except ValueError:
-            return None
-    try:
-        if value is None:
-            return None
-        return int(str(value).strip())
-    except (TypeError, ValueError):
-        return None
-
-
-def _as_float(value: object | None) -> float | None:
-    try:
-        if value is None:
-            return None
-        if isinstance(value, (int, float)):
-            return float(value)
-        if isinstance(value, str):
-            text = value.strip()
-            if not text:
-                return None
-            return float(text)
-        return float(str(value).strip())
-    except (TypeError, ValueError):
-        return None
-
-
-def _as_str(value: object | None) -> str:
-    if value is None:
-        return ""
-    return str(value).strip()
 
 
 def _reasons_label(reasons: object | None) -> str:
