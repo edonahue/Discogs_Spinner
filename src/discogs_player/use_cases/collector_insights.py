@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from discogs_player.use_cases._coerce import to_int as _to_int
 from discogs_player.use_cases.collection_health import run_collection_health
 from discogs_player.use_cases.hidden_gems import run_hidden_gems
 from discogs_player.use_cases.setup_report import run_setup_report
@@ -19,17 +20,6 @@ def _as_list(value: object) -> list[object]:
     if isinstance(value, list):
         return value
     return []
-
-
-def _to_int(value: object, *, default: int = 0) -> int:
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float | str | bytes | bytearray):
-        try:
-            return int(value)
-        except ValueError:
-            return default
-    return default
 
 
 def run_collector_insights(

@@ -9,53 +9,11 @@ from __future__ import annotations
 
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import query_hidden_gems
+from discogs_player.use_cases._coerce import to_optional_float as _as_float
+from discogs_player.use_cases._coerce import to_optional_int as _as_int
 
 _DEFAULT_MIN_MEDIAN = 25.0
 _DEFAULT_LIMIT = 25
-
-
-def _as_float(value: object) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            return float(text)
-        except ValueError:
-            return None
-    try:
-        return float(str(value).strip())
-    except (TypeError, ValueError):
-        return None
-
-
-def _as_int(value: object) -> int | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            return int(text)
-        except ValueError:
-            return None
-    try:
-        return int(str(value).strip())
-    except (TypeError, ValueError):
-        return None
 
 
 def _scarcity(num_for_sale: int | None) -> float:
