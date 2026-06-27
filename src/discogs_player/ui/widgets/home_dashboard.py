@@ -154,8 +154,12 @@ class HomeDashboardWidget(Gtk.Box):
 
         # Highlights
         self._clear_box(self._highlights_box)
-        highlights_raw = data.get("highlights") or []
-        highlights = [h for h in highlights_raw if isinstance(h, dict)]
+        highlights_raw = data.get("highlights")
+        highlights = (
+            [h for h in highlights_raw if isinstance(h, dict)]
+            if isinstance(highlights_raw, list)
+            else []
+        )
         if highlights:
             for h in highlights[:5]:
                 row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
@@ -173,8 +177,12 @@ class HomeDashboardWidget(Gtk.Box):
 
         # Hidden gems
         self._clear_box(self._gems_box)
-        gems_raw = data.get("top_hidden_gems") or []
-        gems = [g for g in gems_raw if isinstance(g, dict)]
+        gems_raw = data.get("top_hidden_gems")
+        gems = (
+            [g for g in gems_raw if isinstance(g, dict)]
+            if isinstance(gems_raw, list)
+            else []
+        )
         if gems:
             for gem in gems:
                 row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)

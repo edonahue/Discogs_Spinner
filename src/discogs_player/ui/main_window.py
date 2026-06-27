@@ -1930,7 +1930,8 @@ class MainWindow(Gtk.ApplicationWindow):
     def _on_recent_releases_success(self, data: dict[str, object]) -> None:
         self._recent_releases_loaded = True
         self._recent_releases_widget.set_releases(data)
-        count = len(data.get("releases") or [])
+        releases = data.get("releases")
+        count = len(releases) if isinstance(releases, list) else 0
         self._set_status(f"Showing {count} recently added release{'s' if count != 1 else ''}.")
 
     def _on_recent_releases_error(self, message: str) -> None:

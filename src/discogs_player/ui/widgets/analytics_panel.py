@@ -150,7 +150,7 @@ class AnalyticsPanelWidget(Gtk.Box):
         ]
         col = 0
         for title, rows_raw, label_key in rank_tables:
-            rows = [r for r in rows_raw if isinstance(r, dict)]
+            rows = [r for r in rows_raw if isinstance(r, dict)] if isinstance(rows_raw, list) else []
             widget = self._build_rank_table(title, rows, label_key)
             self._tables_grid.attach(widget, col % 2, col // 2, 1, 1)
             col += 1
@@ -167,7 +167,7 @@ class AnalyticsPanelWidget(Gtk.Box):
             ("Acquisition Timeline", data.get("acquisition_timeline") or []),
         ]
         for title, rows_raw in year_tables:
-            rows = [r for r in rows_raw if isinstance(r, dict)]
+            rows = [r for r in rows_raw if isinstance(r, dict)] if isinstance(rows_raw, list) else []
             widget = self._build_year_table(title, rows)
             widget.set_hexpand(True)
             self._year_box.append(widget)

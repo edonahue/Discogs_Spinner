@@ -108,8 +108,12 @@ class RecentReleasesWidget(Gtk.Box):
         self._clear_list()
         self._status_label.set_visible(False)
 
-        releases_raw = data.get("releases") or []
-        releases = [r for r in releases_raw if isinstance(r, dict)]
+        releases_raw = data.get("releases")
+        releases = (
+            [r for r in releases_raw if isinstance(r, dict)]
+            if isinstance(releases_raw, list)
+            else []
+        )
 
         if not releases:
             self._status_label.set_text("No releases added in this period.")
