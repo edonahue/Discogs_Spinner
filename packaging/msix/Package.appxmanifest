@@ -31,6 +31,9 @@
     Publisher="CN=ErichDonahue"
     Version="0.2.2.0"
     ProcessorArchitecture="x64" />
+  <!-- TODO(partner-center): replace Identity/@Name and Identity/@Publisher above with the
+       values assigned during app reservation, and PublisherDisplayName below if it differs.
+       See docs/STORE_SUBMISSIONS.md → "Channel 5: Microsoft Store". -->
 
   <mp:PhoneIdentity
     PhoneProductId="00000000-0000-0000-0000-000000000000"
