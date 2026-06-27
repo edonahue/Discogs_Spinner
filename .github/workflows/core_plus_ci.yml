@@ -10,6 +10,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
 
 jobs:
   prepublish-hygiene:
@@ -48,6 +49,38 @@ jobs:
 
       - name: Mypy
         run: mypy src
+
+  webapp-lint:
+    name: Webapp Lint and Type Check
+    needs:
+      - prepublish-hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install webapp deps
+        working-directory: webapp
+        run: npm ci
+
+      - name: ESLint
+        working-directory: webapp
+        run: npm run lint
+
+      - name: Type check
+        working-directory: webapp
+        run: npm run typecheck
+
+      - name: Prettier check
+        working-directory: webapp
+        run: npm run format:check
 
   test-core:
     name: Test Core Profile

@@ -30,8 +30,8 @@ type SyncState = "idle" | "syncing" | "done" | "error";
 
 function formatSyncSummary(label: "Collection" | "Wantlist", summary: SyncSummary): string {
   return (
-    `${label} sync complete: fetched ${summary.fetched_count}, `
-    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
+    `${label} sync complete: fetched ${summary.fetched_count}, ` +
+    `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
   );
 }
 
@@ -79,8 +79,12 @@ export function HomePage() {
         setStatus(statusPayload.data);
         setInsights(insightsPayload.data);
       })
-      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Unknown API error."); });
-    return () => { cancelled = true; };
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Unknown API error.");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function handleSyncCollection() {
@@ -127,12 +131,15 @@ export function HomePage() {
         <div>
           <h1 className="app-page__title">Discogs Spinner</h1>
           <p className="app-page__subtitle">
-            Your records, your market. Browse your collection, spin something to play, and keep wantlist and value context close.
+            Your records, your market. Browse your collection, spin something to play, and keep
+            wantlist and value context close.
           </p>
         </div>
       </header>
       {error ? <p className="app-message app-message--error">{error}</p> : null}
-      {!error && !status ? <p className="app-message app-message--subtle">Loading status…</p> : null}
+      {!error && !status ? (
+        <p className="app-message app-message--subtle">Loading status…</p>
+      ) : null}
       {status ? (
         <section className="app-stat-grid">
           <article className="app-surface app-stat-card">
@@ -165,7 +172,9 @@ export function HomePage() {
                 {status.spotify_capability.action_label}
               </p>
               <p className="app-stat-card__meta">
-                {status.spotify_capability.addon_available ? "Addon installed" : "Addon unavailable"}
+                {status.spotify_capability.addon_available
+                  ? "Addon installed"
+                  : "Addon unavailable"}
               </p>
             </article>
           ) : null}
@@ -185,13 +194,19 @@ export function HomePage() {
       ) : null}
       {status?.provider_readiness ? (
         <section className="app-surface app-card" style={{ marginTop: "1.25rem" }}>
-          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Setup Guidance</h2>
+          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>
+            Setup Guidance
+          </h2>
           {!status.provider_readiness.summary.required_services_configured ? (
             <div style={{ marginBottom: "1rem" }}>
               <p className="app-message app-message--error" style={{ marginBottom: "0.75rem" }}>
                 Discogs setup is required before you can browse your collection.
               </p>
-              <Link to="/setup" className="app-button app-button--primary" style={{ display: "inline-block" }}>
+              <Link
+                to="/setup"
+                className="app-button app-button--primary"
+                style={{ display: "inline-block" }}
+              >
                 Go to Setup
               </Link>
             </div>
@@ -208,7 +223,8 @@ export function HomePage() {
           <ul className="app-list">
             {status.provider_readiness.providers.map((provider) => (
               <li key={provider.provider_id}>
-                <strong>{provider.display_name}</strong>: {provider.readiness} — {provider.status_message}
+                <strong>{provider.display_name}</strong>: {provider.readiness} —{" "}
+                {provider.status_message}
               </li>
             ))}
           </ul>
@@ -228,9 +244,13 @@ export function HomePage() {
       ) : null}
       {insights ? (
         <section className="app-surface app-card" style={{ marginTop: "1.25rem" }}>
-          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>Collector Insights</h2>
+          <h2 className="app-stack-label" style={{ marginBottom: "0.5rem" }}>
+            Collector Insights
+          </h2>
           <p className="app-message app-message--subtle" style={{ marginBottom: "0.75rem" }}>
-            Health {insights.summary.health_score}/100 · Hidden gems {insights.summary.hidden_gems_count} · Value queue {insights.summary.refresh_queue_count}
+            Health {insights.summary.health_score}/100 · Hidden gems{" "}
+            {insights.summary.hidden_gems_count} · Value queue{" "}
+            {insights.summary.refresh_queue_count}
           </p>
           {insights.highlights.length > 0 ? (
             <ul className="app-list">
@@ -241,7 +261,9 @@ export function HomePage() {
               ))}
             </ul>
           ) : (
-            <p className="app-message app-message--subtle">No urgent insights right now. Try a fresh sync or value refresh.</p>
+            <p className="app-message app-message--subtle">
+              No urgent insights right now. Try a fresh sync or value refresh.
+            </p>
           )}
           {insights.daily_use_actions.length > 0 ? (
             <>
@@ -277,12 +299,16 @@ export function HomePage() {
         </button>
       </div>
       {collectionMsg ? (
-        <p className={`app-message ${collectionSync === "error" ? "app-message--error" : "app-message--success"}`}>
+        <p
+          className={`app-message ${collectionSync === "error" ? "app-message--error" : "app-message--success"}`}
+        >
           {collectionMsg}
         </p>
       ) : null}
       {wantlistMsg ? (
-        <p className={`app-message ${wantlistSync === "error" ? "app-message--error" : "app-message--success"}`}>
+        <p
+          className={`app-message ${wantlistSync === "error" ? "app-message--error" : "app-message--success"}`}
+        >
           {wantlistMsg}
         </p>
       ) : null}

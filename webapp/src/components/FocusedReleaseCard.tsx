@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  fetchReleaseDetail,
-  fetchWantlistDetail,
-  ReleaseDetail,
-} from "../api";
+import { fetchReleaseDetail, fetchWantlistDetail, ReleaseDetail } from "../api";
 
 type FocusScope = "collection" | "wantlist";
 
@@ -15,7 +11,10 @@ type Props = {
   spinAnimating?: boolean;
 };
 
-function formatCurrency(value: number | null | undefined, currency: string | null | undefined): string {
+function formatCurrency(
+  value: number | null | undefined,
+  currency: string | null | undefined,
+): string {
   if (value == null) return "Not priced";
   const normalizedCurrency = (currency || "USD").trim() || "USD";
   try {
@@ -56,7 +55,13 @@ function discogsReleaseUrl(releaseId: number): string {
   return `https://www.discogs.com/release/${releaseId}`;
 }
 
-export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist, spinAnimating }: Props) {
+export function FocusedReleaseCard({
+  releaseId,
+  scope,
+  onClear,
+  onOpenTracklist,
+  spinAnimating,
+}: Props) {
   const [release, setRelease] = useState<ReleaseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,9 +71,10 @@ export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist,
     setLoading(true);
     setError("");
 
-    const request = scope === "wantlist"
-      ? fetchWantlistDetail(releaseId, { withValue: true })
-      : fetchReleaseDetail(releaseId, { withValue: true });
+    const request =
+      scope === "wantlist"
+        ? fetchWantlistDetail(releaseId, { withValue: true })
+        : fetchReleaseDetail(releaseId, { withValue: true });
 
     request
       .then((payload) => {
@@ -96,9 +102,14 @@ export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist,
   const scopeLabel = scope === "wantlist" ? "Focused Wantlist Detail" : "Focused Collection Detail";
 
   return (
-    <section className={`app-surface app-focus-card${spinAnimating ? " app-focus-card--spin-result" : ""}`} aria-live="polite">
+    <section
+      className={`app-surface app-focus-card${spinAnimating ? " app-focus-card--spin-result" : ""}`}
+      aria-live="polite"
+    >
       <p className="app-focus-card__eyebrow">{scopeLabel}</p>
-      {loading ? <p className="app-message app-message--subtle">Loading release #{releaseId}…</p> : null}
+      {loading ? (
+        <p className="app-message app-message--subtle">Loading release #{releaseId}…</p>
+      ) : null}
       {error ? <p className="app-message app-message--error">{error}</p> : null}
       {!loading && !error && release ? (
         <div className="app-card-stack">
@@ -116,7 +127,9 @@ export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist,
           {release.genres.length > 0 || release.styles.length > 0 ? (
             <div className="app-tag-list">
               {[...release.genres, ...release.styles].slice(0, 6).map((tag) => (
-                <span key={tag} className="app-tag">{tag}</span>
+                <span key={tag} className="app-tag">
+                  {tag}
+                </span>
               ))}
             </div>
           ) : null}
@@ -138,9 +151,7 @@ export function FocusedReleaseCard({ releaseId, scope, onClear, onOpenTracklist,
             </div>
           </div>
 
-          {release.notes ? (
-            <p className="app-focus-card__note">{release.notes}</p>
-          ) : null}
+          {release.notes ? <p className="app-focus-card__note">{release.notes}</p> : null}
 
           <div className="app-card-actions">
             {onOpenTracklist ? (

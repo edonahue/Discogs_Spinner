@@ -17,7 +17,9 @@ export function HealthPage() {
     setError("");
     fetchCollectionHealth()
       .then((payload) => setHealth(payload.data))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load health data."))
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : "Failed to load health data."),
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -30,7 +32,9 @@ export function HealthPage() {
       </header>
 
       {error ? <p className="app-message app-message--error">{error}</p> : null}
-      {loading ? <p className="app-message app-message--subtle">Loading collection health…</p> : null}
+      {loading ? (
+        <p className="app-message app-message--subtle">Loading collection health…</p>
+      ) : null}
 
       {!loading && !error && health !== null ? (
         <>
@@ -38,7 +42,9 @@ export function HealthPage() {
             <p className="app-stat-card__label">Health score</p>
             <p className="app-stat-card__value" style={{ color: scoreColor(health.score) }}>
               {health.score}
-              <span style={{ fontSize: "1rem", color: "var(--muted)", marginLeft: "0.35rem" }}>/100</span>
+              <span style={{ fontSize: "1rem", color: "var(--muted)", marginLeft: "0.35rem" }}>
+                /100
+              </span>
             </p>
             <p className="app-stat-card__meta">{health.total_active} releases</p>
           </section>
@@ -58,8 +64,12 @@ export function HealthPage() {
                   {health.buckets.map((bucket) => (
                     <tr key={bucket.name}>
                       <td data-label="Label">{bucket.label}</td>
-                      <td data-label="Gap" className="is-right">{bucket.gap_count}</td>
-                      <td data-label="Percent" className="is-right">{bucket.gap_pct.toFixed(1)}%</td>
+                      <td data-label="Gap" className="is-right">
+                        {bucket.gap_count}
+                      </td>
+                      <td data-label="Percent" className="is-right">
+                        {bucket.gap_pct.toFixed(1)}%
+                      </td>
                       <td
                         data-label="Deduction"
                         className="is-right"

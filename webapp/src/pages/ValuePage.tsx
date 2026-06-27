@@ -105,7 +105,8 @@ export function ValuePage() {
         <div>
           <h1 className="app-page__title">Collection Value</h1>
           <p className="app-page__subtitle">
-            Review price leaders and refresh candidates, then jump back into the collection with the target release focused.
+            Review price leaders and refresh candidates, then jump back into the collection with the
+            target release focused.
           </p>
         </div>
         <div className="app-inline-actions">
@@ -124,13 +125,17 @@ export function ValuePage() {
       </header>
 
       {refreshMsg ? (
-        <p className={`app-message ${refreshError ? "app-message--error" : "app-message--success"}`}>
+        <p
+          className={`app-message ${refreshError ? "app-message--error" : "app-message--success"}`}
+        >
           {refreshMsg}
         </p>
       ) : null}
 
       {error ? <p className="app-message app-message--error">{error}</p> : null}
-      {loading ? <p className="app-message app-message--subtle">Loading market value dashboard…</p> : null}
+      {loading ? (
+        <p className="app-message app-message--subtle">Loading market value dashboard…</p>
+      ) : null}
 
       {!loading && !error && !hasData ? (
         <p className="app-message app-message--subtle">Run a value refresh to see market prices.</p>
@@ -156,11 +161,18 @@ export function ValuePage() {
                   <tr key={release.discogs_release_id}>
                     <td data-label="Artist">{release.artist}</td>
                     <td data-label="Title">{release.title}</td>
-                    <td data-label="Median" className="is-right">{formatCurrency(release.price_median, release.currency)}</td>
-                    <td data-label="High" className="is-right">{formatCurrency(release.price_high, release.currency)}</td>
+                    <td data-label="Median" className="is-right">
+                      {formatCurrency(release.price_median, release.currency)}
+                    </td>
+                    <td data-label="High" className="is-right">
+                      {formatCurrency(release.price_high, release.currency)}
+                    </td>
                     <td data-label="Currency">{release.currency}</td>
                     <td data-label="Action">
-                      <Link className="app-link-button app-link-button--ghost" to={`/collection?focus=${release.discogs_release_id}`}>
+                      <Link
+                        className="app-link-button app-link-button--ghost"
+                        to={`/collection?focus=${release.discogs_release_id}`}
+                      >
                         View in Collection
                       </Link>
                     </td>
@@ -178,7 +190,8 @@ export function ValuePage() {
             <div>
               <h2 className="app-page__section-title">Hidden Gems</h2>
               <p className="app-page__subtitle">
-                Owned releases that are quietly valuable AND hard to find on the Discogs marketplace right now.
+                Owned releases that are quietly valuable AND hard to find on the Discogs marketplace
+                right now.
               </p>
             </div>
           </div>
@@ -246,9 +259,15 @@ export function ValuePage() {
         {queue !== null && queue.total_candidates > 0 ? (
           <>
             <div className="app-inline-summary" style={{ marginBottom: "1rem" }}>
-              <span className="app-muted">Missing <strong>{queue.missing_count}</strong></span>
-              <span className="app-muted">Unpriced <strong>{queue.unpriced_count}</strong></span>
-              <span className="app-muted">Stale (&gt;{queue.stale_days}d) <strong>{queue.stale_count}</strong></span>
+              <span className="app-muted">
+                Missing <strong>{queue.missing_count}</strong>
+              </span>
+              <span className="app-muted">
+                Unpriced <strong>{queue.unpriced_count}</strong>
+              </span>
+              <span className="app-muted">
+                Stale (&gt;{queue.stale_days}d) <strong>{queue.stale_count}</strong>
+              </span>
             </div>
             <div className="app-table-wrap">
               <table className="app-table app-table--compact responsive-stack">
@@ -267,9 +286,14 @@ export function ValuePage() {
                       <td data-label="Artist">{item.artist}</td>
                       <td data-label="Title">{item.title}</td>
                       <td data-label="Reason">{item.market_need_reason}</td>
-                      <td data-label="Median" className="is-right">{item.market_median != null ? item.market_median.toFixed(2) : "—"}</td>
+                      <td data-label="Median" className="is-right">
+                        {item.market_median != null ? item.market_median.toFixed(2) : "—"}
+                      </td>
                       <td data-label="Action">
-                        <Link className="app-link-button app-link-button--ghost" to={`/collection?focus=${item.discogs_release_id}`}>
+                        <Link
+                          className="app-link-button app-link-button--ghost"
+                          to={`/collection?focus=${item.discogs_release_id}`}
+                        >
                           View in Collection
                         </Link>
                       </td>

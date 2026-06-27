@@ -107,8 +107,8 @@ export async function getJson<T>(
     method: "GET",
     signal: options.signal,
     headers: {
-      "Accept": "application/json"
-    }
+      Accept: "application/json",
+    },
   });
   const payload = (await response.json()) as ApiEnvelope<T>;
   if (!response.ok || !payload.ok) {
@@ -127,7 +127,7 @@ export async function postJson<T>(
     method: "POST",
     signal: options.signal,
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
@@ -329,10 +329,13 @@ export interface CollectionHealth {
   buckets: HealthBucket[];
 }
 
-export function fetchValueQueue(params?: {
-  limit?: number;
-  stale_days?: number;
-}, options: RequestOptions = {}): Promise<ApiEnvelope<ValueRefreshQueue>> {
+export function fetchValueQueue(
+  params?: {
+    limit?: number;
+    stale_days?: number;
+  },
+  options: RequestOptions = {},
+): Promise<ApiEnvelope<ValueRefreshQueue>> {
   const qs = new URLSearchParams();
   if (params?.limit != null) qs.set("limit", String(params.limit));
   if (params?.stale_days != null) qs.set("stale_days", String(params.stale_days));
@@ -366,10 +369,13 @@ export interface HiddenGemsPayload {
   gems: HiddenGem[];
 }
 
-export function fetchHiddenGems(params?: {
-  min_median?: number;
-  limit?: number;
-}, options: RequestOptions = {}): Promise<ApiEnvelope<HiddenGemsPayload>> {
+export function fetchHiddenGems(
+  params?: {
+    min_median?: number;
+    limit?: number;
+  },
+  options: RequestOptions = {},
+): Promise<ApiEnvelope<HiddenGemsPayload>> {
   const qs = new URLSearchParams();
   if (params?.min_median != null) qs.set("min_median", String(params.min_median));
   if (params?.limit != null) qs.set("limit", String(params.limit));
@@ -400,9 +406,18 @@ export interface AnalyticsYearRow {
   year: number;
   count: number;
 }
-export interface AnalyticsGenreRow { genre: string; count: number; }
-export interface AnalyticsStyleRow { style: string; count: number; }
-export interface AnalyticsArtistRow { artist: string; count: number; }
+export interface AnalyticsGenreRow {
+  genre: string;
+  count: number;
+}
+export interface AnalyticsStyleRow {
+  style: string;
+  count: number;
+}
+export interface AnalyticsArtistRow {
+  artist: string;
+  count: number;
+}
 
 export interface CollectionAnalytics {
   release_count_active: number;
@@ -464,11 +479,14 @@ export interface CollectorInsightsPayload {
   top_hidden_gems: CollectorInsightGem[];
 }
 
-export function fetchCollectorInsights(params?: {
-  gems_limit?: number;
-  queue_limit?: number;
-  min_median?: number;
-}, options: RequestOptions = {}): Promise<ApiEnvelope<CollectorInsightsPayload>> {
+export function fetchCollectorInsights(
+  params?: {
+    gems_limit?: number;
+    queue_limit?: number;
+    min_median?: number;
+  },
+  options: RequestOptions = {},
+): Promise<ApiEnvelope<CollectorInsightsPayload>> {
   const qs = new URLSearchParams();
   if (params?.gems_limit != null) qs.set("gems_limit", String(params.gems_limit));
   if (params?.queue_limit != null) qs.set("queue_limit", String(params.queue_limit));
@@ -496,15 +514,11 @@ export interface TracklistPayload {
   tracklist_last_refreshed_at: string | null;
 }
 
-export function fetchTracklist(
-  releaseId: number,
-): Promise<ApiEnvelope<TracklistPayload>> {
+export function fetchTracklist(releaseId: number): Promise<ApiEnvelope<TracklistPayload>> {
   return getJson<TracklistPayload>(`/releases/${releaseId}/tracklist`);
 }
 
-export function refreshTracklist(
-  releaseId: number,
-): Promise<ApiEnvelope<TracklistPayload>> {
+export function refreshTracklist(releaseId: number): Promise<ApiEnvelope<TracklistPayload>> {
   return postJson<TracklistPayload>(`/releases/${releaseId}/tracklist/refresh`, {});
 }
 
@@ -520,9 +534,7 @@ export interface SpinParams {
   unmatched?: boolean;
 }
 
-export function spinCollection(
-  params: SpinParams,
-): Promise<ApiEnvelope<SpinResult>> {
+export function spinCollection(params: SpinParams): Promise<ApiEnvelope<SpinResult>> {
   const qs = new URLSearchParams();
   if (params.q) qs.set("q", params.q);
   if (params.year) qs.set("year", params.year);
@@ -532,9 +544,7 @@ export function spinCollection(
   return postJson<SpinResult>(`/releases/spin${suffix}`, {});
 }
 
-export function spinWantlist(
-  params: SpinParams,
-): Promise<ApiEnvelope<SpinResult>> {
+export function spinWantlist(params: SpinParams): Promise<ApiEnvelope<SpinResult>> {
   const qs = new URLSearchParams();
   if (params.q) qs.set("q", params.q);
   if (params.year) qs.set("year", params.year);

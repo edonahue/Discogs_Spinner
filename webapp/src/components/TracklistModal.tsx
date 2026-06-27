@@ -26,7 +26,7 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
         setHasCached(d?.has_cached_tracklist ?? false);
       })
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Failed to load tracklist.")
+        setError(err instanceof Error ? err.message : "Failed to load tracklist."),
       )
       .finally(() => setLoading(false));
   }
@@ -45,7 +45,7 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
         setHasCached(d?.has_cached_tracklist ?? false);
       })
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Failed to refresh tracklist.")
+        setError(err instanceof Error ? err.message : "Failed to refresh tracklist."),
       )
       .finally(() => setRefreshing(false));
   }
@@ -65,16 +65,14 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
   const audioTracks = tracks.filter((t) => t.type_ !== "heading");
 
   return (
-    <div
-      ref={backdropRef}
-      onClick={handleBackdropClick}
-      className="app-modal"
-    >
+    <div ref={backdropRef} onClick={handleBackdropClick} className="app-modal">
       <div className="app-modal__panel">
         <div className="app-modal__header">
           <div>
             <strong style={{ fontSize: "1.05rem" }}>{releaseArtist}</strong>
-            <div className="app-muted" style={{ marginTop: "0.1rem" }}>{releaseTitle}</div>
+            <div className="app-muted" style={{ marginTop: "0.1rem" }}>
+              {releaseTitle}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -89,7 +87,10 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
         {loading ? <p className="app-message app-message--subtle">Loading…</p> : null}
 
         {!loading && !error && !hasCached ? (
-          <div className="app-message app-message--subtle" style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div
+            className="app-message app-message--subtle"
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}
+          >
             <span>Tracklist not yet loaded.</span>
             <button
               type="button"
@@ -122,7 +123,9 @@ export function TracklistModal({ releaseId, releaseTitle, releaseArtist, onClose
                   <tr key={i}>
                     <td data-label="Track">{track.position || String(i + 1)}</td>
                     <td data-label="Title">{track.title}</td>
-                    <td data-label="Duration" className="is-right">{track.duration || "—"}</td>
+                    <td data-label="Duration" className="is-right">
+                      {track.duration || "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
