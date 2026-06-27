@@ -82,8 +82,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     try:
         import gi
-    except ModuleNotFoundError as exc:
-        module_name = exc.name or "gi"
+    except ImportError as exc:
+        # ModuleNotFoundError (gi absent) or a broken PyGObject install (e.g. a
+        # half-built _gi extension) both land here; show the install guidance
+        # instead of letting a raw traceback escape.
+        module_name = getattr(exc, "name", None) or "gi"
         print(_missing_gui_dependency_message(module_name), file=sys.stderr)
         return 1
 

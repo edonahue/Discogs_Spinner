@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import urllib.parse
 from collections.abc import Callable
 
@@ -9,6 +10,8 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk, Pango
+
+logger = logging.getLogger(__name__)
 
 
 from discogs_player.ui.utils.formatting import (
@@ -38,6 +41,7 @@ def _make_youtube_icon() -> Gtk.Image:
         loader.close()
         return Gtk.Image.new_from_pixbuf(loader.get_pixbuf())
     except Exception:
+        logger.debug("Could not render YouTube icon SVG; using blank image", exc_info=True)
         return Gtk.Image()
 
 

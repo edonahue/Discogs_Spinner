@@ -85,6 +85,34 @@ jobs:
       - name: Compile check
         run: python -m compileall -q src tests
 
+  test-full:
+    name: Test Full Suite
+    needs:
+      - prepublish-hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install full profile
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[dev,spotify]"
+
+      - name: Run full test suite
+        # The complete suite (vs. the curated fast subset above). GTK widget
+        # unit tests stub PyGObject, so no system GTK is needed here; the two
+        # GUI smoke-script tests detect the absent GTK runtime and skip.
+        run: python -m pytest -q tests/
+
+      - name: Compile check
+        run: python -m compileall -q src tests
+
   build-artifacts:
     name: Build Artifacts (${{ matrix.os }})
     needs:

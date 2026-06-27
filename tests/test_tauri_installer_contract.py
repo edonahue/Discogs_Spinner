@@ -243,7 +243,7 @@ def test_installer_workflow_runs_sidecar_and_platform_bundle_validators():
         "Checkout",
         "uses: actions/checkout@v4",
         "Validate release notes file",
-        'test -f "$RELEASE_NOTES_PATH"',
+        'if [[ ! -f "$RELEASE_NOTES_PATH" ]]; then',
         "Create or update GitHub Release metadata",
         'gh release edit "$RELEASE_TAG"',
         'gh release create "$RELEASE_TAG"',

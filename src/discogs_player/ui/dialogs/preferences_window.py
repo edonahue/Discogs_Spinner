@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
+import logging
 
 import gi
 
@@ -14,12 +15,14 @@ from discogs_player.capabilities import get_capabilities
 from discogs_player.core.settings import get_discogs_token
 from discogs_player.use_cases.config_management import run_config_set, run_config_unset
 
+logger = logging.getLogger(__name__)
+
 
 def _open_uri(uri: str) -> None:
     try:
         Gio.AppInfo.launch_default_for_uri(uri, None)
     except Exception:
-        pass
+        logger.warning("Could not open URI in default handler: %s", uri, exc_info=True)
 
 
 class PreferencesWindow(Adw.PreferencesWindow):
