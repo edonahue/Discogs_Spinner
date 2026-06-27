@@ -7,6 +7,31 @@ type SetupResponse = {
   discogs: { configured: boolean };
 };
 
+// Mirror the GTK setup wizard's auth-vs-network error differentiation so the
+// same failure reads the same way across the desktop and web surfaces.
+function describeSetupError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : "";
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("token")
+    || lower.includes("auth")
+    || lower.includes("401")
+    || lower.includes("unauthorized")
+  ) {
+    return "Token rejected — check your token at discogs.com/settings/developers.";
+  }
+  if (
+    lower.includes("network")
+    || lower.includes("connection")
+    || lower.includes("timeout")
+    || lower.includes("failed to fetch")
+    || lower.includes("fetch")
+  ) {
+    return "Network error — check your internet connection and try again.";
+  }
+  return raw || "Could not save token. Please try again.";
+}
+
 export function SetupPage() {
   const navigate = useNavigate();
   const [token, setToken] = useState("");
@@ -34,7 +59,7 @@ export function SetupPage() {
       await postJson<SetupResponse>("/setup", { discogs_token: token });
       navigate("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save token.");
+      setError(describeSetupError(err));
     } finally {
       setSaving(false);
     }

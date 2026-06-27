@@ -175,6 +175,14 @@ Flathub review typically takes 1-4 weeks.
   messages, a COSMIC dconf profile fallback, and missing IM/media module
   warnings. Treat these as polish debt unless a user-visible launch failure
   appears.
+- **Schema warnings mitigation (needs verification):** `snap/snapcraft.yaml` now
+  precompiles the staged GSettings schemas at prime time
+  (`glib-compile-schemas` in `override-prime`), which should remove the repeated
+  GLib schema symlink/compile messages. This has not yet been verified against a
+  real snap rebuild — confirm on the next build with
+  `snap run spinner-for-discogs` and check that the schema warnings are gone. The
+  remaining libproxy / COSMIC dconf / IM-module messages originate in the host
+  desktop environment and are not fixable from the package.
 
 ### Listing metadata
 
@@ -279,7 +287,8 @@ snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
 - Tune the first-time user experience so a fresh snap launch immediately explains
   the Discogs token requirement and next step.
 - Reduce harmless terminal warning noise from GTK/GIO/libproxy/schema setup where
-  practical.
+  practical. (GSettings schema precompile is now wired in `snapcraft.yaml`; verify
+  it on the next snap build and tackle any residual GTK/GIO noise from there.)
 - Add a featured banner sized for Snapcraft once the visual direction is stable.
 - Add a short hosted demo video after the first-run flow is polished.
 

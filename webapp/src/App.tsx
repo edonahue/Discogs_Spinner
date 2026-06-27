@@ -14,6 +14,7 @@ async function checkTauriUpdate(): Promise<string | null> {
     return null;
   }
 }
+import { Footer } from "./components/Footer";
 import { Nav } from "./components/Nav";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CollectionPage } from "./pages/CollectionPage";
@@ -126,6 +127,7 @@ function AppRoutes() {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Footer />
     </div>
   );
 }

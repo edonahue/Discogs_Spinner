@@ -926,6 +926,7 @@ _SPOTIFY_OAUTH_GUIDE_URL = (
     "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
 )
 _DISCOGS_TOKEN_URL = "https://www.discogs.com/settings/developers"
+_ISSUES_URL = "https://github.com/edonahue/Discogs_Spinner/issues"
 
 
 def _normalize_release_limit(value: object | None) -> int | None:
@@ -3179,6 +3180,14 @@ class MainWindow(Gtk.ApplicationWindow):
                 "",
                 label="Discogs token page",
                 fallback_url=_DISCOGS_TOKEN_URL,
+            ),
+        )
+        _add_action(
+            "Report a Problem",
+            lambda: self._open_project_doc(
+                "",
+                label="Issue tracker",
+                fallback_url=_ISSUES_URL,
             ),
         )
 
