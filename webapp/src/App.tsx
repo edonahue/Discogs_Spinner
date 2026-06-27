@@ -79,12 +79,13 @@ function AppRoutes() {
       return getJson<SetupPayload>("/setup")
         .then((payload) => {
           const readinessSummary = payload.data?.provider_readiness?.summary;
-          const onboardingStage = readinessSummary?.onboarding_state ?? payload.data?.onboarding_stage;
+          const onboardingStage =
+            readinessSummary?.onboarding_state ?? payload.data?.onboarding_stage;
           const requiredConfigured = readinessSummary?.required_services_configured;
           if (
-            onboardingStage === "needs_required_setup"
-            || onboardingStage === "needs_discogs_token"
-            || requiredConfigured === false
+            onboardingStage === "needs_required_setup" ||
+            onboardingStage === "needs_discogs_token" ||
+            requiredConfigured === false
           ) {
             navigate("/setup", { replace: true });
           }
@@ -92,14 +93,18 @@ function AppRoutes() {
         .catch(() => {
           if (attemptsLeft > 1) {
             return new Promise<void>((resolve) => {
-              setTimeout(() => { resolve(checkSetup(attemptsLeft - 1)); }, RETRY_DELAY_MS);
+              setTimeout(() => {
+                resolve(checkSetup(attemptsLeft - 1));
+              }, RETRY_DELAY_MS);
             });
           }
           // All retries exhausted — API unreachable; let routes render normally.
         });
     }
 
-    checkSetup(MAX_ATTEMPTS).finally(() => { setChecked(true); });
+    checkSetup(MAX_ATTEMPTS).finally(() => {
+      setChecked(true);
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!checked) {

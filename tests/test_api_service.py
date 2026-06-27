@@ -8,7 +8,7 @@ fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
 from discogs_player_api.app import create_app
-from discogs_player_api.routers import catalog, matching, status, sync
+from discogs_player_api.routers import catalog, matching, share, status, sync
 from discogs_player_api.routers import value as value_router
 
 # ---------------------------------------------------------------------------
@@ -500,3 +500,31 @@ def test_api_validation_errors_use_standard_error_envelope():
     assert body["ok"] is False
     assert body["error"]["code"] == "request_validation_failed"
     assert isinstance(body["error"]["details"], dict)
+
+
+# ---------------------------------------------------------------------------
+# Share (markdown) — returns raw text, not the JSON envelope
+# ---------------------------------------------------------------------------
+
+
+def test_api_share_collection_markdown_returns_raw_markdown(monkeypatch):
+    monkeypatch.setattr(share, "run_collection_analytics", lambda **_: {})
+    monkeypatch.setattr(share, "_analytics_to_markdown", lambda _report: "# Collection\n\nbody")
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/share/collection/markdown")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+    # Raw markdown, not wrapped in the {"ok": ..., "data": ...} envelope.
+    assert response.text == "# Collection\n\nbody"
+
+
+def test_api_share_value_markdown_returns_raw_markdown(monkeypatch):
+    monkeypatch.setattr(share, "run_market_value_status", lambda: {})
+    monkeypatch.setattr(share, "_value_to_markdown", lambda _summary: "# Value\n\nbody")
+
+    client = TestClient(create_app())
+    response = client.get("/api/v1/share/value/markdown")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+    assert response.text == "# Value\n\nbody"

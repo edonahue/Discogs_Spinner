@@ -12,12 +12,18 @@ type SyncState = "idle" | "syncing" | "done" | "error";
 function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
   return [...releases].sort((a, b) => {
     switch (sortKey) {
-      case "artist_asc": return a.artist.localeCompare(b.artist);
-      case "artist_desc": return b.artist.localeCompare(a.artist);
-      case "title_asc": return a.title.localeCompare(b.title);
-      case "year_desc": return (Number(b.year) || 0) - (Number(a.year) || 0);
-      case "year_asc": return (Number(a.year) || 0) - (Number(b.year) || 0);
-      case "value_desc": return (b.value?.price_median ?? 0) - (a.value?.price_median ?? 0);
+      case "artist_asc":
+        return a.artist.localeCompare(b.artist);
+      case "artist_desc":
+        return b.artist.localeCompare(a.artist);
+      case "title_asc":
+        return a.title.localeCompare(b.title);
+      case "year_desc":
+        return (Number(b.year) || 0) - (Number(a.year) || 0);
+      case "year_asc":
+        return (Number(a.year) || 0) - (Number(b.year) || 0);
+      case "value_desc":
+        return (b.value?.price_median ?? 0) - (a.value?.price_median ?? 0);
     }
   });
 }
@@ -34,8 +40,8 @@ function parseFocusId(raw: string | null): number | null {
 
 function formatSyncSummary(summary: SyncSummary): string {
   return (
-    `Wantlist sync complete: fetched ${summary.fetched_count}, `
-    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
+    `Wantlist sync complete: fetched ${summary.fetched_count}, ` +
+    `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
   );
 }
 
@@ -89,21 +95,24 @@ export function WantlistPage() {
     const shouldValidateFocus = pendingFocusValidation;
     setLoading(true);
     setError("");
-    fetchWantlist({
-      limit,
-      q: debouncedQuery || undefined,
-      year: debouncedYear || undefined,
-      genres: debouncedGenre ? [debouncedGenre] : undefined,
-      withValue: showValue || undefined,
-    }, { signal: controller.signal })
+    fetchWantlist(
+      {
+        limit,
+        q: debouncedQuery || undefined,
+        year: debouncedYear || undefined,
+        genres: debouncedGenre ? [debouncedGenre] : undefined,
+        withValue: showValue || undefined,
+      },
+      { signal: controller.signal },
+    )
       .then((payload) => {
         if (cancelled) return;
         const nextEntries = payload.data ?? [];
         setEntries(nextEntries);
         if (
-          shouldValidateFocus
-          && focusedReleaseId != null
-          && !nextEntries.some((entry) => entry.discogs_release_id === focusedReleaseId)
+          shouldValidateFocus &&
+          focusedReleaseId != null &&
+          !nextEntries.some((entry) => entry.discogs_release_id === focusedReleaseId)
         ) {
           clearFocus();
         }
@@ -244,7 +253,11 @@ export function WantlistPage() {
         </div>
         <div className="app-toolbar__group">
           <label className="app-checkbox">
-            <input type="checkbox" checked={showValue} onChange={(e) => setShowValue(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={showValue}
+              onChange={(e) => setShowValue(e.target.checked)}
+            />
             Show value
           </label>
           <div className="app-toolbar__field">
@@ -270,7 +283,14 @@ export function WantlistPage() {
             onClick={handleSpin}
             disabled={spinning}
           >
-            {spinning ? <><span className="app-spinner" />Spinning…</> : "Spin"}
+            {spinning ? (
+              <>
+                <span className="app-spinner" />
+                Spinning…
+              </>
+            ) : (
+              "Spin"
+            )}
           </button>
           <button
             type="button"
@@ -284,14 +304,20 @@ export function WantlistPage() {
       </section>
 
       {syncMessage ? (
-        <p className={`app-message ${syncState === "error" ? "app-message--error" : "app-message--success"}`}>
+        <p
+          className={`app-message ${syncState === "error" ? "app-message--error" : "app-message--success"}`}
+        >
           {syncMessage}
         </p>
       ) : null}
       {spinError ? <p className="app-message app-message--error">{spinError}</p> : null}
       {error ? <p className="app-message app-message--error">{error}</p> : null}
-      {loading && entries.length === 0 ? <p className="app-message app-message--subtle">Loading wantlist…</p> : null}
-      {!loading && !error && entries.length === 0 ? <p className="app-message app-message--subtle">No wantlist entries found.</p> : null}
+      {loading && entries.length === 0 ? (
+        <p className="app-message app-message--subtle">Loading wantlist…</p>
+      ) : null}
+      {!loading && !error && entries.length === 0 ? (
+        <p className="app-message app-message--subtle">No wantlist entries found.</p>
+      ) : null}
 
       <ul className="app-record-list">
         {sorted.map((entry) => {
@@ -324,7 +350,9 @@ export function WantlistPage() {
               {entry.genres.length > 0 || entry.styles.length > 0 ? (
                 <div className="app-tag-list" style={{ marginTop: "0.5rem" }}>
                   {[...entry.genres, ...entry.styles].slice(0, 3).map((tag) => (
-                    <span key={tag} className="app-tag" style={pillStyle}>{tag}</span>
+                    <span key={tag} className="app-tag" style={pillStyle}>
+                      {tag}
+                    </span>
                   ))}
                 </div>
               ) : null}

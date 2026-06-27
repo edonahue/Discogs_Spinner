@@ -21,12 +21,18 @@ type SyncState = "idle" | "syncing" | "done" | "error";
 function sortReleases(releases: Release[], sortKey: SortKey): Release[] {
   return [...releases].sort((a, b) => {
     switch (sortKey) {
-      case "artist_asc": return a.artist.localeCompare(b.artist);
-      case "artist_desc": return b.artist.localeCompare(a.artist);
-      case "title_asc": return a.title.localeCompare(b.title);
-      case "year_desc": return (Number(b.year) || 0) - (Number(a.year) || 0);
-      case "year_asc": return (Number(a.year) || 0) - (Number(b.year) || 0);
-      case "value_desc": return (b.value?.price_median ?? 0) - (a.value?.price_median ?? 0);
+      case "artist_asc":
+        return a.artist.localeCompare(b.artist);
+      case "artist_desc":
+        return b.artist.localeCompare(a.artist);
+      case "title_asc":
+        return a.title.localeCompare(b.title);
+      case "year_desc":
+        return (Number(b.year) || 0) - (Number(a.year) || 0);
+      case "year_asc":
+        return (Number(a.year) || 0) - (Number(b.year) || 0);
+      case "value_desc":
+        return (b.value?.price_median ?? 0) - (a.value?.price_median ?? 0);
     }
   });
 }
@@ -49,8 +55,8 @@ function parseFocusId(raw: string | null): number | null {
 
 function formatSyncSummary(summary: SyncSummary): string {
   return (
-    `Collection sync complete: fetched ${summary.fetched_count}, `
-    + `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
+    `Collection sync complete: fetched ${summary.fetched_count}, ` +
+    `upserted ${summary.upserted_count}, deactivated ${summary.deactivated_count}.`
   );
 }
 
@@ -143,22 +149,25 @@ export function CollectionPage() {
     const shouldValidateFocus = pendingFocusValidation;
     setLoading(true);
     setError("");
-    fetchReleases({
-      limit,
-      q: debouncedQuery || undefined,
-      year: debouncedYear || undefined,
-      genres: debouncedGenre ? [debouncedGenre] : undefined,
-      unmatched: unmatchedOnly || undefined,
-      withValue: showValue || undefined,
-    }, { signal: controller.signal })
+    fetchReleases(
+      {
+        limit,
+        q: debouncedQuery || undefined,
+        year: debouncedYear || undefined,
+        genres: debouncedGenre ? [debouncedGenre] : undefined,
+        unmatched: unmatchedOnly || undefined,
+        withValue: showValue || undefined,
+      },
+      { signal: controller.signal },
+    )
       .then((payload) => {
         if (cancelled) return;
         const nextReleases = payload.data ?? [];
         setReleases(nextReleases);
         if (
-          shouldValidateFocus
-          && focusedReleaseId != null
-          && !nextReleases.some((release) => release.discogs_release_id === focusedReleaseId)
+          shouldValidateFocus &&
+          focusedReleaseId != null &&
+          !nextReleases.some((release) => release.discogs_release_id === focusedReleaseId)
         ) {
           clearFocus();
         }
@@ -181,7 +190,16 @@ export function CollectionPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [debouncedQuery, debouncedYear, debouncedGenre, unmatchedOnly, showValue, limit, reloadToken, pageVisible]);
+  }, [
+    debouncedQuery,
+    debouncedYear,
+    debouncedGenre,
+    unmatchedOnly,
+    showValue,
+    limit,
+    reloadToken,
+    pageVisible,
+  ]);
 
   useEffect(() => {
     if (!pageVisible) return;
@@ -189,12 +207,15 @@ export function CollectionPage() {
     const controller = new AbortController();
     setSummaryLoading(true);
     setSummaryError("");
-    fetchReleaseSummary({
-      q: debouncedQuery || undefined,
-      year: debouncedYear || undefined,
-      genres: debouncedGenre ? [debouncedGenre] : undefined,
-      unmatched: unmatchedOnly || undefined,
-    }, { signal: controller.signal })
+    fetchReleaseSummary(
+      {
+        q: debouncedQuery || undefined,
+        year: debouncedYear || undefined,
+        genres: debouncedGenre ? [debouncedGenre] : undefined,
+        unmatched: unmatchedOnly || undefined,
+      },
+      { signal: controller.signal },
+    )
       .then((payload) => {
         if (cancelled) return;
         setSummary(payload.data ?? null);
@@ -202,9 +223,7 @@ export function CollectionPage() {
       .catch((err: unknown) => {
         if (cancelled) return;
         if (err instanceof Error && err.name === "AbortError") return;
-        setSummaryError(
-          err instanceof Error ? err.message : "Failed to load collection summary.",
-        );
+        setSummaryError(err instanceof Error ? err.message : "Failed to load collection summary.");
       })
       .finally(() => {
         if (!cancelled) setSummaryLoading(false);
@@ -398,11 +417,19 @@ export function CollectionPage() {
         </div>
         <div className="app-toolbar__group">
           <label className="app-checkbox">
-            <input type="checkbox" checked={unmatchedOnly} onChange={(e) => setUnmatchedOnly(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={unmatchedOnly}
+              onChange={(e) => setUnmatchedOnly(e.target.checked)}
+            />
             Unmatched only
           </label>
           <label className="app-checkbox">
-            <input type="checkbox" checked={showValue} onChange={(e) => setShowValue(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={showValue}
+              onChange={(e) => setShowValue(e.target.checked)}
+            />
             Show value
           </label>
           <div className="app-toolbar__field">
@@ -428,7 +455,14 @@ export function CollectionPage() {
             onClick={handleSpin}
             disabled={spinning}
           >
-            {spinning ? <><span className="app-spinner" />Spinning…</> : "Spin"}
+            {spinning ? (
+              <>
+                <span className="app-spinner" />
+                Spinning…
+              </>
+            ) : (
+              "Spin"
+            )}
           </button>
           <button
             type="button"
@@ -442,7 +476,9 @@ export function CollectionPage() {
       </section>
 
       {syncMessage ? (
-        <p className={`app-message ${syncState === "error" ? "app-message--error" : "app-message--success"}`}>
+        <p
+          className={`app-message ${syncState === "error" ? "app-message--error" : "app-message--success"}`}
+        >
           {syncMessage}
         </p>
       ) : null}
@@ -452,8 +488,12 @@ export function CollectionPage() {
       {summaryLoading ? (
         <p className="app-message app-message--subtle">Loading collection summary…</p>
       ) : null}
-      {loading && releases.length === 0 ? <p className="app-message app-message--subtle">Loading releases…</p> : null}
-      {!loading && !error && releases.length === 0 ? <p className="app-message app-message--subtle">No releases found.</p> : null}
+      {loading && releases.length === 0 ? (
+        <p className="app-message app-message--subtle">Loading releases…</p>
+      ) : null}
+      {!loading && !error && releases.length === 0 ? (
+        <p className="app-message app-message--subtle">No releases found.</p>
+      ) : null}
 
       <ul className="app-record-list">
         {sorted.map((release) => {
@@ -476,7 +516,9 @@ export function CollectionPage() {
               <div className="app-record__header">
                 <p className="app-record__title">
                   <strong>{release.artist}</strong> — {release.title}
-                  {release.year ? <span className="app-record__year"> ({release.year})</span> : null}
+                  {release.year ? (
+                    <span className="app-record__year"> ({release.year})</span>
+                  ) : null}
                 </p>
                 {showValue && release.value?.price_median != null ? (
                   <span className="app-record__price">
@@ -487,7 +529,9 @@ export function CollectionPage() {
               {release.genres.length > 0 || release.styles.length > 0 ? (
                 <div className="app-tag-list" style={{ marginTop: "0.5rem" }}>
                   {[...release.genres, ...release.styles].slice(0, 3).map((tag) => (
-                    <span key={tag} className="app-tag" style={pillStyle}>{tag}</span>
+                    <span key={tag} className="app-tag" style={pillStyle}>
+                      {tag}
+                    </span>
                   ))}
                 </div>
               ) : null}

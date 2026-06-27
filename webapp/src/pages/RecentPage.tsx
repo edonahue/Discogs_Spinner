@@ -44,7 +44,9 @@ export function RecentPage() {
           </p>
         </div>
         <div className="app-inline-actions">
-          <label className="app-stack-label" htmlFor="recent-days">Last</label>
+          <label className="app-stack-label" htmlFor="recent-days">
+            Last
+          </label>
           <select
             id="recent-days"
             className="app-select"
@@ -63,7 +65,9 @@ export function RecentPage() {
       {error ? <p className="app-message app-message--error">{error}</p> : null}
       {loading ? <p className="app-message app-message--subtle">Loading recent releases…</p> : null}
       {!loading && !error && releases.length === 0 ? (
-        <p className="app-message app-message--subtle">No releases added in the last {days} days.</p>
+        <p className="app-message app-message--subtle">
+          No releases added in the last {days} days.
+        </p>
       ) : null}
 
       <ul className="app-record-list">
@@ -72,11 +76,12 @@ export function RecentPage() {
             <div className="app-record__header">
               <p className="app-record__title">
                 <strong>{release.artist}</strong> — {release.title}
-                {release.year ? (
-                  <span className="app-record__year"> ({release.year})</span>
-                ) : null}
+                {release.year ? <span className="app-record__year"> ({release.year})</span> : null}
               </p>
-              <Link className="app-link-button app-link-button--ghost" to={`/collection?focus=${release.discogs_release_id}`}>
+              <Link
+                className="app-link-button app-link-button--ghost"
+                to={`/collection?focus=${release.discogs_release_id}`}
+              >
                 View in Collection
               </Link>
             </div>

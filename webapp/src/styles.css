@@ -56,7 +56,10 @@ button,
   color: var(--text);
   padding: 0.6rem 1rem;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease,
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
     transform 140ms ease;
 }
 
@@ -126,11 +129,7 @@ button:disabled,
   z-index: 10;
   padding: 1rem 1.25rem 0.8rem;
   backdrop-filter: blur(10px);
-  background: linear-gradient(
-    180deg,
-    rgba(244, 240, 232, 0.95),
-    rgba(244, 240, 232, 0.82)
-  );
+  background: linear-gradient(180deg, rgba(244, 240, 232, 0.95), rgba(244, 240, 232, 0.82));
   border-bottom: 1px solid rgba(88, 67, 39, 0.08);
 }
 
@@ -151,7 +150,10 @@ button:disabled,
   color: var(--muted);
   background: rgba(255, 255, 255, 0.42);
   border: 1px solid transparent;
-  transition: color 140ms ease, background 140ms ease, border-color 140ms ease,
+  transition:
+    color 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
     transform 140ms ease;
 }
 
@@ -381,7 +383,10 @@ button:disabled,
 
 .app-record--interactive {
   cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .app-record--interactive:hover {
@@ -440,9 +445,15 @@ button:disabled,
 }
 
 @keyframes spin-reveal {
-  0%   { box-shadow: 0 0 0 0 rgba(12, 93, 124, 0.45); }
-  60%  { box-shadow: 0 0 0 14px rgba(12, 93, 124, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(12, 93, 124, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(12, 93, 124, 0.45);
+  }
+  60% {
+    box-shadow: 0 0 0 14px rgba(12, 93, 124, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(12, 93, 124, 0);
+  }
 }
 
 .app-focus-card--spin-result {
@@ -450,7 +461,9 @@ button:disabled,
 }
 
 @keyframes spin-rotate {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .app-spinner {

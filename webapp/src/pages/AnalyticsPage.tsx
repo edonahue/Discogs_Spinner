@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { CollectionAnalytics, fetchAnalytics } from "../api";
 
-function RankTable({
+function RankTable<T extends { count: number }>({
   title,
   rows,
   labelKey,
 }: {
   title: string;
-  rows: { count: number; [key: string]: string | number }[];
-  labelKey: string;
+  rows: T[];
+  labelKey: keyof T & string;
 }) {
   return (
     <div style={{ marginBottom: "2rem" }}>
@@ -18,22 +18,26 @@ function RankTable({
       ) : (
         <div className="app-table-wrap">
           <table className="app-table app-table--compact responsive-stack app-rank-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th className="is-right">Releases</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={String(row[labelKey])}>
-                <td data-label="Rank" style={{ color: "#aaa", width: "2rem" }}>{i + 1}</td>
-                <td data-label="Name">{String(row[labelKey])}</td>
-                <td data-label="Releases" className="is-right">{row.count}</td>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th className="is-right">Releases</th>
               </tr>
-            ))}
-          </tbody>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={String(row[labelKey])}>
+                  <td data-label="Rank" style={{ color: "#aaa", width: "2rem" }}>
+                    {i + 1}
+                  </td>
+                  <td data-label="Name">{String(row[labelKey])}</td>
+                  <td data-label="Releases" className="is-right">
+                    {row.count}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       )}
@@ -41,13 +45,7 @@ function RankTable({
   );
 }
 
-function YearTable({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: { year: number; count: number }[];
-}) {
+function YearTable({ title, rows }: { title: string; rows: { year: number; count: number }[] }) {
   return (
     <div style={{ marginBottom: "2rem" }}>
       <h3 className="app-page__section-title">{title}</h3>
@@ -56,20 +54,22 @@ function YearTable({
       ) : (
         <div className="app-table-wrap">
           <table className="app-table app-table--compact responsive-stack app-rank-table">
-          <thead>
-            <tr>
-              <th>Year</th>
-              <th className="is-right">Releases</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.year}>
-                <td data-label="Year">{row.year}</td>
-                <td data-label="Releases" className="is-right">{row.count}</td>
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th className="is-right">Releases</th>
               </tr>
-            ))}
-          </tbody>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.year}>
+                  <td data-label="Year">{row.year}</td>
+                  <td data-label="Releases" className="is-right">
+                    {row.count}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       )}
@@ -88,7 +88,7 @@ export function AnalyticsPage() {
     fetchAnalytics({ limit: 10 })
       .then((payload) => setData(payload.data))
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Failed to load analytics.")
+        setError(err instanceof Error ? err.message : "Failed to load analytics."),
       )
       .finally(() => setLoading(false));
   }, []);
@@ -113,11 +113,15 @@ export function AnalyticsPage() {
             </article>
             <article className="app-surface app-stat-card">
               <p className="app-stat-card__label">Mapped</p>
-              <p className="app-stat-card__value" style={{ color: "var(--success)" }}>{data.mapped_count}</p>
+              <p className="app-stat-card__value" style={{ color: "var(--success)" }}>
+                {data.mapped_count}
+              </p>
             </article>
             <article className="app-surface app-stat-card">
               <p className="app-stat-card__label">Unmatched</p>
-              <p className="app-stat-card__value" style={{ color: "#b8860b" }}>{data.unmatched_count}</p>
+              <p className="app-stat-card__value" style={{ color: "#b8860b" }}>
+                {data.unmatched_count}
+              </p>
             </article>
             {data.release_count_active > 0 ? (
               <article className="app-surface app-stat-card">

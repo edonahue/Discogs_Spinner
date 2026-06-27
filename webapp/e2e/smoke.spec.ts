@@ -38,10 +38,7 @@ import {
 
 const SAVE_SCREENSHOTS = !!process.env.SAVE_SCREENSHOTS;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SCREENSHOT_DIR = path.resolve(
-  __dirname,
-  "../../docs/media/screenshots/webapp"
-);
+const SCREENSHOT_DIR = path.resolve(__dirname, "../../docs/media/screenshots/webapp");
 
 function fulfill(route: Route, json: unknown) {
   return route.fulfill({
@@ -74,11 +71,9 @@ async function mockSetup(page: Page) {
 }
 
 async function mockCollectionRoutes(page: Page) {
-  await page.route("**/api/v1/releases/summary?**", (r) =>
-    fulfill(r, STUB_COLLECTION_SUMMARY)
-  );
+  await page.route("**/api/v1/releases/summary?**", (r) => fulfill(r, STUB_COLLECTION_SUMMARY));
   await page.route("**/api/v1/releases/1?with_value=true", (r) =>
-    fulfill(r, STUB_COLLECTION_DETAIL)
+    fulfill(r, STUB_COLLECTION_DETAIL),
   );
   await page.route("**/api/v1/releases/2?with_value=true", (r) =>
     fulfill(r, {
@@ -90,31 +85,23 @@ async function mockCollectionRoutes(page: Page) {
         artist: "Stevie Wonder",
         year: 1973,
       },
-    })
+    }),
   );
-  await page.route("**/api/v1/releases/1/tracklist**", (r) =>
-    fulfill(r, STUB_TRACKLIST)
-  );
+  await page.route("**/api/v1/releases/1/tracklist**", (r) => fulfill(r, STUB_TRACKLIST));
   await page.route("**/api/v1/releases?**", (r) => fulfill(r, STUB_COLLECTION));
 }
 
 async function mockWantlistRoutes(page: Page) {
   await page.route("**/api/v1/wantlist/10?with_value=true", (r) =>
-    fulfill(r, STUB_WANTLIST_DETAIL)
+    fulfill(r, STUB_WANTLIST_DETAIL),
   );
   await page.route("**/api/v1/wantlist?**", (r) => fulfill(r, STUB_WANTLIST));
 }
 
 async function mockValueRoutes(page: Page) {
-  await page.route("**/api/v1/value/dashboard**", (r) =>
-    fulfill(r, STUB_VALUE_DASHBOARD)
-  );
-  await page.route("**/api/v1/value/queue**", (r) =>
-    fulfill(r, STUB_VALUE_QUEUE)
-  );
-  await page.route("**/api/v1/value/gems**", (r) =>
-    fulfill(r, STUB_HIDDEN_GEMS)
-  );
+  await page.route("**/api/v1/value/dashboard**", (r) => fulfill(r, STUB_VALUE_DASHBOARD));
+  await page.route("**/api/v1/value/queue**", (r) => fulfill(r, STUB_VALUE_QUEUE));
+  await page.route("**/api/v1/value/gems**", (r) => fulfill(r, STUB_HIDDEN_GEMS));
 }
 
 async function saveScreenshot(page: Page, filename: string) {
@@ -163,7 +150,7 @@ test("Value page renders top releases", async ({ page }) => {
   await expect(page.getByText("Kind of Blue")).toBeVisible();
   await expect(page.getByText("Hidden Gems")).toBeVisible();
   await expect(
-    page.locator("section").filter({ hasText: "Hidden Gems" }).getByText("Innervisions")
+    page.locator("section").filter({ hasText: "Hidden Gems" }).getByText("Innervisions"),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "View in Collection" }).first()).toBeVisible();
 });
@@ -171,14 +158,10 @@ test("Value page renders top releases", async ({ page }) => {
 test("Value page keeps top releases visible if Hidden Gems fails", async ({ page }) => {
   await mockSetup(page);
   await mockCollectionRoutes(page);
-  await page.route("**/api/v1/value/dashboard**", (r) =>
-    fulfill(r, STUB_VALUE_DASHBOARD)
-  );
-  await page.route("**/api/v1/value/queue**", (r) =>
-    fulfill(r, STUB_VALUE_QUEUE)
-  );
+  await page.route("**/api/v1/value/dashboard**", (r) => fulfill(r, STUB_VALUE_DASHBOARD));
+  await page.route("**/api/v1/value/queue**", (r) => fulfill(r, STUB_VALUE_QUEUE));
   await page.route("**/api/v1/value/gems**", (r) =>
-    fulfillError(r, "Hidden Gems unavailable.", 503)
+    fulfillError(r, "Hidden Gems unavailable.", 503),
   );
 
   await page.goto("/value");
@@ -191,9 +174,7 @@ test("Value page keeps top releases visible if Hidden Gems fails", async ({ page
 
 test("Collection Health page renders score", async ({ page }) => {
   await mockSetup(page);
-  await page.route("**/api/v1/value/health**", (r) =>
-    fulfill(r, STUB_HEALTH)
-  );
+  await page.route("**/api/v1/value/health**", (r) => fulfill(r, STUB_HEALTH));
 
   await page.goto("/health");
   await expect(page.locator("h1")).toHaveText("Collection Health");
@@ -207,9 +188,7 @@ test("Collection Health page renders score", async ({ page }) => {
 test("Recently Added page renders releases", async ({ page }) => {
   await mockSetup(page);
   await mockCollectionRoutes(page);
-  await page.route("**/api/v1/releases/recent**", (r) =>
-    fulfill(r, STUB_RECENT)
-  );
+  await page.route("**/api/v1/releases/recent**", (r) => fulfill(r, STUB_RECENT));
 
   await page.goto("/recent");
   await expect(page.locator("h1")).toHaveText("Recently Added");
@@ -224,15 +203,13 @@ test("Recently Added page renders releases", async ({ page }) => {
 
 test("Collection Analytics page renders stats", async ({ page }) => {
   await mockSetup(page);
-  await page.route("**/api/v1/analytics**", (r) =>
-    fulfill(r, STUB_ANALYTICS)
-  );
+  await page.route("**/api/v1/analytics**", (r) => fulfill(r, STUB_ANALYTICS));
 
   await page.goto("/analytics");
   await expect(page.locator("h1")).toHaveText("Collection Analytics");
   // Summary counters
-  await expect(page.getByText("150")).toBeVisible();  // release_count_active
-  await expect(page.getByText("120")).toBeVisible();  // mapped_count
+  await expect(page.getByText("150")).toBeVisible(); // release_count_active
+  await expect(page.getByText("120")).toBeVisible(); // mapped_count
   // Top genres table heading
   await expect(page.getByText("Top Genres")).toBeVisible();
 
@@ -269,9 +246,7 @@ test("Value page handoff opens focused collection detail", async ({ page }) => {
 test("Recent page handoff opens focused collection detail", async ({ page }) => {
   await mockSetup(page);
   await mockCollectionRoutes(page);
-  await page.route("**/api/v1/releases/recent**", (r) =>
-    fulfill(r, STUB_RECENT)
-  );
+  await page.route("**/api/v1/releases/recent**", (r) => fulfill(r, STUB_RECENT));
 
   await page.goto("/recent");
   await page.getByRole("link", { name: "View in Collection" }).first().click();
@@ -349,12 +324,16 @@ test("Home page sync buttons await completion and refresh status", async ({ page
 
   releaseCollectionSync?.();
 
-  await expect(page.getByText("Collection sync complete: fetched 4, upserted 4, deactivated 0.")).toBeVisible();
+  await expect(
+    page.getByText("Collection sync complete: fetched 4, upserted 4, deactivated 0."),
+  ).toBeVisible();
   await expect(syncCollectionButton).toBeEnabled();
   await expect(activeCard).toContainText("4");
 
   await page.locator(".app-inline-actions button").nth(1).click();
-  await expect(page.getByText("Wantlist sync complete: fetched 2, upserted 2, deactivated 0.")).toBeVisible();
+  await expect(
+    page.getByText("Wantlist sync complete: fetched 2, upserted 2, deactivated 0."),
+  ).toBeVisible();
   await expect(wantlistCard).toContainText("2");
 });
 
@@ -364,14 +343,10 @@ test("Collection page sync reloads releases and preserves focused detail", async
   let collectionPayload = STUB_COLLECTION;
   let collectionSummaryPayload = STUB_COLLECTION_SUMMARY;
   await page.route("**/api/v1/releases/1?with_value=true", (r) =>
-    fulfill(r, STUB_COLLECTION_DETAIL)
+    fulfill(r, STUB_COLLECTION_DETAIL),
   );
-  await page.route("**/api/v1/releases/1/tracklist**", (r) =>
-    fulfill(r, STUB_TRACKLIST)
-  );
-  await page.route("**/api/v1/releases/summary?**", (r) =>
-    fulfill(r, collectionSummaryPayload)
-  );
+  await page.route("**/api/v1/releases/1/tracklist**", (r) => fulfill(r, STUB_TRACKLIST));
+  await page.route("**/api/v1/releases/summary?**", (r) => fulfill(r, collectionSummaryPayload));
   await page.route("**/api/v1/releases?**", (r) => fulfill(r, collectionPayload));
   await page.route("**/api/v1/sync/collection", async (r) => {
     collectionPayload = STUB_COLLECTION_AFTER_SYNC;
@@ -384,7 +359,9 @@ test("Collection page sync reloads releases and preserves focused detail", async
 
   await page.getByRole("button", { name: "Sync Collection" }).click();
 
-  await expect(page.getByText("Collection sync complete: fetched 4, upserted 4, deactivated 0.")).toBeVisible();
+  await expect(
+    page.getByText("Collection sync complete: fetched 4, upserted 4, deactivated 0."),
+  ).toBeVisible();
   await expect(page.locator("li")).toHaveCount(4);
   await expect(page).toHaveURL(/\/collection\?focus=1$/);
   await expect(page.getByText("Focused Collection Detail")).toBeVisible();
@@ -397,7 +374,7 @@ test("Wantlist page sync reloads entries and preserves focused detail", async ({
 
   let wantlistPayload = STUB_WANTLIST;
   await page.route("**/api/v1/wantlist/10?with_value=true", (r) =>
-    fulfill(r, STUB_WANTLIST_DETAIL)
+    fulfill(r, STUB_WANTLIST_DETAIL),
   );
   await page.route("**/api/v1/wantlist?**", (r) => fulfill(r, wantlistPayload));
   await page.route("**/api/v1/sync/wantlist", async (r) => {
@@ -410,7 +387,9 @@ test("Wantlist page sync reloads entries and preserves focused detail", async ({
 
   await page.getByRole("button", { name: "Sync Wantlist" }).click();
 
-  await expect(page.getByText("Wantlist sync complete: fetched 2, upserted 2, deactivated 0.")).toBeVisible();
+  await expect(
+    page.getByText("Wantlist sync complete: fetched 2, upserted 2, deactivated 0."),
+  ).toBeVisible();
   await expect(page.locator("li")).toHaveCount(2);
   await expect(page).toHaveURL(/\/wantlist\?focus=10$/);
   await expect(page.getByText("Focused Wantlist Detail")).toBeVisible();
@@ -421,7 +400,7 @@ test("Collection page sync failure keeps the current list visible", async ({ pag
   await mockSetup(page);
   await mockCollectionRoutes(page);
   await page.route("**/api/v1/sync/collection", (r) =>
-    fulfillError(r, "Discogs collection sync failed.", 503)
+    fulfillError(r, "Discogs collection sync failed.", 503),
   );
 
   await page.goto("/collection");

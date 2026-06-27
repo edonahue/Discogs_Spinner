@@ -22,3 +22,16 @@ def run_use_case(
     except Exception as exc:  # noqa: BLE001 - centralized API mapping.
         raise_http_exception_for(exc)
     return success_envelope(with_provider_mapping_aliases(data), meta=meta)
+
+
+def run_use_case_raw(call: Callable[[], T]) -> T:
+    """Run a use-case with centralized error mapping but return its raw result.
+
+    Use for endpoints that serve content directly (e.g. ``PlainTextResponse``
+    markdown) rather than the standard JSON success envelope.
+    """
+    try:
+        return call()
+    except Exception as exc:  # noqa: BLE001 - centralized API mapping.
+        raise_http_exception_for(exc)
+        raise  # unreachable: raise_http_exception_for always raises
