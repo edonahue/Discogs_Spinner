@@ -5,6 +5,24 @@ channel. Complete steps in the order shown — later channels depend on earlier 
 
 ---
 
+## Submission Readiness Snapshot
+
+At-a-glance status of every channel and the single next blocker for the ones that
+are not yet live. Full per-channel steps follow below.
+
+| Channel | Status | Next blocker / action |
+|---|---|---|
+| WinGet | ✅ Live | Per-release: `./scripts/update_winget_manifest.sh <version>` then PR |
+| Snap Store | ✅ Live | Auto-publishes on `v*` tag via `snap_publish.yml` |
+| Homebrew Cask | 🟡 Ready, blocked on macOS notarization | Notarize the `.dmg` (needs Apple Developer Program), then submit the PR — formula SHA256s for 0.2.2 are already filled in |
+| Flathub | 🟡 Ready, needs deps JSON | Run `./scripts/gen_flatpak_deps.sh`, set the real commit SHA in the manifest, then submit the PR — screenshots in the metainfo are already populated |
+| Microsoft Store | 🟡 Ready, blocked on Partner Center | Register Partner Center ($19), replace the `TODO(partner-center)` Identity/Publisher in `packaging/msix/Package.appxmanifest`, convert the NSIS `.exe` to MSIX, upload |
+
+Items marked 🟡 require an external account, paid program, or a clean OS — the in-repo
+prep for each is done; the remaining work is the manual submission step.
+
+---
+
 ## Naming Convention
 
 All **store display names** use **"Spinner for Discogs"** to comply with Discogs LLC
@@ -55,7 +73,8 @@ Required for: Microsoft Store submission.
 **File:** `packaging/homebrew/spinner-for-discogs.rb`
 
 1. Download the notarized `.dmg` files for both architectures from the GitHub Release
-2. Compute SHA256 checksums and replace the `PLACEHOLDER_SHA256_*` values in the formula
+2. Confirm the `sha256` values in the formula match the released `.dmg` files (already
+   filled in for 0.2.2; recompute with `shasum -a 256 <file>.dmg` for new releases)
 3. Fork https://github.com/Homebrew/homebrew-cask
 4. Copy the formula to `Casks/s/spinner-for-discogs.rb`
 5. Run locally: `brew install --cask ./Casks/s/spinner-for-discogs.rb`
@@ -104,16 +123,16 @@ For manual submission:
 
 2. Generate Python dependency sources (re-run whenever `pyproject.toml` deps change):
    ```bash
-   flatpak-pip-generator --runtime org.gnome.Sdk//48 \
-     httpx uvicorn fastapi starlette anyio h11 httpcore \
-     typer rich python-dotenv ytmusicapi platformdirs \
-     keyring rapidfuzz certifi idna sniffio \
-     > packaging/flatpak/python3-deps.json
+   ./scripts/gen_flatpak_deps.sh
    ```
-   Then uncomment the `- python3-deps.json` line in the Flatpak manifest.
+   This wraps `flatpak-pip-generator` with the exact runtime dependency set and writes
+   `packaging/flatpak/python3-deps.json`. Then uncomment the `- python3-deps.json` line
+   in the Flatpak manifest.
 
-3. Add screenshots to `packaging/metainfo/` and uncomment the `<screenshots>` block
-   in `packaging/metainfo/com.discogs-spinner.app.metainfo.xml`
+3. Screenshots: the `<screenshots>` block in
+   `packaging/metainfo/com.discogs-spinner.app.metainfo.xml` is already populated with the
+   five `docs/media/screenshots/*.png` images. Confirm they meet Flathub's size guidance
+   (1248×702 or 624×351) and refresh them if the UI has changed.
 
 4. Validate the metainfo:
    ```bash
