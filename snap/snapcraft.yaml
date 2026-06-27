@@ -58,6 +58,9 @@ parts:
     source: .
     python-packages:
       - ".[web,spotify]"
+    build-packages:
+      # Provides glib-compile-schemas for the schema precompile step below.
+      - libglib2.0-bin
     stage-packages:
       - python3-gi
       - python3-gi-cairo
@@ -68,6 +71,17 @@ parts:
       - libgtk-4-1
       - libglib2.0-0
       - adwaita-icon-theme
+    override-prime: |
+      craftctl default
+      # Precompile the staged GSettings schemas so GLib finds a ready
+      # gschemas.compiled at launch instead of emitting repeated schema
+      # symlink/compile warnings on first run. Best-effort: never fail the
+      # build if the schema directory is absent (e.g. provided by the gnome
+      # extension's platform snap).
+      schema_dir="$CRAFT_PRIME/usr/share/glib-2.0/schemas"
+      if [ -d "$schema_dir" ]; then
+        glib-compile-schemas "$schema_dir" || true
+      fi
 
   desktop-assets:
     plugin: dump
