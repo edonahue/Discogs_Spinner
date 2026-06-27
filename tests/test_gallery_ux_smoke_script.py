@@ -33,6 +33,11 @@ def test_gallery_ux_smoke_script_emits_valid_json_when_gui_runtime_is_available(
             "Missing dependency: xvfb-run" in stderr
             or "Missing GUI dependency:" in stderr
             or "Gtk couldn't be initialized" in stderr
+            # No GTK runtime at all (no python3-gi) or a broken PyGObject build —
+            # nothing to smoke-test, so skip rather than fail.
+            or "No module named 'gi'" in stderr
+            or "cannot import name '_gi'" in stderr
+            or "Namespace Gtk not available" in stderr
         ):
             pytest.skip("GUI runtime dependencies unavailable for smoke execution")
         pytest.fail(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
+import logging
 import threading
 import time
 
@@ -19,12 +20,14 @@ from discogs_player.use_cases.config_management import run_config_set
 from discogs_player.use_cases.setup_report import run_setup_report
 from discogs_player.use_cases.sync_collection import SyncCancelledError, run_sync_collection
 
+logger = logging.getLogger(__name__)
+
 
 def _open_uri(uri: str) -> None:
     try:
         Gio.AppInfo.launch_default_for_uri(uri, None)
     except Exception:
-        pass
+        logger.warning("Could not open URI in default handler: %s", uri, exc_info=True)
 
 
 def _make_heading(text: str) -> Gtk.Label:
