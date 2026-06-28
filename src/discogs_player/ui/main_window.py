@@ -99,6 +99,8 @@ from discogs_player.use_cases.value_refresh import run_refresh_market_values
 from discogs_player.use_cases.value_search import run_search_value_releases
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
 from discogs_player.ui.sorting import sort_release_items
+from discogs_player.ui.utils.coerce import as_float as _to_float
+from discogs_player.ui.utils.coerce import as_int as _to_int
 from discogs_player.ui.widgets.album_detail import AlbumDetail
 
 def _format_sync_date(iso_str: str | None) -> str:
@@ -936,34 +938,6 @@ def _normalize_release_limit(value: object | None) -> int | None:
     if limit <= 0:
         return None
     return limit
-
-
-def _to_int(value: object | None, *, default: int = 0) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped and stripped.lstrip("-").isdigit():
-            return int(stripped)
-    return default
-
-
-def _to_float(value: object | None, *, default: float = 0.0) -> float:
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return default
-        try:
-            return float(stripped)
-        except ValueError:
-            return default
-    return default
 
 
 def _as_optional_str(value: object | None) -> str | None:

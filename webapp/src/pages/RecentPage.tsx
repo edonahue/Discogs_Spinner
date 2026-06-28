@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchRecentReleases, Release } from "../api";
-
-const pillStyle: React.CSSProperties = {
-  display: "inline-flex",
-};
+import { PILL_STYLE as pillStyle } from "../utils/helpers";
 
 const DAYS_OPTIONS = [7, 14, 30, 90];
 

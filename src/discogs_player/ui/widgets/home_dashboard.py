@@ -9,21 +9,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-
-def _as_str(value: object | None) -> str:
-    if value is None:
-        return "—"
-    return str(value).strip() or "—"
-
-
-def _as_int(value: object | None) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    return 0
+from discogs_player.ui.utils.coerce import as_int as _as_int
+from discogs_player.ui.utils.coerce import as_str as _as_str
 
 
 class HomeDashboardWidget(Gtk.Box):
@@ -163,7 +150,7 @@ class HomeDashboardWidget(Gtk.Box):
         if highlights:
             for h in highlights[:5]:
                 row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-                msg_lbl = Gtk.Label(label=_as_str(h.get("message") or h.get("title")))
+                msg_lbl = Gtk.Label(label=_as_str(h.get("message") or h.get("title"), "—"))
                 msg_lbl.set_xalign(0.0)
                 msg_lbl.set_wrap(True)
                 msg_lbl.set_hexpand(True)
@@ -186,7 +173,7 @@ class HomeDashboardWidget(Gtk.Box):
         if gems:
             for gem in gems:
                 row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-                artist_title = f"{_as_str(gem.get('artist'))} – {_as_str(gem.get('title'))}"
+                artist_title = f"{_as_str(gem.get('artist'), '—')} – {_as_str(gem.get('title'), '—')}"
                 lbl = Gtk.Label(label=artist_title)
                 lbl.set_xalign(0.0)
                 lbl.set_hexpand(True)

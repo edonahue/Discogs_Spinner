@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from discogs_player.provider_mapping import with_provider_mapping_aliases
+from discogs_player.use_cases._coerce import to_int as _to_int
 from discogs_player.use_cases.ensure_mapping import (
     SAFE_AUTO_APPLY_THRESHOLD,
     run_match_audit,
@@ -27,20 +28,6 @@ def _as_dict(value: object | None) -> dict[str, object] | None:
     if isinstance(value, dict):
         return value
     return None
-
-
-def _to_int(value: object | None, *, default: int = 0) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped and stripped.lstrip("-").isdigit():
-            return int(stripped)
-    return default
 
 
 def _candidate_summary(candidate: dict[str, object] | None) -> str | None:

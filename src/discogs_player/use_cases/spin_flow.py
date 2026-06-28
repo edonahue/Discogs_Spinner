@@ -2,22 +2,9 @@
 
 from __future__ import annotations
 
+from discogs_player.use_cases._coerce import to_int as _to_int
 from discogs_player.use_cases.play_release import run_play_release
 from discogs_player.use_cases.spin_release import run_spin_release
-
-
-def _to_int(value: object | None, *, default: int = 0) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped and stripped.lstrip("-").isdigit():
-            return int(stripped)
-    return default
 
 
 def run_spin_action(
