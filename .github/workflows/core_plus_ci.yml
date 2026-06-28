@@ -51,7 +51,7 @@ jobs:
         run: mypy src
 
   webapp-lint:
-    name: Webapp Lint and Type Check
+    name: Webapp Lint, Types, and Tests
     needs:
       - prepublish-hygiene
     runs-on: ubuntu-latest
@@ -81,6 +81,10 @@ jobs:
       - name: Prettier check
         working-directory: webapp
         run: npm run format:check
+
+      - name: Unit tests
+        working-directory: webapp
+        run: npm test
 
   test-core:
     name: Test Core Profile
