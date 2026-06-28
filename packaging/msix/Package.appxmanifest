@@ -29,7 +29,7 @@
   <Identity
     Name="ErichDonahue.SpinnerforDiscogs"
     Publisher="CN=ErichDonahue"
-    Version="0.2.2.0"
+    Version="0.2.3.0"
     ProcessorArchitecture="x64" />
   <!-- TODO(partner-center): replace Identity/@Name and Identity/@Publisher above with the
        values assigned during app reservation, and PublisherDisplayName below if it differs.

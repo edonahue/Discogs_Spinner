@@ -126,7 +126,7 @@ xattr -dr com.apple.quarantine "Discogs Spinner.app"
 ## Reference
 
 - Public release runbook: [../docs/PUBLIC_RELEASE_RUNBOOK.md](../docs/PUBLIC_RELEASE_RUNBOOK.md)
-- Stable release notes: [../docs/releases/v0.2.1.md](../docs/releases/v0.2.1.md)
+- Stable release notes: [../docs/releases/v0.2.3.md](../docs/releases/v0.2.3.md)
 - Windows quickstart: [../docs/quickstart_windows.md](../docs/quickstart_windows.md)
 - macOS quickstart: [../docs/quickstart_macos.md](../docs/quickstart_macos.md)
 - Debian quickstart: [../docs/quickstart_debian.md](../docs/quickstart_debian.md)

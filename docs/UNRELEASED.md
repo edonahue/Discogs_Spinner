@@ -3,7 +3,7 @@
 This file tracks user-visible changes currently on `main` that are not yet
 described by the latest packaged public release.
 
-Latest stable public release: `v0.2.2`
+Latest stable public release: `v0.2.3`
 
 ## Current Main
 

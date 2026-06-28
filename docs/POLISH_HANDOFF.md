@@ -8,7 +8,7 @@ This document is a handoff prompt for a new Claude Code session. The goal is to 
 
 ## What the App Is
 
-Discogs Spinner is a local-first desktop companion for vinyl collectors. It wraps a FastAPI Python backend with a React frontend served via Tauri on Windows/macOS, and a GTK4 native app on Linux. Current version is `v0.2.2`. The web UI is the surface this handoff concerns.
+Discogs Spinner is a local-first desktop companion for vinyl collectors. It wraps a FastAPI Python backend with a React frontend served via Tauri on Windows/macOS, and a GTK4 native app on Linux. Current version is `v0.2.3`. The web UI is the surface this handoff concerns.
 
 **Pages:** Home, Collection, Wantlist, Value, Health, Recent, Analytics, Setup  
 **Key files:** `webapp/src/pages/`, `webapp/src/components/Nav.tsx`, `webapp/src/styles.css`

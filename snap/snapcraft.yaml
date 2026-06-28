@@ -1,7 +1,7 @@
 name: spinner-for-discogs
 title: Spinner for Discogs
 base: core24
-version: "0.2.2"
+version: "0.2.3"
 summary: Pick, browse, and value your Discogs vinyl collection
 description: |
   Spinner for Discogs is a local-first desktop companion for vinyl collectors
@@ -44,7 +44,7 @@ confinement: strict
 # Snap publication steps:
 #   snapcraft login
 #   snapcraft build
-#   snapcraft upload spinner-for-discogs_0.2.2_amd64.snap --release=stable
+#   snapcraft upload spinner-for-discogs_0.2.3_amd64.snap --release=stable
 
 layout:
   /usr/lib/x86_64-linux-gnu/girepository-1.0:

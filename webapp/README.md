@@ -99,6 +99,18 @@ npm --prefix webapp run build
 
 Output is written to `webapp/dist/`.
 
+## Quality checks
+
+Run from `webapp/` (all gated in CI by the `Webapp Lint, Types, and Tests` job):
+
+```bash
+npm run lint          # eslint (flat config)
+npm run typecheck     # tsc --noEmit
+npm run format:check  # prettier --check
+npm test              # vitest unit/component tests
+npm run test:e2e      # playwright smoke (requires a browser)
+```
+
 ## Environment
 
 - `VITE_API_BASE_URL` (optional): override API base URL.

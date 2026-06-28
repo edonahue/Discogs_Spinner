@@ -73,6 +73,14 @@
   </screenshots>
 
   <releases>
+    <release version="0.2.3" date="2026-06-28">
+      <description>
+        <p>First-run and supportability polish: adds an in-app "Report a
+        problem" link, distinguishes token versus network errors in web setup,
+        and precompiles GSettings schemas to quiet repeated warnings on first
+        snap launch.</p>
+      </description>
+    </release>
     <release version="0.2.2" date="2026-05-23">
       <description>
         <p>Packaging refresh: fixes COSMIC/GTK desktop launch sizing, hardens

@@ -14,8 +14,8 @@ This guide targets first-time users installing `discogs_player` on macOS.
 
 Download the current stable `.dmg` directly:
 
-- Recommended for most modern Macs: [Discogs Spinner_0.2.2_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg)
-- Intel Macs: [Discogs Spinner_0.2.2_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg)
+- Recommended for most modern Macs: [Discogs Spinner_0.2.3_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg)
+- Intel Macs: [Discogs Spinner_0.2.3_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Open the disk image, drag **Discogs Spinner.app** into `/Applications`, then launch it once.
