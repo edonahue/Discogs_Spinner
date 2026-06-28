@@ -7,18 +7,18 @@
 # 4. Run: brew audit --cask --new spinner-for-discogs
 #
 cask "spinner-for-discogs" do
-  version "0.2.2"
+  version "0.2.3"
 
   on_arm do
     url "https://github.com/edonahue/Discogs_Spinner/releases/download/v#{version}/Discogs.Spinner_#{version}_aarch64.dmg",
         verified: "github.com/edonahue/Discogs_Spinner/"
-    sha256 "122b8d29aee2bd5c3988239bcd1c7a42858a1fc2e061acf960086635c3e3a088"
+    sha256 "73e9aa70874d28a8b8eed736ccf4143a238e5359d13eaae251993787f02301de"
   end
 
   on_intel do
     url "https://github.com/edonahue/Discogs_Spinner/releases/download/v#{version}/Discogs.Spinner_#{version}_x64.dmg",
         verified: "github.com/edonahue/Discogs_Spinner/"
-    sha256 "a4ed2b0e08bf4ddeffcd14bdb68bc56e62fab58211c4d8f1d78a859567f3befa"
+    sha256 "74dd23f7c8a2f345f740c95684312357433280942088a8e6580bd028b4364817"
   end
 
   name "Spinner for Discogs"

@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+PackageIdentifier: ErichDonahue.SpinnerforDiscogs
+PackageVersion: 0.2.3
+MinimumOSVersion: "10.0.17763.0"
+InstallerType: nullsoft
+InstallModes:
+  - interactive
+  - silent
+UpgradeBehavior: install
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe
+    InstallerSha256: 3eb076af62b928d4701b6ab479cdf21dbc034fd9c221ce0a18a457568a2ae8e7
+    InstallerType: nullsoft
+  - Architecture: x64
+    InstallerUrl: https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi
+    InstallerSha256: d38030f62d43c7fcf5e7be097ddafbc05cb6dca3be8087586ecddced9882eee5
+    InstallerType: wix
+ManifestType: installer
+ManifestVersion: 1.6.0

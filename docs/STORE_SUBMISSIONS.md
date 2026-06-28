@@ -14,7 +14,7 @@ are not yet live. Full per-channel steps follow below.
 |---|---|---|
 | WinGet | ✅ Live | Per-release: `./scripts/update_winget_manifest.sh <version>` then PR |
 | Snap Store | ✅ Live | Auto-publishes on `v*` tag via `snap_publish.yml` |
-| Homebrew Cask | 🟡 Ready, blocked on macOS notarization | Notarize the `.dmg` (needs Apple Developer Program), then submit the PR — formula SHA256s for 0.2.2 are already filled in |
+| Homebrew Cask | 🟡 Ready, blocked on macOS notarization | Notarize the `.dmg` (needs Apple Developer Program), then submit the PR — formula SHA256s for 0.2.3 are already filled in |
 | Flathub | 🟡 Ready, needs deps JSON | Run `./scripts/gen_flatpak_deps.sh`, set the real commit SHA in the manifest, then submit the PR — screenshots in the metainfo are already populated |
 | Microsoft Store | 🟡 Ready, blocked on Partner Center | Register Partner Center ($19), replace the `TODO(partner-center)` Identity/Publisher in `packaging/msix/Package.appxmanifest`, convert the NSIS `.exe` to MSIX, upload |
 
@@ -74,7 +74,7 @@ Required for: Microsoft Store submission.
 
 1. Download the notarized `.dmg` files for both architectures from the GitHub Release
 2. Confirm the `sha256` values in the formula match the released `.dmg` files (already
-   filled in for 0.2.2; recompute with `shasum -a 256 <file>.dmg` for new releases)
+   filled in for 0.2.3; recompute with `shasum -a 256 <file>.dmg` for new releases)
 3. Fork https://github.com/Homebrew/homebrew-cask
 4. Copy the formula to `Casks/s/spinner-for-discogs.rb`
 5. Run locally: `brew install --cask ./Casks/s/spinner-for-discogs.rb`
