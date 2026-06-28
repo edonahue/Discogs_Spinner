@@ -12,6 +12,12 @@ from typing import Any
 
 from discogs_player.data.db import get_connection
 from discogs_player.data.repo import get_release_counts, upsert_spotify_mapping
+from discogs_player.use_cases._coerce import (
+    to_optional_bool as _to_optional_bool,
+    to_optional_float as _to_optional_float,
+    to_optional_int as _to_optional_int,
+    to_optional_str as _to_optional_str,
+)
 
 VALID_SOURCE_FORMATS = {
     "auto",
@@ -78,63 +84,6 @@ def _normalize_conflict_mode(raw: str) -> str:
     if value not in VALID_CONFLICT_MODES:
         raise ValueError("Conflict mode must be 'merge' or 'replace'.")
     return value
-
-
-def _to_optional_int(value: Any) -> int | None:
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        if value.is_integer():
-            return int(value)
-        return None
-    if value is None:
-        return None
-    text = str(value).strip()
-    if not text:
-        return None
-    if text.isdigit():
-        return int(text)
-    return None
-
-
-def _to_optional_float(value: Any) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    text = str(value).strip()
-    if not text:
-        return None
-    try:
-        return float(text)
-    except ValueError:
-        return None
-
-
-def _to_optional_bool(value: Any) -> bool | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        return value != 0
-    text = str(value).strip().lower()
-    if text in {"1", "true", "yes", "y", "on"}:
-        return True
-    if text in {"0", "false", "no", "n", "off"}:
-        return False
-    return None
-
-
-def _to_optional_str(value: Any) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
 
 
 def _parse_discogs_id_from_url(value: str) -> int | None:

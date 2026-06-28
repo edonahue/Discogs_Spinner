@@ -86,6 +86,7 @@ from discogs_player.use_cases.value_examples import run_market_value_examples
 from discogs_player.use_cases.value_refresh import run_refresh_market_values
 from discogs_player.use_cases.value_show import run_market_value_show
 from discogs_player.use_cases.value_snapshot import run_market_value_snapshot
+from discogs_player.use_cases._coerce import to_float as _to_float, to_int as _to_int
 from discogs_player.use_cases.value_status import run_market_value_status
 from discogs_player.use_cases.value_trend import run_market_value_trend
 from discogs_player.use_cases.value_refresh_queue import run_value_refresh_queue
@@ -189,38 +190,6 @@ def _as_dict_list(value: object) -> list[dict[str, object]]:
         if isinstance(item, dict):
             rows.append(cast(dict[str, object], item))
     return rows
-
-
-def _to_int(value: object, *, default: int = 0) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if text:
-            try:
-                return int(text)
-            except ValueError:
-                return default
-    return default
-
-
-def _to_float(value: object, *, default: float = 0.0) -> float:
-    if isinstance(value, bool):
-        return float(int(value))
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if text:
-            try:
-                return float(text)
-            except ValueError:
-                return default
-    return default
 
 
 def _print_missing_dependency(module_name: str | None) -> None:

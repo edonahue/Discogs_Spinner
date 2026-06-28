@@ -26,20 +26,7 @@ from discogs_player.integrations.spotify.spotify_client import (
     SpotifyClient,
     SpotifyPlaybackError,
 )
-
-
-def _to_int(value: object | None, *, default: int) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped and stripped.lstrip("-").isdigit():
-            return int(stripped)
-    return default
+from discogs_player.use_cases._coerce import to_int as _to_int
 
 
 def _to_bool(value: object | None, *, default: bool) -> bool:

@@ -9,21 +9,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-
-def _as_str(value: object | None) -> str:
-    if value is None:
-        return ""
-    return str(value).strip()
-
-
-def _as_int(value: object | None) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    return 0
+from discogs_player.ui.utils.coerce import as_int as _as_int
+from discogs_player.ui.utils.coerce import as_str as _as_str
 
 
 def _reason_label(reason: str) -> str:

@@ -14,6 +14,12 @@ from discogs_player.data.repo import (
     upsert_releases,
     upsert_spotify_mapping,
 )
+from discogs_player.use_cases._coerce import (
+    to_bool as _to_bool,
+    to_optional_bool as _to_optional_bool,
+    to_optional_float as _to_optional_float,
+    to_optional_str as _to_optional_str,
+)
 
 VALID_CONFLICT_MODES = {"merge", "replace"}
 
@@ -43,59 +49,6 @@ def _to_optional_int(value: Any, *, field: str) -> int | None:
     except ValueError:
         return None
     return parsed
-
-
-def _to_optional_float(value: Any) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        text = value.strip()
-        if not text:
-            return None
-        try:
-            return float(text)
-        except ValueError:
-            return None
-    return None
-
-
-def _to_optional_str(value: Any) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
-
-
-def _to_bool(value: Any, *, default: bool = False) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        return value != 0
-    if isinstance(value, str):
-        text = value.strip().lower()
-        if text in {"1", "true", "yes", "y", "on"}:
-            return True
-        if text in {"0", "false", "no", "n", "off"}:
-            return False
-    return default
-
-
-def _to_optional_bool(value: Any) -> bool | None:
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        return value != 0
-    if isinstance(value, str):
-        text = value.strip().lower()
-        if text in {"1", "true", "yes", "y", "on"}:
-            return True
-        if text in {"0", "false", "no", "n", "off"}:
-            return False
-    return None
 
 
 def _to_str_list(value: Any) -> list[str]:

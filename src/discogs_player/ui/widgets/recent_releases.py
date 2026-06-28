@@ -9,12 +9,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-
-def _as_str(value: object | None, fallback: str = "—") -> str:
-    if value is None:
-        return fallback
-    s = str(value).strip()
-    return s or fallback
+from discogs_player.ui.utils.coerce import as_str as _as_str
 
 
 def _format_added_at(iso: object | None) -> str:
@@ -135,7 +130,7 @@ class RecentReleasesWidget(Gtk.Box):
         text_col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         text_col.set_hexpand(True)
 
-        artist_title = f"{_as_str(release.get('artist'))} – {_as_str(release.get('title'))}"
+        artist_title = f"{_as_str(release.get('artist'), '—')} – {_as_str(release.get('title'), '—')}"
         main_lbl = Gtk.Label(label=artist_title)
         main_lbl.set_xalign(0.0)
         main_lbl.set_ellipsize(3)  # PANGO_ELLIPSIZE_END

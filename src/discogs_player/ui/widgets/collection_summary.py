@@ -9,31 +9,10 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
+from discogs_player.ui.utils.coerce import as_int as _as_int
+from discogs_player.ui.utils.coerce import as_optional_float as _as_float
+from discogs_player.ui.utils.coerce import as_str as _as_str
 from discogs_player.ui.utils.formatting import format_price
-
-
-def _as_int(value: object | None) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    return 0
-
-
-def _as_float(value: object | None) -> float | None:
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    return None
-
-
-def _as_str(value: object | None) -> str:
-    if value is None:
-        return ""
-    return str(value).strip()
 
 
 def _format_local_datetime(value: object | None) -> str:
