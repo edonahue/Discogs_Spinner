@@ -24,7 +24,7 @@ _Part of my [Open Workbench](https://erichdonahue.com/workbench); featured on [e
 >
 > **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
 >
-> **Release note:** The download links below point to the latest stable public release, `v0.2.2`. The Snap Store is live for Linux and WinGet is live for Windows — both are listed below alongside the direct download links.
+> **Release note:** The download links below point to the latest stable public release, `v0.2.3`. The Snap Store is live for Linux and WinGet is live for Windows — both are listed below alongside the direct download links.
 
 ---
 
@@ -151,13 +151,13 @@ These installers are meant to get a collector to value quickly: install, paste a
 
 - [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 - Windows via WinGet: `winget install ErichDonahue.SpinnerforDiscogs` — no browser required, auto-updates with `winget upgrade`.
-- Windows direct download: [Discogs Spinner_0.2.2_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe) (recommended installer). Use [Discogs Spinner_0.2.2_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi) only if you specifically want MSI deployment tooling.
-- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg).
+- Windows direct download: [Discogs Spinner_0.2.3_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe) (recommended installer). Use [Discogs Spinner_0.2.3_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi) only if you specifically want MSI deployment tooling.
+- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg).
 - Linux via Snap Store: [install Spinner for Discogs from Snapcraft](https://snapcraft.io/spinner-for-discogs), or run `sudo snap install spinner-for-discogs` if `snapd` is already set up.
-- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb).
-- Linux portable fallback: [Discogs Spinner_0.2.2_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage).
-- Linux alternate desktop build: [discogs-spinner-tauri_0.2.2_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb).
-- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt).
+- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb).
+- Linux portable fallback: [Discogs Spinner_0.2.3_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage).
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb).
+- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt).
 
 What first launch should feel like:
 
@@ -225,7 +225,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 
 ## Help & Reference
 
-- [Release Notes (v0.2.2)](docs/releases/v0.2.2.md)
+- [Release Notes (v0.2.3)](docs/releases/v0.2.3.md)
 - [Support Matrix](docs/SUPPORT_MATRIX.md)
 - [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
 

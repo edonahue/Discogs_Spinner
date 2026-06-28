@@ -46,15 +46,15 @@ def test_quickstarts_link_clean_machine_validation_checklists():
     assert "validation/windows_tauri_ftux.md" in windows
     assert "validation/macos_installer_ftux.md" in macos
     assert "validation/debian_installer_ftux.md" in debian
-    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe" in windows
-    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi" in windows
-    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg" in macos
-    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg" in macos
-    assert "releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb" in debian
-    assert "releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb" in debian
-    assert "releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage" in debian
-    assert "releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt" in windows
-    assert "releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt" in debian
+    assert "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe" in windows
+    assert "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi" in windows
+    assert "releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg" in macos
+    assert "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg" in macos
+    assert "releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb" in debian
+    assert "releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb" in debian
+    assert "releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage" in debian
+    assert "releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt" in windows
+    assert "releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt" in debian
 
 
 def test_quickstarts_call_out_recommended_installer_and_first_run_success():

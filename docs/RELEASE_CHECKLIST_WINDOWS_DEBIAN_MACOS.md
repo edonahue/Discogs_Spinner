@@ -5,13 +5,13 @@ Owner: Engineering
 
 This checklist is optimized for a public installer release centered on native installs and first-run success across all three operating systems.
 
-## Current Stable Baseline (`v0.2.2`)
+## Current Stable Baseline (`v0.2.3`)
 
 - `Installer Build` must be green for the published stable tag and release assets.
 - `Windows MSI Smoke` has passed on `main` and is available as the slower Windows confidence lane.
 - The Snap Store listing is live and should remain the preferred Linux install path in public docs.
 - Remaining non-blocking launch polish: Windows signing, macOS signing/notarization, Snap first-launch warning cleanup, and first-user feedback triage.
-- `v0.2.2` packages the post-`v0.2.1` GTK desktop launch, resize, and gallery cover sizing fixes.
+- `v0.2.3` packages the post-`v0.2.1` GTK desktop launch, resize, and gallery cover sizing fixes.
 
 ## Global Pre-Release Gate
 

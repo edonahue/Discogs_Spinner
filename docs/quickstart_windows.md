@@ -22,9 +22,9 @@ This installs the same signed package available on GitHub Releases and keeps the
 
 **Option B — Direct download:**
 
-- Recommended installer: [Discogs Spinner_0.2.2_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe)
-- MSI installer: [Discogs Spinner_0.2.2_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt)
+- Recommended installer: [Discogs Spinner_0.2.3_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe)
+- MSI installer: [Discogs Spinner_0.2.3_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
 - Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 Run the installer and launch **Discogs Spinner** from the Start menu.

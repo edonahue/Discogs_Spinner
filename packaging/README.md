@@ -32,5 +32,5 @@ Related docs:
 - [Desktop shell README](../desktop_shell/README.md)
 - [Debian quickstart](../docs/quickstart_debian.md)
 - [Public release runbook](../docs/PUBLIC_RELEASE_RUNBOOK.md)
-- [Current stable release notes](../docs/releases/v0.2.2.md)
+- [Current stable release notes](../docs/releases/v0.2.3.md)
 - [Store submissions guide](../docs/STORE_SUBMISSIONS.md)

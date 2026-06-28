@@ -16,6 +16,14 @@ Utility scripts for building, releasing, testing, and operating Discogs Spinner.
 | `build_artifacts.sh` | Aggregates all release artifacts after platform builds |
 | `validate_linux_packaging_metadata.py` | Validates GTK `.deb` desktop entry and AppStream metadata before release |
 
+## Release
+
+| Script | Purpose |
+|--------|---------|
+| `bump_version.sh` | Atomically bumps the version across `pyproject.toml`, `Cargo.toml`, `package.json`, and `snapcraft.yaml` |
+| `update_winget_manifest.sh` | Generates the WinGet manifest for a new release, fetching SHA256s from the GitHub Release |
+| `gen_flatpak_deps.sh` | Generates `python3-deps.json` for the Flathub build via `flatpak-pip-generator` |
+
 ## Screenshots & media
 
 | Script | Purpose |
@@ -64,8 +72,8 @@ Utility scripts for building, releasing, testing, and operating Discogs Spinner.
 ## Related docs
 
 - [Public release runbook](../docs/PUBLIC_RELEASE_RUNBOOK.md)
-- [Current stable release notes](../docs/releases/v0.2.1.md)
-- [Next packaging refresh notes](../docs/releases/v0.2.2.md)
+- [Current stable release notes](../docs/releases/v0.2.3.md)
+- [Previous release notes](../docs/releases/v0.2.2.md)
 - [Windows quickstart](../docs/quickstart_windows.md)
 - [macOS quickstart](../docs/quickstart_macos.md)
 - [Debian quickstart](../docs/quickstart_debian.md)

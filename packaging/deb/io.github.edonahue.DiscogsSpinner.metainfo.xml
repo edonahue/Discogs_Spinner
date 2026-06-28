@@ -40,6 +40,12 @@
     <keyword>Wantlist</keyword>
   </keywords>
   <releases>
+    <release version="0.2.3" date="2026-06-28">
+      <description>
+        <p>First-run and supportability polish: in-app "Report a problem" link,
+        clearer web setup errors, and quieter first snap launch.</p>
+      </description>
+    </release>
     <release version="0.2.2" date="2026-05-23">
       <description>
         <p>Packaging refresh for recent GTK desktop launch and gallery fixes.</p>

@@ -84,7 +84,7 @@ def test_linux_packaging_metadata_is_validated_before_release():
         "sync your collection and wantlist",
         "spin a random record",
         "screenshots",
-        "0.2.2",
+        "0.2.3",
     ):
         assert marker in metainfo
         assert marker in validator

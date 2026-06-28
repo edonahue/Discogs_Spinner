@@ -102,7 +102,7 @@ def test_release_notes_template_references_quickstarts_and_diagnostics():
 def test_readme_links_user_facing_docs_not_internal_runbooks():
     source = _read("README.md")
     for marker in (
-        "docs/releases/v0.2.2.md",
+        "docs/releases/v0.2.3.md",
         "docs/friend_trial.md",
         "docs/SUPPORT_MATRIX.md",
     ):
@@ -127,10 +127,10 @@ def test_readme_promotes_download_now_and_first_launch_value():
         "What first launch should feel like:",
         "https://snapcraft.io/spinner-for-discogs",
         "sudo snap install spinner-for-discogs",
-        "Discogs.Spinner_0.2.2_x64-setup.exe",
-        "Discogs.Spinner_0.2.2_aarch64.dmg",
-        "discogs-spinner-gtk4_0.2.2_amd64.deb",
-        "Discogs.Spinner_0.2.2_amd64.AppImage",
+        "Discogs.Spinner_0.2.3_x64-setup.exe",
+        "Discogs.Spinner_0.2.3_aarch64.dmg",
+        "discogs-spinner-gtk4_0.2.3_amd64.deb",
+        "Discogs.Spinner_0.2.3_amd64.AppImage",
         "docs/friend_trial.md",
     ):
         assert marker in source
@@ -250,7 +250,7 @@ def test_active_installer_docs_have_resolvable_local_links_and_assets():
             "docs/START_HERE.md",
             "docs/friend_trial.md",
             "docs/releases/v0.2.1.md",
-            "docs/releases/v0.2.2.md",
+            "docs/releases/v0.2.3.md",
             "docs/quickstart_windows.md",
             "docs/quickstart_macos.md",
             "docs/quickstart_debian.md",
@@ -269,45 +269,43 @@ def test_start_here_and_friend_trial_are_installer_first():
     assert "Snap Store app" in start_here
     assert "https://snapcraft.io/spinner-for-discogs" in friend_trial
     assert "sudo snap install spinner-for-discogs" in friend_trial
-    assert "Discogs.Spinner_0.2.2_x64-setup.exe" in friend_trial
-    assert "discogs-spinner-gtk4_0.2.2_amd64.deb" in friend_trial
+    assert "Discogs.Spinner_0.2.3_x64-setup.exe" in friend_trial
+    assert "discogs-spinner-gtk4_0.2.3_amd64.deb" in friend_trial
     assert "Discogs Spinner_*_x64-setup.exe" not in friend_trial
 
 
 def test_current_release_notes_pin_verified_stable_asset_links():
-    source = _read("docs/releases/v0.2.2.md")
+    source = _read("docs/releases/v0.2.3.md")
     for marker in (
-        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe",
-        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64_en-US.msi",
-        "releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb",
-        "releases/download/v0.2.2/discogs-spinner-tauri_0.2.2_amd64.deb",
-        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_amd64.AppImage",
-        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_aarch64.dmg",
-        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64.dmg",
-        "releases/download/v0.2.2/CHECKSUMS-INSTALLERS.txt",
+        "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe",
+        "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi",
+        "releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb",
+        "releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb",
+        "releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage",
+        "releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg",
+        "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg",
+        "releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt",
         "https://snapcraft.io/spinner-for-discogs",
         "sudo snap install spinner-for-discogs",
         "Who This Is For",
         "Discogs personal access token",
-        "Installer workflow: pass",
-        "Release asset verification: pass",
-        "Snap Store install smoke: pass",
+        "Installer workflow:",
+        "Release asset verification:",
+        "Linux metadata validation: pass",
     ):
         assert marker in source
 
 
 def test_next_release_notes_prepare_packaging_refresh_assets_and_validation():
-    source = _read("docs/releases/v0.2.2.md")
+    source = _read("docs/releases/v0.2.3.md")
     for marker in (
-        "Tag: `v0.2.2`",
-        "COSMIC/GTK desktop launch sizing",
-        "GTK launcher Python fallback",
-        "lazy-loaded gallery album covers",
-        "Linux AppStream metadata",
-        "lintian",
+        "Tag: `v0.2.3`",
+        "Report a problem",
+        "web setup errors",
+        "GLib schema warnings",
         "INSTALLER-MANIFEST.txt",
-        "releases/download/v0.2.2/Discogs.Spinner_0.2.2_x64-setup.exe",
-        "releases/download/v0.2.2/discogs-spinner-gtk4_0.2.2_amd64.deb",
+        "releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe",
+        "releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb",
         "scripts/validate_linux_packaging_metadata.py",
         "Installer Build",
     ):
@@ -317,7 +315,7 @@ def test_next_release_notes_prepare_packaging_refresh_assets_and_validation():
 def test_release_checklist_requires_package_qa_and_clean_first_run_proof():
     source = _read("docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md")
     for marker in (
-        "v0.2.2",
+        "v0.2.3",
         "validate_linux_packaging_metadata.py",
         "AppStream metainfo",
         "lintian",

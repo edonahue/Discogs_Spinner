@@ -117,8 +117,8 @@ def validate_metainfo() -> list[str]:
             errors.append("metainfo screenshots must include captions")
 
     release = root.find("releases/release")
-    if release is None or release.attrib.get("version") != "0.2.2":
-        errors.append("metainfo latest release must be version 0.2.2")
+    if release is None or release.attrib.get("version") != "0.2.3":
+        errors.append("metainfo latest release must be version 0.2.3")
     return errors
 
 
