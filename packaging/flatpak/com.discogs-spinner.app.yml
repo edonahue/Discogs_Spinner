@@ -65,5 +65,5 @@ modules:
       - type: git
         url: https://github.com/edonahue/Discogs_Spinner.git
         # Replace with the exact tag or commit SHA for each release
-        tag: v0.2.2
-        commit: PLACEHOLDER_COMMIT_SHA_REPLACE_BEFORE_SUBMISSION
+        tag: v0.2.3
+        commit: 0b3e01a73c5db20a8810c600975e8ee295579e10
