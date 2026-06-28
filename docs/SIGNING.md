@@ -1,63 +1,67 @@
-# Code Signing Checklist
+# Code Signing
 
-This document covers signing for macOS, Windows, and Debian distributions of Discogs Spinner.
-Signing was optional for the pilot / `v0.2.0` release line. For the recommended `v1.0.0` bar, Windows signing and macOS signing/notarization should be treated as release requirements.
+Signing for macOS, Windows, and Debian distributions of Discogs Spinner.
+Signing was optional for the pilot / `v0.2.0` line. For the `v1.0.0` bar, Windows
+signing and macOS signing + notarization are release requirements (see
+`docs/RELEASE_TARGET_v1.0.md`).
+
+## How it's already wired
+
+**`installer_build.yml` is already set up to sign — there is no workflow code to
+uncomment or change.** Its "Configure optional code-signing env" step reads the
+signing secrets and exports each one to `$GITHUB_ENV` *only when it is non-empty*.
+When the secrets are unset, the vars stay truly absent and Tauri produces clean
+**unsigned** bundles; when they're set, the macOS keychain-import step runs and
+Tauri signs (and, for macOS, notarizes). So enabling signing is entirely a matter
+of **adding the GitHub Actions secrets below and re-running a tagged build** —
+`tauri.conf.json` can keep `signingIdentity: null` because CI drives it via env.
+
+Add secrets under **Settings → Secrets and variables → Actions → New repository
+secret**, then push a `v*` tag (or re-run `installer_build.yml`).
 
 ---
 
 ## macOS
 
-**Requirement:** Apple Developer Program membership (~$99/yr at developer.apple.com)
+**Requires:** Apple Developer Program membership (~$99/yr).
 
-### Certificates
+### Secrets (exact names consumed by CI)
 
-1. Open Xcode → Settings → Accounts → Manage Certificates → create a "Developer ID Application" cert.
-2. Export the `.p12` from Keychain Access (File → Export Items), set a strong password.
-3. Base64-encode the file:
+| Secret | Value |
+|---|---|
+| `APPLE_CERTIFICATE` | base64 of the exported Developer ID Application `.p12` |
+| `APPLE_CERTIFICATE_PASSWORD` | password set when exporting the `.p12` |
+| `APPLE_SIGNING_IDENTITY` | the identity string, e.g. `Developer ID Application: Eric Donahue (XXXXXXXXXX)` |
+| `APPLE_ID` | your Apple ID email |
+| `APPLE_TEAM_ID` | 10-character team ID (developer.apple.com → Membership) |
+| `APPLE_APP_SPECIFIC_PASSWORD` | app-specific password (appleid.apple.com → Sign-In & Security) |
+
+### Steps
+
+1. In Xcode → Settings → Accounts → Manage Certificates, create a **Developer ID
+   Application** certificate.
+2. In Keychain Access, find that certificate and **File → Export Items** as a
+   password-protected `.p12`.
+3. Get the exact identity string for `APPLE_SIGNING_IDENTITY`:
    ```bash
-   base64 -i certificate.p12 | pbcopy
+   security find-identity -v -p codesigning
+   # → "Developer ID Application: Eric Donahue (XXXXXXXXXX)"
    ```
-4. Add GitHub secrets (Settings → Secrets and variables → Actions):
-   - `APPLE_CERTIFICATE_BASE64` — base64-encoded `.p12`
-   - `APPLE_CERTIFICATE_PASSWORD` — password you set on export
-   - `APPLE_ID` — your Apple ID email
-   - `APPLE_TEAM_ID` — 10-character team ID (visible in developer.apple.com → Membership)
-   - `APPLE_ID_PASSWORD` — app-specific password (appleid.apple.com → Sign-In & Security → App-Specific Passwords)
+4. Base64-encode the `.p12` for `APPLE_CERTIFICATE`:
+   ```bash
+   base64 -i certificate.p12 | pbcopy   # macOS, copies to clipboard
+   ```
+5. Add all six secrets above. CI imports the cert into a temporary keychain and
+   Tauri runs `xcrun notarytool submit` + `xcrun stapler staple` automatically.
 
-### Tauri configuration
+### Verify a signed + notarized build
 
-In `desktop_shell/src-tauri/tauri.conf.json`, the `bundle.macOS` section should reference:
-
-```json
-"macOS": {
-  "signingIdentity": "Developer ID Application: Your Name (TEAMID)",
-  "notarizationCredentials": {
-    "appleId": "your@apple.id",
-    "appleIdPassword": { "appleIdPassword": "xxxx-xxxx-xxxx-xxxx" },
-    "teamId": "XXXXXXXXXX"
-  }
-}
+```bash
+spctl --assess --type install --verbose=4 "/Applications/Discogs Spinner.app"   # → "accepted ... source=Notarized Developer ID"
+codesign --verify --deep --strict --verbose=2 "/Applications/Discogs Spinner.app"
 ```
 
-Tauri handles `xcrun notarytool submit` and `xcrun stapler staple` automatically when these values are set.
-
-### CI integration
-
-Uncomment the following env vars in the Tauri build step of `installer_build.yml`:
-
-```yaml
-env:
-  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-  APPLE_SIGNING_IDENTITY: "Developer ID Application: Your Name (TEAMID)"
-  APPLE_ID: ${{ secrets.APPLE_ID }}
-  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-```
-
-### Unsigned workaround for pilot users
-
-Until signing is activated, macOS users can bypass Gatekeeper with:
+### Unsigned workaround (until signing is on)
 
 ```bash
 xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
@@ -67,93 +71,82 @@ xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
 
 ## Windows
 
-### Option A: Unsigned (current `v0.2.0` posture)
+### Choosing a certificate path
 
-The NSIS installer produced by `cargo tauri build` works without a cert. Users will see a
-SmartScreen "Unknown publisher" warning. They click **More info → Run anyway** to proceed.
+`installer_build.yml` consumes `WINDOWS_CERTIFICATE` (base64 `.pfx`) and
+`WINDOWS_CERTIFICATE_PASSWORD`. The open question is *which kind of certificate* —
+the trade-offs:
 
-This is acceptable for the current stable line, but should not be the default experience for `v1.0.0`.
+| Option | SmartScreen | Cost / yr | Notes |
+|---|---|---|---|
+| **Unsigned** (current) | "Unknown publisher" warning; user clicks **More info → Run anyway** | $0 | Fine for `0.x`; not the `1.0` default experience |
+| **OV** (Organization Validation) | Warning persists until the binary builds download "reputation," then clears | ~$200–400 | Cheapest signed path; reputation can take weeks/many installs |
+| **EV** (Extended Validation) | Cleared **immediately** (no reputation wait) | ~$250–500 + hardware token / HSM | Strongest trust; requires a FIPS token or cloud HSM, more identity vetting |
+| **Azure Trusted Signing** | Cleared quickly (Microsoft-run) | ~$10/mo | Modern managed option; needs a verified Azure account + an eligible org/individual identity |
 
-### Option B: EV Code Signing Certificate (future)
+**Recommendation for this project:** since `1.0` is being approached gradually and
+the cost/instant-trust trade-off is the deciding factor, the pragmatic order is
+**Azure Trusted Signing** (cheapest path to fast SmartScreen trust if you can pass
+its identity verification) → **EV** (if you want a classic cert and accept the
+token) → **OV** (only if EV/Azure are unavailable; accept the reputation lag). Stay
+**unsigned** for any pre-`1.0` build — just keep the SmartScreen "Run anyway"
+workaround documented in the Windows quickstart. Revisit once a path is chosen;
+this doc currently lays out options rather than committing to one.
 
-EV certificates eliminate SmartScreen warnings and are required for Windows kernel drivers.
+### Secrets (once a `.pfx` is in hand)
 
-1. Obtain a certificate from DigiCert or Sectigo (~$300–500/yr for OV; EV requires extra identity verification).
-2. Export as a password-protected `.pfx` file, then base64-encode:
-   ```bash
-   base64 -i certificate.pfx
-   ```
-3. Add GitHub secrets:
-   - `TAURI_SIGNING_PRIVATE_KEY` — base64-encoded `.pfx`
-   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — password
+| Secret | Value |
+|---|---|
+| `WINDOWS_CERTIFICATE` | base64 of the password-protected `.pfx` |
+| `WINDOWS_CERTIFICATE_PASSWORD` | the `.pfx` password |
 
-### CI integration (Windows)
-
-Uncomment in `installer_build.yml`:
-
-```yaml
-env:
-  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+```bash
+base64 -w0 certificate.pfx   # Linux; on macOS use `base64 -i certificate.pfx`
 ```
+
+### Verify a signed installer
+
+```powershell
+Get-AuthenticodeSignature ".\Discogs.Spinner_x.y.z_x64-setup.exe" | Format-List
+# Status should be "Valid"; or: signtool verify /pa /v <installer>.exe
+```
+
+> **Not the same as updater signing.** `TAURI_SIGNING_PRIVATE_KEY` /
+> `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` are the **minisign** keys Tauri's updater
+> uses to sign `latest.json`/`.sig` artifacts — they are unrelated to Authenticode
+> code signing and do **not** remove SmartScreen warnings.
 
 ---
 
 ## Debian / Linux
 
-**Cost:** $0 — GPG signing only.
-
-### Sign a `.deb` with dpkg-sig
+**Cost:** $0 — GPG signing only; an unsigned `.deb` installs fine and is not a
+`1.0` blocker.
 
 ```bash
-# Install dpkg-sig if needed
 sudo apt install dpkg-sig
-
-# Sign the package
-dpkg-sig --sign builder discogs-spinner_0.2.0_amd64.deb
-
-# Verify
-dpkg-sig --verify discogs-spinner_0.2.0_amd64.deb
+dpkg-sig --sign builder discogs-spinner-gtk4_<version>_amd64.deb
+dpkg-sig --verify discogs-spinner-gtk4_<version>_amd64.deb
 ```
 
-### Distribute your public key
-
-Publish your GPG public key so users can verify:
+Distribute the public key so users can verify:
 
 ```bash
 gpg --export --armor YOUR_KEY_ID > discogs-spinner-pubkey.asc
-```
-
-Users add it:
-
-```bash
+# user side:
 sudo gpg --dearmor -o /usr/share/keyrings/discogs-spinner.gpg < discogs-spinner-pubkey.asc
 ```
 
-### Unsigned `.deb` for current release line
-
-An unsigned `.deb` installs fine via:
-
-```bash
-sudo dpkg -i discogs-spinner_0.2.0_amd64.deb
-```
-
-No blocker for the current public release line.
-
 ---
 
-## Adding Secrets to GitHub
+## Status / next steps
 
-1. Navigate to the repository on GitHub.
-2. Go to **Settings → Secrets and variables → Actions**.
-3. Click **New repository secret** for each secret listed above.
-4. After adding secrets, re-run the `installer_build.yml` workflow to produce signed artifacts.
-
----
-
-## macOS Signing/Notarization TODOs
-
-1. Define signing identity and certificate storage policy for CI.
-2. Add a codesign step for macOS release artifacts in tagged-release workflow.
-3. Add notarization submission + staple workflow and failure handling.
-4. Publish user-facing Gatekeeper troubleshooting section once signed builds ship.
+- ✅ CI is wired to consume all signing secrets (`installer_build.yml`); unsigned
+  by default, signed when secrets are present.
+- ⬜ **macOS:** enroll in Apple Developer Program, add the six `APPLE_*` secrets,
+  tag a build, verify with `spctl --assess`.
+- ⬜ **Windows:** choose a certificate path (see matrix above), add the two
+  `WINDOWS_CERTIFICATE*` secrets, verify with `Get-AuthenticodeSignature`.
+- ⬜ Once signed builds ship, add a user-facing Gatekeeper/SmartScreen
+  troubleshooting note to the OS quickstarts and flip the two signing gates in
+  `docs/V1_READINESS_TRACKER.md` to done.
