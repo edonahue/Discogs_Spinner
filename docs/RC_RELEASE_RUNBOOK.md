@@ -1,5 +1,12 @@
 # RC Release Runbook (`v0.2.0-rc1` and later)
 
+> **⚠️ Deprecated.** This runbook describes the legacy **tarball-based** release
+> candidate process driven by `tagged_release.yml`. The current release path
+> builds native installers via `installer_build.yml` — use
+> **[PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md)** to cut a release and
+> **[V1_RELEASE_FLOW.md](V1_RELEASE_FLOW.md)** for the end-to-end v1.0 sequence.
+> Kept for historical reference only.
+
 Owner: Engineering  
 Date created: 2026-02-26
 

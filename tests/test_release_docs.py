@@ -77,8 +77,8 @@ def test_support_matrix_and_v1_release_target_define_first_class_surfaces():
         assert marker in release_target
 
     for marker in (
-        "Windows signing wired and verified",
-        "macOS signing + notarization wired and verified",
+        "Windows signing secrets set + signed build verified",
+        "macOS signing + notarization secrets set + verified",
         "Live timing baseline recorded",
         "Small friend/beta cohort reviewed",
         "continue shipping `0.x` releases",
