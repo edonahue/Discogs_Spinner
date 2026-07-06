@@ -22,11 +22,11 @@ describe("Footer", () => {
     render(<Footer />);
 
     expect(
-      screen.getByText(/This product uses a Discogs API but is not endorsed/)
+      screen.getByText(/This product uses a Discogs API but is not endorsed/),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Data provided by Discogs" })).toHaveAttribute(
       "href",
-      "https://www.discogs.com/"
+      "https://www.discogs.com/",
     );
   });
 });

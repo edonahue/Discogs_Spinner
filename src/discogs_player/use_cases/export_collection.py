@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -86,7 +87,7 @@ def _is_secret_setting_key(key: str) -> bool:
     return any(marker in normalized for marker in SECRET_SETTING_MARKERS)
 
 
-def _redact_settings(settings: dict[str, object]) -> dict[str, object]:
+def _redact_settings(settings: Mapping[str, object]) -> dict[str, object]:
     redacted: dict[str, object] = {}
     for key, value in settings.items():
         redacted[key] = "<redacted>" if _is_secret_setting_key(key) else value
