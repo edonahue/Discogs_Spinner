@@ -44,7 +44,7 @@ function UpdateBanner() {
     <div className="app-update-banner">
       <span>Version {updateVersion} is available.</span>
       <a
-        href="https://github.com/edonahue/Discogs_Spinner/releases/latest"
+        href="https://github.com/edonahue/spinner-for-discogs/releases/latest"
         target="_blank"
         rel="noreferrer"
         className="app-link"

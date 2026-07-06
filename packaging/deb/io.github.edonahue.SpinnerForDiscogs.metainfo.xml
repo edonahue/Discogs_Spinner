@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.edonahue.DiscogsSpinner</id>
+  <id>io.github.edonahue.SpinnerForDiscogs</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>Discogs Spinner</name>
+  <name>Spinner for Discogs</name>
   <summary>Browse, spin, and value your Discogs vinyl collection</summary>
   <description>
-    <p>Discogs Spinner is a local-first desktop companion for vinyl collectors who already keep a Discogs collection.</p>
+    <p>Spinner for Discogs is a local-first desktop companion for vinyl collectors who already keep a Discogs collection.</p>
     <p>Connect a Discogs personal access token, sync your collection and wantlist, spin a random record, inspect market value, and keep daily collector context close without living in browser tabs.</p>
+    <p>This product uses a Discogs API but is not endorsed, certified or otherwise approved in any way by Discogs. Data provided by Discogs: https://www.discogs.com/.</p>
   </description>
-  <launchable type="desktop-id">discogs-spinner.desktop</launchable>
+  <launchable type="desktop-id">io.github.edonahue.SpinnerForDiscogs.desktop</launchable>
   <provides>
     <binary>dplayer</binary>
     <binary>dplayer-gui</binary>
@@ -17,16 +18,16 @@
   <screenshots>
     <screenshot type="default">
       <caption>Browse your synced record collection as a cover-art gallery.</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/01-browse-gallery.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/01-browse-gallery.png</image>
     </screenshot>
     <screenshot>
       <caption>Spin a record and inspect tracklist, value, and playback context.</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/02-spin-result.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/02-spin-result.png</image>
     </screenshot>
   </screenshots>
-  <url type="homepage">https://github.com/edonahue/Discogs_Spinner</url>
-  <url type="bugtracker">https://github.com/edonahue/Discogs_Spinner/issues</url>
-  <url type="help">https://github.com/edonahue/Discogs_Spinner/blob/main/docs/START_HERE.md</url>
+  <url type="homepage">https://github.com/edonahue/spinner-for-discogs</url>
+  <url type="bugtracker">https://github.com/edonahue/spinner-for-discogs/issues</url>
+  <url type="help">https://github.com/edonahue/spinner-for-discogs/blob/main/docs/START_HERE.md</url>
   <categories>
     <category>AudioVideo</category>
     <category>Audio</category>

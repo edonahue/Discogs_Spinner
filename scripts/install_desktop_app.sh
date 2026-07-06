@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-APP_NAME="Discogs Spinner"
+APP_NAME="Spinner for Discogs"
 DESKTOP_ID="discogs-player.desktop"
 ICON_NAME="discogs-player"
 LAUNCHER_NAME="discogs-player-gui"
@@ -62,7 +62,7 @@ log_line() {
 notify_failure() {
   local message="$1"
   if command -v notify-send >/dev/null 2>&1; then
-    notify-send "Discogs Spinner" "${message}" || true
+    notify-send "Spinner for Discogs" "${message}" || true
   fi
 }
 
@@ -90,7 +90,7 @@ run_with_python() {
     return 1
   fi
 
-  log_line "Launching Discogs Spinner with ${label} runtime (${py_bin})"
+  log_line "Launching Spinner for Discogs with ${label} runtime (${py_bin})"
   local rc=0
   if ensure_log_writable; then
     if "${py_bin}" -m discogs_player.ui_main "$@" >>"${LOG_PATH}" 2>&1; then
@@ -107,11 +107,11 @@ run_with_python() {
   fi
 
   if [ "${rc}" -eq 0 ]; then
-    log_line "Discogs Spinner exited cleanly via ${label} runtime"
+    log_line "Spinner for Discogs exited cleanly via ${label} runtime"
     return 0
   fi
 
-  log_line "Discogs Spinner exited with rc=${rc} via ${label} runtime"
+  log_line "Spinner for Discogs exited with rc=${rc} via ${label} runtime"
   return "${rc}"
 }
 
@@ -144,7 +144,7 @@ if [ -n "${SYS_PYTHON}" ]; then
   fi
 fi
 
-echo "Discogs Spinner launcher failed. See ${LOG_PATH}" >&2
+echo "Spinner for Discogs launcher failed. See ${LOG_PATH}" >&2
 echo "GTK4/libadwaita Python bindings are not available." >&2
 echo "Install on Pop!_OS with:" >&2
 echo "  ${APT_GUI_CMD}" >&2
@@ -184,7 +184,7 @@ echo "First-time setup for vinyl collectors:"
 echo "  1. Get your Discogs personal access token:"
 echo "     https://www.discogs.com/settings/developers"
 echo "     (Personal Access Tokens → Generate new token)"
-echo "  2. Launch Discogs Spinner and paste the token into the setup wizard."
+echo "  2. Launch Spinner for Discogs and paste the token into the setup wizard."
 echo "  3. Sync once, then browse your records and use Spin for a quick pick."
 echo
 echo "Terminal alternative:"

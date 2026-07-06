@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate the Tauri updater key pair for Discogs Spinner.
+# Generate the Tauri updater key pair for Spinner for Discogs.
 #
 # Run this ONCE, locally, before the first signed release. The public key
 # goes into tauri.conf.json; the private key and passphrase go into GitHub

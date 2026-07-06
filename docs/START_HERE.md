@@ -67,7 +67,7 @@ Proving it works: the app shows your collection and `dplayer status` shows colle
 Proving it works: the window appears and displays your collection after `dplayer sync`.
 
 ### macOS native installer (~5 min)
-`Discogs Spinner.app` opens from `/Applications`, the setup flow accepts your token, and the collection view loads after sync.
+`Spinner for Discogs.app` opens from `/Applications`, the setup flow accepts your token, and the collection view loads after sync.
 Proving it works: the app syncs and loads your collection without errors.
 
 ---

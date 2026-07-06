@@ -8,10 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from discogs_player.brand import DISCOGS_ATTRIBUTION
 from discogs_player.core.settings import list_settings
 from discogs_player.data.db import LATEST_SCHEMA_VERSION, get_connection
 from discogs_player.data.repo import get_release_counts, query_releases_for_export
 
+ATTRIBUTION_COLUMNS: tuple[str, str] = ("data_source", "data_source_url")
 CSV_COLUMNS: tuple[str, ...] = (
     "discogs_release_id",
     "artist",
@@ -35,6 +37,16 @@ CSV_COLUMNS: tuple[str, ...] = (
     "market_highest",
     "market_currency",
     "market_last_updated_at",
+    *ATTRIBUTION_COLUMNS,
+)
+SECRET_SETTING_MARKERS: tuple[str, ...] = (
+    "token",
+    "secret",
+    "password",
+    "credential",
+    "access_token",
+    "refresh_token",
+    "client_secret",
 )
 
 
@@ -69,6 +81,26 @@ def _as_dict_list(value: object | None) -> list[dict[str, object]]:
     return rows
 
 
+def _is_secret_setting_key(key: str) -> bool:
+    normalized = key.strip().lower()
+    return any(marker in normalized for marker in SECRET_SETTING_MARKERS)
+
+
+def _redact_settings(settings: dict[str, object]) -> dict[str, object]:
+    redacted: dict[str, object] = {}
+    for key, value in settings.items():
+        redacted[key] = "<redacted>" if _is_secret_setting_key(key) else value
+    return redacted
+
+
+def _add_csv_attribution(item: dict[str, object]) -> dict[str, object]:
+    return {
+        **item,
+        "data_source": DISCOGS_ATTRIBUTION["text"],
+        "data_source_url": DISCOGS_ATTRIBUTION["url"],
+    }
+
+
 def build_export_payload(*, include_inactive: bool = True) -> dict[str, object]:
     conn = get_connection()
     try:
@@ -83,7 +115,8 @@ def build_export_payload(*, include_inactive: bool = True) -> dict[str, object]:
         "schema_version": LATEST_SCHEMA_VERSION,
         "include_inactive": include_inactive,
         "counts": counts,
-        "settings": settings,
+        "settings": _redact_settings(settings),
+        "attribution": DISCOGS_ATTRIBUTION,
         "release_count": len(releases),
         "releases": releases,
     }
@@ -114,8 +147,9 @@ def run_export_collection(
             writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
             writer.writeheader()
             for item in releases:
+                row = _add_csv_attribution(item)
                 writer.writerow(
-                    {key: _serialize_csv_value(item.get(key)) for key in CSV_COLUMNS}
+                    {key: _serialize_csv_value(row.get(key)) for key in CSV_COLUMNS}
                 )
 
     return {
@@ -124,4 +158,5 @@ def run_export_collection(
         "output_path": str(output),
         "include_inactive": include_inactive,
         "release_count": len(releases),
+        "attribution": DISCOGS_ATTRIBUTION,
     }

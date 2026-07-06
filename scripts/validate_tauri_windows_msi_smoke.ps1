@@ -30,8 +30,8 @@ function Write-ProcessSnapshot {
     $processes = @(
         Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
             Where-Object {
-                $_.Name -match "msiexec|Discogs Spinner|dplayer-api" -or
-                ($_.CommandLine -and $_.CommandLine -match "msiexec|Discogs Spinner|dplayer-api")
+                $_.Name -match "msiexec|Spinner for Discogs|dplayer-api" -or
+                ($_.CommandLine -and $_.CommandLine -match "msiexec|Spinner for Discogs|dplayer-api")
             } |
             Sort-Object ProcessId
     )
@@ -59,13 +59,13 @@ function Get-InstallRoots {
     $roots.Add($FallbackRoot)
 
     if ($env:LOCALAPPDATA) {
-        $roots.Add((Join-Path $env:LOCALAPPDATA "Programs\Discogs Spinner"))
+        $roots.Add((Join-Path $env:LOCALAPPDATA "Programs\Spinner for Discogs"))
     }
     if ($env:ProgramFiles) {
-        $roots.Add((Join-Path $env:ProgramFiles "Discogs Spinner"))
+        $roots.Add((Join-Path $env:ProgramFiles "Spinner for Discogs"))
     }
     if (${env:ProgramFiles(x86)}) {
-        $roots.Add((Join-Path ${env:ProgramFiles(x86)} "Discogs Spinner"))
+        $roots.Add((Join-Path ${env:ProgramFiles(x86)} "Spinner for Discogs"))
     }
 
     return @(
@@ -161,7 +161,7 @@ function Get-MsiLogStatus {
         }
     }
 
-    $hasProductSuccess = $content.Contains("Product: Discogs Spinner -- Installation completed successfully.")
+    $hasProductSuccess = $content.Contains("Product: Spinner for Discogs -- Installation completed successfully.")
     $hasStatusZero = $content.Contains("Installation success or error status: 0.")
     $hasInstallReturn = $content -match 'Action ended .*INSTALL\. Return value 1\.'
     $hasFailure = $content.Contains("Installation failed.") -or

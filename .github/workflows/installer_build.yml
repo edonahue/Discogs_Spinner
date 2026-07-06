@@ -330,15 +330,15 @@ jobs:
           New-Item -Force -ItemType Directory $stageDir | Out-Null
 
           # Cargo names the binary after the package ("discogs-spinner.exe");
-          # the manifest expects the productName ("Discogs Spinner.exe"), so rename.
+          # the manifest expects the productName ("Spinner for Discogs.exe"), so rename.
           $cargoExe = Join-Path $relDir "discogs-spinner.exe"
           if (-not (Test-Path $cargoExe)) {
             Write-Host "EXEs in release dir:"
             Get-ChildItem $relDir -Filter "*.exe" -File | Select-Object Name
             Write-Error "Main app binary not found: $cargoExe"; exit 1
           }
-          Copy-Item $cargoExe (Join-Path $stageDir "Discogs Spinner.exe")
-          Write-Host "Staged: discogs-spinner.exe -> Discogs Spinner.exe"
+          Copy-Item $cargoExe (Join-Path $stageDir "Spinner for Discogs.exe")
+          Write-Host "Staged: discogs-spinner.exe -> Spinner for Discogs.exe"
 
           # Sidecar: strip the target-triple suffix that Tauri adds to source binaries.
           # At runtime the app looks for "dplayer-api.exe" in its own directory.
@@ -426,7 +426,7 @@ jobs:
           if (-not $makeappx) { Write-Error "makeappx.exe not found in Windows SDK"; exit 1 }
           Write-Host "Using $($makeappx.FullName)"
 
-          $outFile = "dist/Discogs.Spinner_$($env:APP_VERSION)_x64.msix"
+          $outFile = "dist/Spinner-for-Discogs_$($env:APP_VERSION)_x64.msix"
           & "$($makeappx.FullName)" pack /d dist/msix-stage /p $outFile /nv
           Write-Host "Built: $outFile"
           echo "MSIX_PATH=$outFile" | Out-File -FilePath $env:GITHUB_ENV -Append
@@ -435,7 +435,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: installer-msix-windows
-          path: dist/Discogs.Spinner_*_x64.msix
+          path: dist/Spinner-for-Discogs_*_x64.msix
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -604,23 +604,27 @@ jobs:
           mapfile -d '' -t exes < <(find "$RELEASE_RAW_DIR"/installer-windows-* -type f -name '*.exe' -print0 | sort -z)
           mapfile -d '' -t msix_files < <(find "$RELEASE_RAW_DIR"/installer-msix-* -type f -name '*.msix' -print0 2>/dev/null | sort -z || true)
 
-          copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
-          copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
+          copy_asset_group "spinner-for-discogs-gtk4_${RELEASE_VERSION}_amd64.deb" "${gtk_debs[@]}"
+          copy_asset_group "spinner-for-discogs-tauri_${RELEASE_VERSION}_amd64.deb" "${linux_debs[@]}"
 
           for appimage in "${appimages[@]}"; do
-            copy_single_asset "$appimage" "$(basename "$appimage")"
+            copy_single_asset "$appimage" "Spinner-for-Discogs_${RELEASE_VERSION}_amd64.AppImage"
           done
           for dmg in "${dmgs[@]}"; do
-            copy_single_asset "$dmg" "$(basename "$dmg")"
+            if [[ "$dmg" == *"aarch64-apple-darwin"* || "$(basename "$dmg")" == *"aarch64"* ]]; then
+              copy_single_asset "$dmg" "Spinner-for-Discogs_${RELEASE_VERSION}_aarch64.dmg"
+            else
+              copy_single_asset "$dmg" "Spinner-for-Discogs_${RELEASE_VERSION}_x64.dmg"
+            fi
           done
           for msi in "${msis[@]}"; do
-            copy_single_asset "$msi" "$(basename "$msi")"
+            copy_single_asset "$msi" "Spinner-for-Discogs_${RELEASE_VERSION}_x64_en-US.msi"
           done
           for exe in "${exes[@]}"; do
-            copy_single_asset "$exe" "$(basename "$exe")"
+            copy_single_asset "$exe" "Spinner-for-Discogs_${RELEASE_VERSION}_x64-setup.exe"
           done
           for msix in "${msix_files[@]}"; do
-            copy_single_asset "$msix" "$(basename "$msix")"
+            copy_single_asset "$msix" "Spinner-for-Discogs_${RELEASE_VERSION}_x64.msix"
           done
 
       - name: Generate Tauri updater manifest (latest.json)
@@ -636,7 +640,7 @@ jobs:
           fi
 
           pub_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          base_url="https://github.com/edonahue/Discogs_Spinner/releases/download/${RELEASE_TAG}"
+          base_url="https://github.com/edonahue/spinner-for-discogs/releases/download/${RELEASE_TAG}"
 
           read_sig() {
             local f="$1"
@@ -692,7 +696,7 @@ jobs:
           platforms = json.loads('''$platforms''')
           manifest = {
               "version": "${RELEASE_TAG}",
-              "notes": "See https://github.com/edonahue/Discogs_Spinner/releases/tag/${RELEASE_TAG}",
+              "notes": "See https://github.com/edonahue/spinner-for-discogs/releases/tag/${RELEASE_TAG}",
               "pub_date": "${pub_date}",
               "platforms": platforms,
           }
@@ -706,8 +710,8 @@ jobs:
         run: |
           echo "Published asset candidates:"
           ls -1 "$RELEASE_PUBLISH_DIR" | sort
-          test -f "$RELEASE_PUBLISH_DIR/discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb"
-          test -f "$RELEASE_PUBLISH_DIR/discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb"
+          test -f "$RELEASE_PUBLISH_DIR/spinner-for-discogs-gtk4_${RELEASE_VERSION}_amd64.deb"
+          test -f "$RELEASE_PUBLISH_DIR/spinner-for-discogs-tauri_${RELEASE_VERSION}_amd64.deb"
           ls "$RELEASE_PUBLISH_DIR"/*.dmg >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null
           ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null
@@ -731,7 +735,7 @@ jobs:
         run: |
           cd "$RELEASE_PUBLISH_DIR"
           {
-            echo "# Discogs Spinner ${RELEASE_TAG} Installer Manifest"
+            echo "# Spinner for Discogs ${RELEASE_TAG} Installer Manifest"
             echo ""
             echo "Generated by Installer Build for ${GITHUB_SHA}."
             echo ""
@@ -753,7 +757,7 @@ jobs:
           if [[ ! -f "$RELEASE_NOTES_PATH" ]]; then
             echo "WARNING: $RELEASE_NOTES_PATH not found — using placeholder for test/dev tag."
             mkdir -p "$(dirname "$RELEASE_NOTES_PATH")"
-            printf '# Discogs Spinner %s\n\nTest/CI build.\n' "$RELEASE_TAG" > "$RELEASE_NOTES_PATH"
+            printf '# Spinner for Discogs %s\n\nTest/CI build.\n' "$RELEASE_TAG" > "$RELEASE_NOTES_PATH"
           fi
 
       - name: Create or update GitHub Release metadata
@@ -763,11 +767,11 @@ jobs:
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" \
-              --title "Discogs Spinner $RELEASE_TAG" \
+              --title "Spinner for Discogs $RELEASE_TAG" \
               --notes-file "$RELEASE_NOTES_PATH"
           else
             gh release create "$RELEASE_TAG" \
-              --title "Discogs Spinner $RELEASE_TAG" \
+              --title "Spinner for Discogs $RELEASE_TAG" \
               --notes-file "$RELEASE_NOTES_PATH"
           fi
 
@@ -793,8 +797,8 @@ jobs:
           echo "Published release assets:"
           printf '%s\n' "$asset_names"
 
-          grep -Fx "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"
-          grep -Fx "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"
+          grep -Fx "spinner-for-discogs-gtk4_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"
+          grep -Fx "spinner-for-discogs-tauri_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"
           grep -F ".AppImage" <<<"$asset_names"
           grep -F ".dmg" <<<"$asset_names"
           grep -F ".msi" <<<"$asset_names"

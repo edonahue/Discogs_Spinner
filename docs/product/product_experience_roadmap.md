@@ -1,8 +1,8 @@
-# Discogs Spinner Product Experience Roadmap
+# Spinner for Discogs Product Experience Roadmap
 
 ## What The App Is For
 
-Discogs Spinner is a local-first collector companion for people who already maintain a Discogs collection and want a better daily loop than living in browser tabs.
+Spinner for Discogs is a local-first collector companion for people who already maintain a Discogs collection and want a better daily loop than living in browser tabs.
 
 Core promise:
 

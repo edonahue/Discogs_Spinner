@@ -37,6 +37,10 @@ limits, authentication requirements, or availability without notice.
 The project is not affiliated with or endorsed by Discogs, Spotify, Apple,
 Google, YouTube, or other referenced brands/services unless explicitly stated.
 
+For Discogs specifically: This product uses a Discogs API but is not endorsed,
+certified or otherwise approved in any way by Discogs. Data provided by
+Discogs: https://www.discogs.com/.
+
 ## Warranty And Liability
 
 The software is provided "as is" without warranties. To the fullest extent

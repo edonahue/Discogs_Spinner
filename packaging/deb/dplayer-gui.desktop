@@ -1,12 +1,12 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Discogs Spinner
+Name=Spinner for Discogs
 Comment=Browse, spin, and value your Discogs vinyl collection
 Exec=dplayer-gui
-Icon=discogs-spinner
+Icon=io.github.edonahue.SpinnerForDiscogs
 Terminal=false
 Categories=AudioVideo;Audio;Player;Music;
 Keywords=Discogs;Records;Vinyl;Collection;Wantlist;Market Value;Spotify;YouTube;Music;
 StartupNotify=true
-StartupWMClass=com.discogs_player.app
+StartupWMClass=io.github.edonahue.SpinnerForDiscogs

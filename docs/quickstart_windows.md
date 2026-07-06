@@ -22,12 +22,12 @@ This installs the same signed package available on GitHub Releases and keeps the
 
 **Option B — Direct download:**
 
-- Recommended installer: [Discogs Spinner_0.2.3_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe)
-- MSI installer: [Discogs Spinner_0.2.3_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
-- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- Recommended installer: [Windows setup EXE (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe)
+- MSI installer: [Windows MSI (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/spinner-for-discogs/releases/latest)
 
-Run the installer and launch **Discogs Spinner** from the Start menu.
+Run the installer and launch **Spinner for Discogs** from the Start menu.
 
 What you may see:
 
@@ -73,8 +73,8 @@ dplayer play --last-spin --open
 If you want the Python CLI in PowerShell in addition to the native app, install it from source:
 
 ```powershell
-git clone https://github.com/edonahue/Discogs_Spinner.git
-cd Discogs_Spinner
+git clone https://github.com/edonahue/spinner-for-discogs.git
+cd spinner-for-discogs
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip

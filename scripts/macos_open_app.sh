@@ -2,15 +2,15 @@
 # macos_open_app.sh — Remove Gatekeeper quarantine and open the app.
 #
 # Usage:
-#   bash scripts/macos_open_app.sh ["/path/to/Discogs Spinner.app"]
+#   bash scripts/macos_open_app.sh ["/path/to/Spinner for Discogs.app"]
 #
-# Defaults to /Applications/Discogs Spinner.app if no argument is given.
+# Defaults to /Applications/Spinner for Discogs.app if no argument is given.
 set -euo pipefail
 
-APP="${1:-/Applications/Discogs Spinner.app}"
+APP="${1:-/Applications/Spinner for Discogs.app}"
 
 if [[ ! -d "$APP" ]]; then
-    echo "Usage: $0 \"/path/to/Discogs Spinner.app\"" >&2
+    echo "Usage: $0 \"/path/to/Spinner for Discogs.app\"" >&2
     echo "App not found: $APP" >&2
     exit 1
 fi

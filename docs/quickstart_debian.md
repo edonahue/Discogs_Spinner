@@ -38,9 +38,9 @@ What success looks like:
 
 Download the current stable GTK `.deb` directly:
 
-- [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
-- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/spinner-for-discogs/releases/latest)
 
 Then install it:
 
@@ -48,7 +48,7 @@ Then install it:
 sudo apt install ./discogs-spinner-gtk4_0.2.3_amd64.deb
 ```
 
-Launch **Discogs Spinner** from your app menu, or run:
+Launch **Spinner for Discogs** from your app menu, or run:
 
 ```bash
 dplayer-gui
@@ -70,9 +70,9 @@ What success looks like:
 
 Download the current stable AppImage directly:
 
-- [Discogs Spinner_0.2.3_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
-- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- [Linux AppImage (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/spinner-for-discogs/releases/latest)
 
 Then:
 
@@ -93,9 +93,9 @@ chmod +x Discogs.Spinner_0.2.3_amd64.AppImage
 
 If you want the Tauri desktop package instead of the GTK build, download:
 
-- [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
-- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/spinner-for-discogs/releases/latest)
 
 Then install it:
 
@@ -161,8 +161,8 @@ sudo apt install -y \
   libsecret-1-0 build-essential python3-dev \
   python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 \
   libadwaita-1-0 gir1.2-gdkpixbuf-2.0 xvfb
-git clone https://github.com/edonahue/Discogs_Spinner.git
-cd Discogs_Spinner
+git clone https://github.com/edonahue/spinner-for-discogs.git
+cd spinner-for-discogs
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip

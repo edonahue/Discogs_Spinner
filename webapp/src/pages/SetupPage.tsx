@@ -55,7 +55,7 @@ export function SetupPage() {
   return (
     <main className="app-page app-page--narrow">
       <section className="app-surface app-card" style={{ marginTop: "2.5rem" }}>
-        <h1 className="app-page__title">Welcome to Discogs Spinner</h1>
+        <h1 className="app-page__title">Welcome to Spinner for Discogs</h1>
         <p className="app-page__subtitle" style={{ marginBottom: "1.25rem" }}>
           Discogs setup is required. Playback providers are optional and can be connected later.
         </p>

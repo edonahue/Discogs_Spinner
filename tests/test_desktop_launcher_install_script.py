@@ -20,6 +20,6 @@ def test_install_desktop_app_launcher_includes_logging_and_runtime_fallback():
         'run_with_python "${VENV_PY}" "venv"',
         'SYS_PYTHON="/usr/bin/python3"',
         'run_with_python "${SYS_PYTHON}" "system"',
-        'echo "Discogs Spinner launcher failed. See ${LOG_PATH}" >&2',
+        'echo "Spinner for Discogs launcher failed. See ${LOG_PATH}" >&2',
     ):
         assert marker in source

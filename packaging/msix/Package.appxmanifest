@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  MSIX Package Manifest for Discogs Spinner
+  MSIX Package Manifest for Spinner for Discogs
   ==========================================
   Before submitting to the Microsoft Store, update the Identity and Publisher
   values below with the ones assigned by Partner Center:
@@ -58,7 +58,7 @@
   </Resources>
 
   <Applications>
-    <Application Id="DiscogsSpinner" Executable="Discogs Spinner.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="SpinnerForDiscogs" Executable="Spinner for Discogs.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="Spinner for Discogs"
         Description="Browse, spin, and value your Discogs vinyl collection."
@@ -67,7 +67,7 @@
         Square44x44Logo="assets\Square44x44Logo.png">
         <uap:DefaultTile
           Square71x71Logo="assets\Square71x71Logo.png"
-          ShortName="Discogs Spinner" />
+          ShortName="Spinner for Discogs" />
       </uap:VisualElements>
     </Application>
   </Applications>

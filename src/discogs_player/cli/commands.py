@@ -12,6 +12,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from discogs_player.brand import DISCOGS_ATTRIBUTION
 from discogs_player.capabilities import get_capabilities, get_player_backend
 from discogs_player.integrations.player_backend import (
     PlayerApiError,
@@ -103,7 +104,7 @@ APT_INSTALL_CMD = (
     "build-essential python3-dev"
 )
 
-app = typer.Typer(help="Discogs Spinner CLI")
+app = typer.Typer(help="Spinner for Discogs CLI")
 device_app = typer.Typer(help="Manage default playback device (Spotify addon)")
 config_app = typer.Typer(help="Manage local app settings")
 auth_app = typer.Typer(help="Authenticate with external services")
@@ -149,7 +150,7 @@ def cli_root(
     version_flag: bool = typer.Option(
         False,
         "--version",
-        help="Show the installed Discogs Spinner version and exit.",
+        help="Show the installed Spinner for Discogs version and exit.",
         is_eager=True,
     ),
 ) -> None:
@@ -212,8 +213,32 @@ def _print_missing_dependency(module_name: str | None) -> None:
 
 
 def _emit_json(payload: object) -> None:
+    if isinstance(payload, dict) and _looks_like_discogs_payload(payload):
+        payload = {**payload, "attribution": DISCOGS_ATTRIBUTION}
     sys.stdout.write(json.dumps(payload, indent=2, sort_keys=True))
     sys.stdout.write("\n")
+
+
+def _looks_like_discogs_payload(payload: dict[str, object]) -> bool:
+    if "attribution" in payload:
+        return False
+    if "onboarding_stage" in payload or "provider_readiness" in payload:
+        return False
+    discogs_keys = {
+        "releases",
+        "release",
+        "discogs_release_id",
+        "wantlist",
+        "wantlist_entries",
+        "review_queue",
+        "market",
+        "market_value",
+        "tracklist",
+        "tracks",
+        "collection",
+        "collection_value",
+    }
+    return any(key in payload for key in discogs_keys)
 
 
 def _render_status_table(report: dict[str, object]) -> None:

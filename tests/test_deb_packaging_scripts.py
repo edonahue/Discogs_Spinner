@@ -17,12 +17,12 @@ def test_build_deb_script_bundles_offline_wheelhouse():
         "for candidate in python3.10 python3",
         "build_deb.sh must build the wheelhouse with Python 3.10",
         'WHEEL_DIR="${STAGING_DIR}${INSTALL_PREFIX}/wheels"',
-        'METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"',
+        'METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.SpinnerForDiscogs.metainfo.xml"',
         'cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"',
         'awk -F\'"\'',
         '"$PYTHON_BIN" -m pip wheel --wheel-dir "$WHEEL_DIR" \'.[web]\'',
-        'cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.DiscogsSpinner.metainfo.xml"',
-        'Discogs Spinner Contributors <discogs_player+maintainer@users.noreply.github.com>',
+        'cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.SpinnerForDiscogs.metainfo.xml"',
+        'Spinner for Discogs Contributors <discogs_player+maintainer@users.noreply.github.com>',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.main "$@"',
         'exec /opt/discogs-spinner/venv/bin/python -m discogs_player.api_main "$@"',
         'export DP_PERF_PROFILE="${DP_PERF_PROFILE:-quiet}"',
@@ -73,13 +73,13 @@ def test_installer_workflow_builds_gtk4_deb_with_python_310():
 
 def test_linux_packaging_metadata_is_validated_before_release():
     validator = _read("scripts/validate_linux_packaging_metadata.py")
-    metainfo = _read("packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml")
+    metainfo = _read("packaging/deb/io.github.edonahue.SpinnerForDiscogs.metainfo.xml")
     workflow = _read(".github/workflows/installer_build.yml")
     hygiene = _read("scripts/prepublish_hygiene_check.sh")
 
     for marker in (
-        "io.github.edonahue.DiscogsSpinner",
-        "discogs-spinner.desktop",
+        "io.github.edonahue.SpinnerForDiscogs",
+        "io.github.edonahue.SpinnerForDiscogs.desktop",
         "Discogs personal access token",
         "sync your collection and wantlist",
         "spin a random record",

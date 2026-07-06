@@ -30,13 +30,15 @@ description: |
   - Spotify and YouTube Music are optional integrations.
   - Spinner for Discogs does not stream audio itself; it controls or opens
     external playback services when configured.
-  - This is an unofficial third-party app and is not affiliated with Discogs.
+  - This product uses a Discogs API but is not endorsed, certified or otherwise
+    approved in any way by Discogs.
+  - Data provided by Discogs: https://www.discogs.com/.
 
 license: MIT
-website: https://github.com/edonahue/Discogs_Spinner
-contact: https://github.com/edonahue/Discogs_Spinner/issues
-source-code: https://github.com/edonahue/Discogs_Spinner
-issues: https://github.com/edonahue/Discogs_Spinner/issues
+website: https://github.com/edonahue/spinner-for-discogs
+contact: https://github.com/edonahue/spinner-for-discogs/issues
+source-code: https://github.com/edonahue/spinner-for-discogs
+issues: https://github.com/edonahue/spinner-for-discogs/issues
 icon: desktop_shell/icons/icon.png
 grade: stable
 confinement: strict
@@ -53,7 +55,7 @@ layout:
     bind: $SNAP/usr/share/glib-2.0/schemas
 
 parts:
-  discogs-spinner:
+  spinner-for-discogs:
     plugin: python
     source: .
     python-packages:
@@ -87,13 +89,13 @@ parts:
     plugin: dump
     source: .
     organize:
-      packaging/deb/dplayer-gui.desktop: usr/share/applications/discogs-spinner.desktop
-      assets/icons/discogs-player.svg: usr/share/icons/hicolor/scalable/apps/discogs-spinner.svg
-      packaging/metainfo/com.discogs-spinner.app.metainfo.xml: usr/share/metainfo/com.discogs-spinner.app.metainfo.xml
+      packaging/deb/dplayer-gui.desktop: usr/share/applications/io.github.edonahue.SpinnerForDiscogs.desktop
+      assets/icons/discogs-player.svg: usr/share/icons/hicolor/scalable/apps/io.github.edonahue.SpinnerForDiscogs.svg
+      packaging/metainfo/com.discogs-spinner.app.metainfo.xml: usr/share/metainfo/io.github.edonahue.SpinnerForDiscogs.metainfo.xml
     stage:
-      - usr/share/applications/discogs-spinner.desktop
-      - usr/share/icons/hicolor/scalable/apps/discogs-spinner.svg
-      - usr/share/metainfo/com.discogs-spinner.app.metainfo.xml
+      - usr/share/applications/io.github.edonahue.SpinnerForDiscogs.desktop
+      - usr/share/icons/hicolor/scalable/apps/io.github.edonahue.SpinnerForDiscogs.svg
+      - usr/share/metainfo/io.github.edonahue.SpinnerForDiscogs.metainfo.xml
     override-build: |
       craftctl default
       sed -i 's|^Exec=.*|Exec=spinner-for-discogs|' \
@@ -102,7 +104,7 @@ parts:
 apps:
   spinner-for-discogs:
     command: bin/dplayer-gui
-    desktop: usr/share/applications/discogs-spinner.desktop
+    desktop: usr/share/applications/io.github.edonahue.SpinnerForDiscogs.desktop
     extensions: [gnome]
     plugs:
       - network

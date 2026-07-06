@@ -386,3 +386,11 @@ def test_extract_release_tracklist_rejects_invalid_shape():
     client = DiscogsClient(token="token")
     with pytest.raises(DiscogsApiError, match="tracklist had unexpected format"):
         client._extract_release_tracklist({"tracklist": {"position": "A1"}})
+
+
+def test_discogs_client_user_agent_uses_public_product_name():
+    client = DiscogsClient(token="token")
+
+    assert client.user_agent.startswith("SpinnerForDiscogs/")
+    assert "github.com/edonahue/spinner-for-discogs" in client.user_agent
+    assert client._headers()["User-Agent"] == client.user_agent

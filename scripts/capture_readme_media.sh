@@ -21,7 +21,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SCREENSHOTS_DIR="$REPO_ROOT/docs/media/screenshots"
 GIF_DIR="$REPO_ROOT/docs/media/gif"
 TMP_DIR="$(mktemp -d)"
-WINDOW_TITLE="Discogs Spinner"
+WINDOW_TITLE="Spinner for Discogs"
 WINDOW_W=1440
 WINDOW_H=900
 

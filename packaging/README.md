@@ -9,7 +9,7 @@ Files for the GTK4 Linux desktop `.deb` package:
 | File | Purpose |
 |------|---------|
 | `dplayer-gui.desktop` | Desktop launcher (shows app in application menu) |
-| `io.github.edonahue.DiscogsSpinner.metainfo.xml` | AppStream metadata for Linux software-center listings |
+| `io.github.edonahue.SpinnerForDiscogs.metainfo.xml` | AppStream metadata for Linux software-center listings |
 | `postinst` | Post-install script — creates `/opt/discogs-spinner/venv` and installs the bundled wheelhouse offline |
 
 Built by `scripts/build_deb.sh` using `fpm`. See `desktop_shell/README.md` for the

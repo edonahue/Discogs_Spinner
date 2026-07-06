@@ -14,11 +14,11 @@
 # 2. Add screenshots to packaging/metainfo/ per Flathub requirements.
 #
 # 3. Submit a PR to https://github.com/flathub/flathub with this file
-#    (renamed to com.discogs-spinner.app.yml) and the generated deps JSON.
+#    (renamed to io.github.edonahue.SpinnerForDiscogs.yml) and the generated deps JSON.
 #
 # 4. Flathub review typically takes 1-4 weeks.
 #
-app-id: com.discogs-spinner.app
+app-id: io.github.edonahue.SpinnerForDiscogs
 runtime: org.gnome.Platform
 runtime-version: "48"
 sdk: org.gnome.Sdk
@@ -48,7 +48,7 @@ modules:
   # Uncomment and regenerate when deps change.
   # - python3-deps.json
 
-  - name: discogs-spinner
+  - name: spinner-for-discogs
     buildsystem: simple
     build-commands:
       # Install the package and runtime deps into the Flatpak prefix.
@@ -56,14 +56,14 @@ modules:
       - pip3 install --prefix=/app --no-build-isolation --no-deps .
       # Install the metainfo and desktop files
       - install -Dm644 packaging/metainfo/com.discogs-spinner.app.metainfo.xml
-          /app/share/metainfo/com.discogs-spinner.app.metainfo.xml
+          /app/share/metainfo/io.github.edonahue.SpinnerForDiscogs.metainfo.xml
       - install -Dm644 packaging/deb/dplayer-gui.desktop
-          /app/share/applications/discogs-spinner.desktop
+          /app/share/applications/io.github.edonahue.SpinnerForDiscogs.desktop
       - install -Dm644 assets/icons/discogs-player.svg
-          /app/share/icons/hicolor/scalable/apps/com.discogs-spinner.app.svg
+          /app/share/icons/hicolor/scalable/apps/io.github.edonahue.SpinnerForDiscogs.svg
     sources:
       - type: git
-        url: https://github.com/edonahue/Discogs_Spinner.git
+        url: https://github.com/edonahue/spinner-for-discogs.git
         # Replace with the exact tag or commit SHA for each release
         tag: v0.2.3
         commit: 0b3e01a73c5db20a8810c600975e8ee295579e10

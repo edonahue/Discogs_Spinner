@@ -1,4 +1,4 @@
-# Discogs Spinner Web App
+# Spinner for Discogs Web App
 
 React + TypeScript multi-page frontend for the local `dplayer-api` service.
 

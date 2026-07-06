@@ -268,7 +268,14 @@ def test_review_list_json_output(monkeypatch):
     )
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == expected
+    payload = json.loads(result.output)
+    assert payload == {
+        **expected,
+        "attribution": {
+            "text": "Data provided by Discogs",
+            "url": "https://www.discogs.com/",
+        },
+    }
     assert captured == {"report_path": "/tmp/audit.json", "limit": 25}
 
 
@@ -1259,7 +1266,13 @@ def test_value_show_json_output(monkeypatch):
     result = runner.invoke(commands.app, ["value", "show", "123", "--json"])
 
     assert result.exit_code == 0
-    assert json.loads(result.output) == expected
+    assert json.loads(result.output) == {
+        **expected,
+        "attribution": {
+            "text": "Data provided by Discogs",
+            "url": "https://www.discogs.com/",
+        },
+    }
 
 
 def test_value_show_validation_error_exits_2(monkeypatch):
@@ -1290,7 +1303,13 @@ def test_value_show_refresh_is_forwarded(monkeypatch):
 
     assert result.exit_code == 0
     assert captured == {"release_id": 456, "refresh": True}
-    assert json.loads(result.output) == {"discogs_release_id": 456}
+    assert json.loads(result.output) == {
+        "discogs_release_id": 456,
+        "attribution": {
+            "text": "Data provided by Discogs",
+            "url": "https://www.discogs.com/",
+        },
+    }
 
 
 def test_value_show_refresh_missing_discogs_token_exits_3(monkeypatch):

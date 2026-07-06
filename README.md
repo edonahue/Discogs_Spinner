@@ -1,11 +1,11 @@
-# Discogs Spinner
+# Spinner for Discogs
 
 > Pick what to play, rediscover your shelves, and understand what your records are worth.
 
 <p align="center">
-  <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/core_plus_ci.yml/badge.svg"></a>
-  <a href="https://github.com/edonahue/Discogs_Spinner/actions/workflows/installer_build.yml"><img alt="Installer Build" src="https://github.com/edonahue/Discogs_Spinner/actions/workflows/installer_build.yml/badge.svg"></a>
-  <a href="https://github.com/edonahue/Discogs_Spinner/releases/latest"><img alt="Latest Stable Release" src="https://img.shields.io/github/v/release/edonahue/Discogs_Spinner"></a>
+  <a href="https://github.com/edonahue/spinner-for-discogs/actions/workflows/core_plus_ci.yml"><img alt="Core Plus CI" src="https://github.com/edonahue/spinner-for-discogs/actions/workflows/core_plus_ci.yml/badge.svg"></a>
+  <a href="https://github.com/edonahue/spinner-for-discogs/actions/workflows/installer_build.yml"><img alt="Installer Build" src="https://github.com/edonahue/spinner-for-discogs/actions/workflows/installer_build.yml/badge.svg"></a>
+  <a href="https://github.com/edonahue/spinner-for-discogs/releases/latest"><img alt="Latest Stable Release" src="https://img.shields.io/github/v/release/edonahue/spinner-for-discogs"></a>
   <a href="https://snapcraft.io/spinner-for-discogs"><img alt="Snap Store" src="https://snapcraft.io/spinner-for-discogs/badge.svg"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-2f5d8a">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
@@ -13,24 +13,26 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/gif/product-demo.gif" alt="Discogs Spinner product demo" width="100%">
+  <img src="docs/media/gif/product-demo.gif" alt="Spinner for Discogs product demo" width="100%">
 </p>
 
-Discogs Spinner is a local-first desktop companion for vinyl collectors who already keep a Discogs collection. Install it, connect your Discogs personal access token, sync once, then browse your shelf, spin a random record, inspect market value, and keep wantlist context close without living in browser tabs.
+Spinner for Discogs is a local-first desktop companion for vinyl collectors who already keep a Discogs collection. Install it, connect your Discogs personal access token, sync once, then browse your shelf, spin a random record, inspect market value, and keep wantlist context close without living in browser tabs.
 
 _Part of my [Open Workbench](https://erichdonahue.com/workbench); featured on [erichdonahue.com/music](https://erichdonahue.com/music)._
 
-> **Playback note:** Discogs Spinner does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
+> **Playback note:** Spinner for Discogs does not stream audio. It controls playback in external apps (e.g. Spotify Connect).
 >
 > **Discogs token required:** You need a Discogs account and a personal access token so the app can read your collection, wantlist, and market data. [Get the token setup steps →](docs/token_setup.md)
 >
 > **Release note:** The download links below point to the latest stable public release, `v0.2.3`. The Snap Store is live for Linux and WinGet is live for Windows — both are listed below alongside the direct download links.
+>
+> **Discogs notice:** This product uses a Discogs API but is not endorsed, certified or otherwise approved in any way by Discogs. Data provided by [Discogs](https://www.discogs.com/).
 
 ---
 
-## Why Discogs Spinner?
+## Why Spinner for Discogs?
 
-Your Discogs collection probably lives in a browser tab today. You scroll when you cannot decide what to play, check market prices in another tab, and open yet another app when you finally choose. Discogs Spinner turns that daily collector loop into one focused utility: your collection, random picks, wantlist context, and market value in one local app. No subscription. No extra cloud account. Just your records on your machine.
+Your Discogs collection probably lives in a browser tab today. You scroll when you cannot decide what to play, check market prices in another tab, and open yet another app when you finally choose. Spinner for Discogs turns that daily collector loop into one focused utility: your collection, random picks, wantlist context, and market value in one local app. No subscription. No extra cloud account. Just your records on your machine.
 
 Use it when you want to:
 
@@ -76,7 +78,7 @@ Before launching, have this ready:
 Your first run should look like this:
 
 1. Install the app for your OS.
-2. Open Discogs Spinner and paste your Discogs token into the setup wizard.
+2. Open Spinner for Discogs and paste your Discogs token into the setup wizard.
 3. Start the first sync.
 4. Browse your collection, hit **Spin**, and inspect the selected record.
 5. Check Value, Wantlist, or Insights when you want market and collection context.
@@ -149,15 +151,15 @@ You only lose direct playback control handoff until an optional provider is conn
 
 These installers are meant to get a collector to value quickly: install, paste a Discogs token, sync, browse, and spin.
 
-- [Open the latest stable release page](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- [Open the latest stable release page](https://github.com/edonahue/spinner-for-discogs/releases/latest)
 - Windows via WinGet: `winget install ErichDonahue.SpinnerforDiscogs` — no browser required, auto-updates with `winget upgrade`.
-- Windows direct download: [Discogs Spinner_0.2.3_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe) (recommended installer). Use [Discogs Spinner_0.2.3_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi) only if you specifically want MSI deployment tooling.
-- macOS: download the `.dmg` that matches your Mac, then drag **Discogs Spinner** into `/Applications`: [Apple Silicon](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg) or [Intel](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg).
+- Windows direct download: [Windows setup EXE (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe) (recommended installer). Use [Windows MSI (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi) only if you specifically want MSI deployment tooling.
+- macOS: download the `.dmg` that matches your Mac, then drag **Spinner for Discogs** into `/Applications`: [Apple Silicon](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg) or [Intel](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg).
 - Linux via Snap Store: [install Spinner for Discogs from Snapcraft](https://snapcraft.io/spinner-for-discogs), or run `sudo snap install spinner-for-discogs` if `snapd` is already set up.
-- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb).
-- Linux portable fallback: [Discogs Spinner_0.2.3_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage).
-- Linux alternate desktop build: [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb).
-- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt).
+- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb).
+- Linux portable fallback: [Linux AppImage (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage).
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb).
+- Verify downloads with [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt).
 
 What first launch should feel like:
 
@@ -176,7 +178,7 @@ Sending this to a friend?
 - Use the [Friend Trial Guide](docs/friend_trial.md) for the shortest install/setup checklist.
 - Use the [Friend Trial Checklist](docs/friend_trial_checklist.md) for a fast pass/fail validation run.
 - Ask them to report install, setup, or playback friction with OS, installer used, exact warning text, and a screenshot if possible.
-- GitHub issue templates: [install](https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml), [auth/setup](https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml), [playback](https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml)
+- GitHub issue templates: [install](https://github.com/edonahue/spinner-for-discogs/issues/new?template=install_failure.yml), [auth/setup](https://github.com/edonahue/spinner-for-discogs/issues/new?template=auth_failure.yml), [playback](https://github.com/edonahue/spinner-for-discogs/issues/new?template=playback_failure.yml)
 
 Need the terminal-first path instead?
 
@@ -227,7 +229,7 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 
 - [Release Notes (v0.2.3)](docs/releases/v0.2.3.md)
 - [Support Matrix](docs/SUPPORT_MATRIX.md)
-- [Report a bug or request a feature](https://github.com/edonahue/Discogs_Spinner/issues)
+- [Report a bug or request a feature](https://github.com/edonahue/spinner-for-discogs/issues)
 
 <details>
 <summary>Developer Docs</summary>
@@ -251,4 +253,4 @@ Need Spotify credentials? [Set up Spotify API access →](docs/token_setup.md#sp
 
 ---
 
-> Repository name: `Discogs_Spinner` | Package/CLI: `discogs_player` / `dplayer`
+> Repository name: `spinner-for-discogs` | Package/CLI: `discogs_player` / `dplayer`

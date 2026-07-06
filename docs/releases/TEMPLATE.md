@@ -34,14 +34,14 @@
 
 ## Direct Download Links
 
-- Windows installer (guided): [Discogs Spinner_X.Y.Z_x64-setup.exe](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/Discogs.Spinner_X.Y.Z_x64-setup.exe)
-- Windows installer (MSI): [Discogs Spinner_X.Y.Z_x64_en-US.msi](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/Discogs.Spinner_X.Y.Z_x64_en-US.msi)
-- Linux desktop installer (GTK): [discogs-spinner-gtk4_X.Y.Z_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/discogs-spinner-gtk4_X.Y.Z_amd64.deb)
-- Linux desktop installer (Tauri): [discogs-spinner-tauri_X.Y.Z_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/discogs-spinner-tauri_X.Y.Z_amd64.deb)
-- Linux portable installer: [Discogs Spinner_X.Y.Z_amd64.AppImage](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/Discogs.Spinner_X.Y.Z_amd64.AppImage)
-- macOS installer (Apple Silicon): [Discogs Spinner_X.Y.Z_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/Discogs.Spinner_X.Y.Z_aarch64.dmg)
-- macOS installer (Intel): [Discogs Spinner_X.Y.Z_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/Discogs.Spinner_X.Y.Z_x64.dmg)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/vX.Y.Z/CHECKSUMS-INSTALLERS.txt)
+- Windows installer (guided): [Spinner for Discogs_X.Y.Z_x64-setup.exe](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/Spinner-for-Discogs_X.Y.Z_x64-setup.exe)
+- Windows installer (MSI): [Spinner for Discogs_X.Y.Z_x64_en-US.msi](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/Spinner-for-Discogs_X.Y.Z_x64_en-US.msi)
+- Linux desktop installer (GTK): [discogs-spinner-gtk4_X.Y.Z_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/discogs-spinner-gtk4_X.Y.Z_amd64.deb)
+- Linux desktop installer (Tauri): [discogs-spinner-tauri_X.Y.Z_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/discogs-spinner-tauri_X.Y.Z_amd64.deb)
+- Linux portable installer: [Spinner for Discogs_X.Y.Z_amd64.AppImage](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/Spinner-for-Discogs_X.Y.Z_amd64.AppImage)
+- macOS installer (Apple Silicon): [Spinner for Discogs_X.Y.Z_aarch64.dmg](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/Spinner-for-Discogs_X.Y.Z_aarch64.dmg)
+- macOS installer (Intel): [Spinner for Discogs_X.Y.Z_x64.dmg](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/Spinner-for-Discogs_X.Y.Z_x64.dmg)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/vX.Y.Z/CHECKSUMS-INSTALLERS.txt)
 
 ## Install and Setup
 
@@ -81,9 +81,9 @@ When filing issues, attach:
 
 Issue template areas:
 
-- [install failure](https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml)
-- [auth/setup failure](https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml)
-- [playback failure](https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml)
+- [install failure](https://github.com/edonahue/spinner-for-discogs/issues/new?template=install_failure.yml)
+- [auth/setup failure](https://github.com/edonahue/spinner-for-discogs/issues/new?template=auth_failure.yml)
+- [playback failure](https://github.com/edonahue/spinner-for-discogs/issues/new?template=playback_failure.yml)
 
 ## Acknowledgements
 

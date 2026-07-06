@@ -8,7 +8,17 @@ from typing import Any
 
 from rich.console import Console
 
+from discogs_player.brand import DISCOGS_ATTRIBUTION, DISCOGS_ATTRIBUTION_TEXT
+
 console = Console()
+
+
+def with_discogs_attribution(payload: dict[str, Any]) -> dict[str, Any]:
+    return {**payload, "attribution": DISCOGS_ATTRIBUTION}
+
+
+def print_discogs_attribution() -> None:
+    console.print(f"{DISCOGS_ATTRIBUTION_TEXT}: {DISCOGS_ATTRIBUTION['url']}")
 
 
 def print_json(payload: Any) -> None:

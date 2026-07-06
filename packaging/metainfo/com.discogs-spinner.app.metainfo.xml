@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.discogs-spinner.app</id>
+  <id>io.github.edonahue.SpinnerForDiscogs</id>
 
   <name>Spinner for Discogs</name>
   <summary>Pick, browse, and value your Discogs vinyl collection</summary>
@@ -8,7 +8,7 @@
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
 
-  <developer_name>Eric Donahue</developer_name>
+  <developer_name>Erich Donahue</developer_name>
 
   <description>
     <p>
@@ -38,37 +38,38 @@
       A free Discogs account and personal access token are required. Spotify and
       YouTube Music are optional integrations. Spinner for Discogs does not
       stream audio itself; it controls or opens external playback services when
-      configured. This is an unofficial third-party app and is not affiliated
-      with Discogs.
+      configured. This product uses a Discogs API but is not endorsed,
+      certified or otherwise approved in any way by Discogs. Data provided by
+      Discogs: https://www.discogs.com/.
     </p>
   </description>
 
-  <launchable type="desktop-id">discogs-spinner.desktop</launchable>
+  <launchable type="desktop-id">io.github.edonahue.SpinnerForDiscogs.desktop</launchable>
 
-  <url type="homepage">https://github.com/edonahue/Discogs_Spinner</url>
-  <url type="bugtracker">https://github.com/edonahue/Discogs_Spinner/issues</url>
-  <url type="vcs-browser">https://github.com/edonahue/Discogs_Spinner</url>
+  <url type="homepage">https://github.com/edonahue/spinner-for-discogs</url>
+  <url type="bugtracker">https://github.com/edonahue/spinner-for-discogs/issues</url>
+  <url type="vcs-browser">https://github.com/edonahue/spinner-for-discogs</url>
 
   <screenshots>
     <screenshot type="default">
       <caption>Browse your synced record collection as a cover-art gallery</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/01-browse-gallery.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/01-browse-gallery.png</image>
     </screenshot>
     <screenshot>
       <caption>Spin a random record and inspect its details</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/02-spin-result.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/02-spin-result.png</image>
     </screenshot>
     <screenshot>
       <caption>Track market value across your collection</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/03-market-value-dashboard.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/03-market-value-dashboard.png</image>
     </screenshot>
     <screenshot>
       <caption>Keep wantlist context close while you browse</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/04-wantlist-view.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/04-wantlist-view.png</image>
     </screenshot>
     <screenshot>
       <caption>Quick first-run setup: paste a Discogs token and sync</caption>
-      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/05-setup-wizard.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/05-setup-wizard.png</image>
     </screenshot>
   </screenshots>
 

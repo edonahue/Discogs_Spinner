@@ -1,6 +1,6 @@
 # Scripts
 
-Utility scripts for building, releasing, testing, and operating Discogs Spinner.
+Utility scripts for building, releasing, testing, and operating Spinner for Discogs.
 
 ## Build & packaging
 

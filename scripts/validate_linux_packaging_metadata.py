@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_PATH = ROOT / "packaging" / "deb" / "dplayer-gui.desktop"
-METAINFO_PATH = ROOT / "packaging" / "deb" / "io.github.edonahue.DiscogsSpinner.metainfo.xml"
+METAINFO_PATH = ROOT / "packaging" / "deb" / "io.github.edonahue.SpinnerForDiscogs.metainfo.xml"
 
 
 def _fail(message: str) -> int:
@@ -33,9 +33,9 @@ def validate_desktop_entry() -> list[str]:
     errors: list[str] = []
     expected = {
         "Type": "Application",
-        "Name": "Discogs Spinner",
+        "Name": "Spinner for Discogs",
         "Exec": "dplayer-gui",
-        "Icon": "discogs-spinner",
+        "Icon": "io.github.edonahue.SpinnerForDiscogs",
         "Terminal": "false",
     }
     for key, value in expected.items():
@@ -74,10 +74,10 @@ def validate_metainfo() -> list[str]:
         errors.append("metainfo component type must be desktop-application")
 
     expected = {
-        "id": "io.github.edonahue.DiscogsSpinner",
+        "id": "io.github.edonahue.SpinnerForDiscogs",
         "metadata_license": "CC0-1.0",
         "project_license": "MIT",
-        "name": "Discogs Spinner",
+        "name": "Spinner for Discogs",
         "summary": "Browse, spin, and value your Discogs vinyl collection",
     }
     for selector, value in expected.items():
@@ -90,8 +90,8 @@ def validate_metainfo() -> list[str]:
             errors.append(f"metainfo {selector!r} must be {value!r}")
 
     launchable = root.find("launchable")
-    if launchable is None or launchable.attrib.get("type") != "desktop-id" or launchable.text != "discogs-spinner.desktop":
-        errors.append("metainfo must launch discogs-spinner.desktop")
+    if launchable is None or launchable.attrib.get("type") != "desktop-id" or launchable.text != "io.github.edonahue.SpinnerForDiscogs.desktop":
+        errors.append("metainfo must launch io.github.edonahue.SpinnerForDiscogs.desktop")
 
     description_text = " ".join(
         (node.text or "").strip() for node in root.findall("description/p") if (node.text or "").strip()

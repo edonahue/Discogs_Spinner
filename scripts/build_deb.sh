@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build_deb.sh — Build a .deb installer for the Discogs Spinner GTK4 GUI.
+# build_deb.sh — Build a .deb installer for the Spinner for Discogs GTK4 GUI.
 #
 # Uses `fpm` (Effing Package Management) to wrap the pip wheel and desktop
 # integration files into a Debian package.
@@ -13,7 +13,7 @@
 #   PYTHON_BIN=/usr/bin/python3.10 ./scripts/build_deb.sh
 #
 # Output:
-#   dist/installers/discogs-spinner_<version>_amd64.deb
+#   dist/installers/spinner-for-discogs-gtk4_<version>_amd64.deb
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -52,7 +52,7 @@ if [[ -z "$PACKAGE_VERSION" ]]; then
     fi
 fi
 
-echo "Building .deb for Discogs Spinner v${PACKAGE_VERSION}"
+echo "Building .deb for Spinner for Discogs v${PACKAGE_VERSION}"
 
 # ---------------------------------------------------------------------------
 # Resolve Python build interpreter
@@ -101,7 +101,7 @@ INSTALL_PREFIX="/opt/discogs-spinner"
 VENV_PATH="${INSTALL_PREFIX}/venv"
 WHEEL_DIR="${STAGING_DIR}${INSTALL_PREFIX}/wheels"
 DESKTOP_FILE="${ROOT_DIR}/packaging/deb/dplayer-gui.desktop"
-METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"
+METAINFO_FILE="${ROOT_DIR}/packaging/deb/io.github.edonahue.SpinnerForDiscogs.metainfo.xml"
 POSTINST_SCRIPT="${ROOT_DIR}/packaging/deb/postinst"
 ICON_SOURCE="${ROOT_DIR}/assets/icons/discogs-player.svg"
 
@@ -143,18 +143,18 @@ chmod 0755 "${BIN_DIR}/dplayer-gui"
 # .desktop file
 APPS_DIR="${STAGING_DIR}/usr/share/applications"
 mkdir -p "$APPS_DIR"
-cp "$DESKTOP_FILE" "${APPS_DIR}/discogs-spinner.desktop"
+cp "$DESKTOP_FILE" "${APPS_DIR}/io.github.edonahue.SpinnerForDiscogs.desktop"
 
 # AppStream metadata for software-center style package listings.
 METAINFO_DIR="${STAGING_DIR}/usr/share/metainfo"
 mkdir -p "$METAINFO_DIR"
-cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.DiscogsSpinner.metainfo.xml"
+cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.SpinnerForDiscogs.metainfo.xml"
 
 # Icon
 ICON_DIR="${STAGING_DIR}/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$ICON_DIR"
 if [[ -f "$ICON_SOURCE" ]]; then
-    cp "$ICON_SOURCE" "${ICON_DIR}/discogs-spinner.svg"
+    cp "$ICON_SOURCE" "${ICON_DIR}/io.github.edonahue.SpinnerForDiscogs.svg"
 else
     echo "Warning: icon not found at ${ICON_SOURCE}" >&2
 fi
@@ -164,13 +164,13 @@ METAINFO_FILE="${ROOT_DIR}/packaging/metainfo/com.discogs-spinner.app.metainfo.x
 METAINFO_DIR="${STAGING_DIR}/usr/share/metainfo"
 mkdir -p "$METAINFO_DIR"
 if [[ -f "$METAINFO_FILE" ]]; then
-    cp "$METAINFO_FILE" "${METAINFO_DIR}/com.discogs-spinner.app.metainfo.xml"
+    cp "$METAINFO_FILE" "${METAINFO_DIR}/io.github.edonahue.SpinnerForDiscogs.metainfo.xml"
 else
     echo "Warning: metainfo not found at ${METAINFO_FILE}" >&2
 fi
 
 # Debian package metadata.
-DOC_DIR="${STAGING_DIR}/usr/share/doc/discogs-spinner"
+DOC_DIR="${STAGING_DIR}/usr/share/doc/spinner-for-discogs-gtk4"
 mkdir -p "$DOC_DIR"
 cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"
 
@@ -178,17 +178,17 @@ cp "${ROOT_DIR}/LICENSE" "${DOC_DIR}/copyright"
 # Run fpm
 # ---------------------------------------------------------------------------
 ARCH="$(dpkg --print-architecture 2>/dev/null || echo amd64)"
-OUTPUT_DEB="${OUTPUT_DIR}/discogs-spinner_${PACKAGE_VERSION}_${ARCH}.deb"
+OUTPUT_DEB="${OUTPUT_DIR}/spinner-for-discogs-gtk4_${PACKAGE_VERSION}_${ARCH}.deb"
 
 fpm \
     --input-type dir \
     --output-type deb \
-    --name discogs-spinner \
+    --name spinner-for-discogs-gtk4 \
     --version "$PACKAGE_VERSION" \
     --architecture "$ARCH" \
-    --maintainer "Discogs Spinner Contributors <discogs_player+maintainer@users.noreply.github.com>" \
-    --description "Browse your Discogs collection and control Spotify/YouTube Music playback." \
-    --url "https://github.com/edonahue/Discogs_Spinner" \
+    --maintainer "Spinner for Discogs Contributors <discogs_player+maintainer@users.noreply.github.com>" \
+    --description "Browse, spin, and value your Discogs vinyl collection." \
+    --url "https://github.com/edonahue/spinner-for-discogs" \
     --license MIT \
     --category "sound" \
     --depends python3 \

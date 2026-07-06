@@ -56,6 +56,8 @@ def test_export_collection_json_snapshot(isolated_xdg, tmp_path):
             last_updated_at="2026-02-07T00:00:00+00:00",
         )
         set_setting("last_sync_time", "2026-02-07T00:00:00+00:00", conn=conn)
+        set_setting("discogs_token", "secret-token", conn=conn)
+        set_setting("spotify_refresh_token", "secret-refresh-token", conn=conn)
     finally:
         conn.close()
 
@@ -73,6 +75,12 @@ def test_export_collection_json_snapshot(isolated_xdg, tmp_path):
     assert payload["release_count"] == 2
     assert payload["include_inactive"] is True
     assert payload["settings"]["last_sync_time"] == "2026-02-07T00:00:00+00:00"
+    assert payload["settings"]["discogs_token"] == "<redacted>"
+    assert payload["settings"]["spotify_refresh_token"] == "<redacted>"
+    assert payload["attribution"] == {
+        "text": "Data provided by Discogs",
+        "url": "https://www.discogs.com/",
+    }
 
     releases = payload["releases"]
     release_11 = next(item for item in releases if item["discogs_release_id"] == 11)
@@ -117,6 +125,8 @@ def test_export_collection_csv_active_only(isolated_xdg, tmp_path):
     assert rows[0]["genres"] == '["Rock"]'
     assert rows[0]["market_lowest"] == ""
     assert rows[0]["market_currency"] == ""
+    assert rows[0]["data_source"] == "Data provided by Discogs"
+    assert rows[0]["data_source_url"] == "https://www.discogs.com/"
 
 
 def test_export_collection_rejects_invalid_format(isolated_xdg, tmp_path):

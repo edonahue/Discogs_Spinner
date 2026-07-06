@@ -229,14 +229,14 @@ def test_installer_workflow_runs_sidecar_and_platform_bundle_validators():
         "find \"$RELEASE_RAW_DIR\"/installer-macos-* -type f -name '*.dmg' -print0",
         "find \"$RELEASE_RAW_DIR\"/installer-windows-* -type f -name '*.msi' -print0",
         "find \"$RELEASE_RAW_DIR\"/installer-windows-* -type f -name '*.exe' -print0",
-        'copy_asset_group "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb"',
-        'copy_asset_group "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb"',
+        'copy_asset_group "spinner-for-discogs-gtk4_${RELEASE_VERSION}_amd64.deb"',
+        'copy_asset_group "spinner-for-discogs-tauri_${RELEASE_VERSION}_amd64.deb"',
         "Validate release asset inventory",
         "Generate installer manifest",
         "INSTALLER-MANIFEST.txt",
         'echo "Published asset candidates:"',
-        'test -f "$RELEASE_PUBLISH_DIR/discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb"',
-        'test -f "$RELEASE_PUBLISH_DIR/discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb"',
+        'test -f "$RELEASE_PUBLISH_DIR/spinner-for-discogs-gtk4_${RELEASE_VERSION}_amd64.deb"',
+        'test -f "$RELEASE_PUBLISH_DIR/spinner-for-discogs-tauri_${RELEASE_VERSION}_amd64.deb"',
         'ls "$RELEASE_PUBLISH_DIR"/*.msi >/dev/null',
         'ls "$RELEASE_PUBLISH_DIR"/*.exe >/dev/null',
         'ls "$RELEASE_PUBLISH_DIR"/*.AppImage >/dev/null',
@@ -251,8 +251,8 @@ def test_installer_workflow_runs_sidecar_and_platform_bundle_validators():
         'gh release upload "$RELEASE_TAG" "${publish_files[@]}" --clobber',
         "Verify published release assets",
         'asset_names="$(gh release view "$RELEASE_TAG" --json assets --jq \'.assets[].name\')"',
-        'grep -Fx "discogs-spinner-gtk4_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"',
-        'grep -Fx "discogs-spinner-tauri_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"',
+        'grep -Fx "spinner-for-discogs-gtk4_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"',
+        'grep -Fx "spinner-for-discogs-tauri_${RELEASE_VERSION}_amd64.deb" <<<"$asset_names"',
         "CHECKSUMS-INSTALLERS.txt",
         'grep -Fx "INSTALLER-MANIFEST.txt" <<<"$asset_names"',
         "working-directory: desktop_shell/src-tauri",
@@ -285,7 +285,7 @@ def test_windows_msi_smoke_workflow_runs_manual_and_scheduled_windows_install_sm
 
 def test_tauri_config_uses_top_level_identifier_only():
     payload = json.loads(_read("desktop_shell/src-tauri/tauri.conf.json"))
-    assert payload["identifier"] == "com.discogs-spinner.app"
+    assert payload["identifier"] == "io.github.edonahue.SpinnerForDiscogs"
     build = payload["build"]
     assert build["beforeBuildCommand"] == "cd ../webapp && npm run build"
     assert build["frontendDist"] == "../../webapp/dist"

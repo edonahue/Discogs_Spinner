@@ -1,4 +1,4 @@
-"""GTK entrypoint for Discogs Spinner."""
+"""GTK entrypoint for Spinner for Discogs."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def _missing_gui_dependency_message(module_name: str) -> str:
 
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dplayer-gui", description="Discogs Spinner GTK UI"
+        prog="dplayer-gui", description="Spinner for Discogs GTK UI"
     )
     parser.add_argument(
         "--limit",

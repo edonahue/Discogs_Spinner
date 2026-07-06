@@ -14,11 +14,11 @@ This guide targets first-time users installing `discogs_player` on macOS.
 
 Download the current stable `.dmg` directly:
 
-- Recommended for most modern Macs: [Discogs Spinner_0.2.3_aarch64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg)
-- Intel Macs: [Discogs Spinner_0.2.3_x64.dmg](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg)
-- Fallback release page: [GitHub Releases](https://github.com/edonahue/Discogs_Spinner/releases/latest)
+- Recommended for most modern Macs: [macOS Apple Silicon DMG (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg)
+- Intel Macs: [macOS Intel DMG (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg)
+- Fallback release page: [GitHub Releases](https://github.com/edonahue/spinner-for-discogs/releases/latest)
 
-Open the disk image, drag **Discogs Spinner.app** into `/Applications`, then launch it once.
+Open the disk image, drag **Spinner for Discogs.app** into `/Applications`, then launch it once.
 
 What you may see:
 
@@ -26,8 +26,8 @@ What you may see:
 - If Gatekeeper blocks the first launch, clear quarantine once:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/Discogs Spinner.app"
-open "/Applications/Discogs Spinner.app"
+xattr -dr com.apple.quarantine "/Applications/Spinner for Discogs.app"
+open "/Applications/Spinner for Discogs.app"
 ```
 
 ## 3) Configure Discogs token
@@ -72,8 +72,8 @@ If you want the Python CLI alongside the native macOS app, install it from sourc
 ```bash
 brew update
 brew install python@3.12 git
-git clone https://github.com/edonahue/Discogs_Spinner.git
-cd Discogs_Spinner
+git clone https://github.com/edonahue/spinner-for-discogs.git
+cd spinner-for-discogs
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip

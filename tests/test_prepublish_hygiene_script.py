@@ -27,7 +27,8 @@ def test_prepublish_hygiene_script_checks_expected_markers():
         "RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md",
         "STRATEGIC_EXPANSION_NOTES_2026-02-26.md",
         "validate_linux_packaging_metadata.py",
-        "io.github.edonahue.DiscogsSpinner.metainfo.xml",
+        "io.github.edonahue.SpinnerForDiscogs.metainfo.xml",
+        "snapcraft-credentials.txt",
         "prepublish hygiene: PASS",
     ):
         assert marker in source

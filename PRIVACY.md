@@ -20,8 +20,10 @@ The app may process:
 ## Storage Model
 
 - Primary data is stored locally (SQLite + cache files).
-- Credentials are expected to come from environment variables and/or local
-  credential stores (for example system keyring where enabled).
+- Discogs tokens can come from `DISCOGS_TOKEN`, local `.env` files, or local
+  app settings stored on the user's machine.
+- Optional provider credentials may use environment variables, local settings,
+  or system keyring storage where enabled.
 - The project does not intentionally send analytics or telemetry by default.
 
 ## Third-Party Services
@@ -41,6 +43,9 @@ Data may be shared only when users explicitly choose to:
 - export local data,
 - upload logs/issues,
 - or use integrated third-party APIs.
+
+Collection exports redact secret-looking settings such as tokens, passwords,
+client secrets, and refresh tokens.
 
 ## Data Retention and Deletion
 

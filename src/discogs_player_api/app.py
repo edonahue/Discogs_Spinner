@@ -45,7 +45,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="discogs_player API",
         version=APP_VERSION,
-        summary="Local-first Discogs Spinner API for web and desktop clients.",
+        summary="Local-first Spinner for Discogs API for web and desktop clients.",
     )
 
     app.add_middleware(

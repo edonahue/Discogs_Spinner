@@ -14,6 +14,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
+from discogs_player.brand import APP_NAME
 from discogs_player.capabilities import get_capabilities
 from discogs_player.core.settings import get_setting, set_setting
 from discogs_player.use_cases.config_management import run_config_set
@@ -58,7 +59,7 @@ class SetupWizard(Adw.Window):
     }
 
     def __init__(self, parent: Gtk.Window) -> None:
-        super().__init__(title="Discogs Spinner Setup")
+        super().__init__(title=f"{APP_NAME} Setup")
         self.set_transient_for(parent)
         self.set_modal(True)
         self.set_default_size(440, 500)

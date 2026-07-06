@@ -26,6 +26,13 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from discogs_player.brand import (
+    APP_NAME,
+    DISCOGS_ATTRIBUTION_TEXT,
+    DISCOGS_NON_AFFILIATION_NOTICE,
+    DISCOGS_URL,
+    ISSUES_URL,
+)
 from discogs_player.capabilities import get_capabilities
 from discogs_player.core.settings import (
     get_discogs_token,
@@ -928,7 +935,7 @@ _SPOTIFY_OAUTH_GUIDE_URL = (
     "https://developer.spotify.com/documentation/web-api/tutorials/code-flow"
 )
 _DISCOGS_TOKEN_URL = "https://www.discogs.com/settings/developers"
-_ISSUES_URL = "https://github.com/edonahue/Discogs_Spinner/issues"
+_ISSUES_URL = ISSUES_URL
 
 
 def _normalize_release_limit(value: object | None) -> int | None:
@@ -967,6 +974,13 @@ def _build_window_header_bar() -> Gtk.HeaderBar:
     return header_bar
 
 
+def _build_notice_link_markup() -> str:
+    return (
+        f"{GLib.markup_escape_text(DISCOGS_NON_AFFILIATION_NOTICE)} "
+        f'<a href="{DISCOGS_URL}">{GLib.markup_escape_text(DISCOGS_ATTRIBUTION_TEXT)}</a>.'
+    )
+
+
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(
         self,
@@ -978,7 +992,7 @@ class MainWindow(Gtk.ApplicationWindow):
         on_interactive_lowest_navigate: Callable[[int], None] | None = None,
         on_interactive_median_navigate: Callable[[int], None] | None = None,
     ) -> None:
-        super().__init__(application=app, title="Discogs Spinner")
+        super().__init__(application=app, title=APP_NAME)
         self.add_css_class("ipod-shell")
         target_width, target_height = self._startup_target_window_size()
         self.set_default_size(target_width, target_height)
@@ -1100,6 +1114,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._set_setup_banner_revealed(False)
         root.append(self._setup_banner)
         root.append(self._main_stack)
+        root.append(self._build_discogs_notice_bar())
 
         browse_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         browse_page.set_hexpand(True)
@@ -2909,6 +2924,18 @@ class MainWindow(Gtk.ApplicationWindow):
 
         return box, label
 
+    def _build_discogs_notice_bar(self) -> Gtk.Label:
+        label = Gtk.Label()
+        label.set_markup(_build_notice_link_markup())
+        label.set_wrap(True)
+        label.set_xalign(0.5)
+        label.set_margin_top(6)
+        label.set_margin_bottom(6)
+        label.set_margin_start(12)
+        label.set_margin_end(12)
+        label.add_css_class("dim-label")
+        return label
+
     def _build_ftux_state_box(self) -> Gtk.Box:
         """Build a rich first-run empty state with icon, heading, and wizard CTA."""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
@@ -2922,7 +2949,7 @@ class MainWindow(Gtk.ApplicationWindow):
         icon.add_css_class("ipod-ftux-icon")
         box.append(icon)
 
-        heading = Gtk.Label(label="Welcome to Discogs Spinner")
+        heading = Gtk.Label(label=f"Welcome to {APP_NAME}")
         heading.add_css_class("ipod-ftux-heading")
         heading.set_xalign(0.5)
         box.append(heading)

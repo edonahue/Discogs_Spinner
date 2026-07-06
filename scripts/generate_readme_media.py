@@ -144,7 +144,7 @@ def draw_shell(draw: ImageDraw.ImageDraw, active_tab: str) -> tuple[int, int, in
 
     header = (44, 40, WIDTH - 44, 122)
     draw.rounded_rectangle(header, radius=18, fill=(20, 31, 48))
-    draw.text((66, 64), "Discogs Spinner", font=font(32, bold=True), fill=(236, 247, 255))
+    draw.text((66, 64), "Spinner for Discogs", font=font(32, bold=True), fill=(236, 247, 255))
     draw.text((360, 72), "Collect  •  Explore  •  External Playback", font=font(19), fill=(145, 194, 211))
 
     tabs = ["Browse", "Wantlist", "Market Value"]
@@ -392,7 +392,7 @@ def compose_hero_scene(browse: Image.Image, wantlist: Image.Image, value: Image.
     draw = ImageDraw.Draw(scene)
     draw.rounded_rectangle((34, 28, DEMO_WIDTH - 34, DEMO_HEIGHT - 28), radius=28, fill=(12, 22, 36), outline=(74, 101, 126), width=2)
 
-    draw.text((72, 66), "Discogs Spinner Product Tour", font=font(44, bold=True), fill=(241, 249, 255))
+    draw.text((72, 66), "Spinner for Discogs Product Tour", font=font(44, bold=True), fill=(241, 249, 255))
     draw.text((72, 122), "Browse, wantlist, value intel, and command-first speed", font=font(21), fill=(166, 206, 223))
 
     b = browse.resize((350, 214), Image.Resampling.LANCZOS)
@@ -416,7 +416,7 @@ def compose_outro_scene() -> Image.Image:
     draw = ImageDraw.Draw(scene)
     draw.rounded_rectangle((34, 28, DEMO_WIDTH - 34, DEMO_HEIGHT - 28), radius=28, fill=(12, 22, 34), outline=(74, 101, 126), width=2)
 
-    draw.text((98, 196), "Discogs Spinner", font=font(70, bold=True), fill=(241, 250, 255))
+    draw.text((98, 196), "Spinner for Discogs", font=font(70, bold=True), fill=(241, 250, 255))
     draw.text((102, 286), "Sync your catalog. Surface value. Stay in flow.", font=font(34), fill=(171, 209, 228))
     draw.text((102, 356), "Start: dplayer setup -> dplayer sync -> dplayer spin", font=font(26, bold=True), fill=(147, 236, 192))
     draw.text((102, 412), "See README quick start and OS guides for full walkthroughs.", font=font(21), fill=(165, 203, 223))

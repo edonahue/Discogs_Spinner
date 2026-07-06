@@ -131,6 +131,8 @@ def test_readme_promotes_download_now_and_first_launch_value():
         "Discogs.Spinner_0.2.3_aarch64.dmg",
         "discogs-spinner-gtk4_0.2.3_amd64.deb",
         "Discogs.Spinner_0.2.3_amd64.AppImage",
+        "This product uses a Discogs API",
+        "Data provided by [Discogs]",
         "docs/friend_trial.md",
     ):
         assert marker in source
@@ -176,15 +178,16 @@ def test_snap_store_listing_metadata_and_assets_are_ready():
         "local-first desktop companion for vinyl collectors",
         "personal access token",
         "does not stream audio itself",
-        "not affiliated with Discogs",
+        "not endorsed",
+        "Data provided by Discogs",
         "license: MIT",
-        "website: https://github.com/edonahue/Discogs_Spinner",
-        "source-code: https://github.com/edonahue/Discogs_Spinner",
-        "issues: https://github.com/edonahue/Discogs_Spinner/issues",
-        "contact: https://github.com/edonahue/Discogs_Spinner/issues",
+        "website: https://github.com/edonahue/spinner-for-discogs",
+        "source-code: https://github.com/edonahue/spinner-for-discogs",
+        "issues: https://github.com/edonahue/spinner-for-discogs/issues",
+        "contact: https://github.com/edonahue/spinner-for-discogs/issues",
         "icon: desktop_shell/icons/icon.png",
         "desktop-assets:",
-        "usr/share/metainfo/com.discogs-spinner.app.metainfo.xml",
+        "usr/share/metainfo/io.github.edonahue.SpinnerForDiscogs.metainfo.xml",
     ):
         assert marker in snapcraft
 
@@ -217,8 +220,8 @@ def test_snap_store_listing_metadata_and_assets_are_ready():
         "personal access token",
         "does not",
         "stream audio itself",
-        "not affiliated",
-        "Discogs",
+        "not endorsed",
+        "Data provided by",
     ):
         assert marker in metainfo
 
@@ -271,7 +274,7 @@ def test_start_here_and_friend_trial_are_installer_first():
     assert "sudo snap install spinner-for-discogs" in friend_trial
     assert "Discogs.Spinner_0.2.3_x64-setup.exe" in friend_trial
     assert "discogs-spinner-gtk4_0.2.3_amd64.deb" in friend_trial
-    assert "Discogs Spinner_*_x64-setup.exe" not in friend_trial
+    assert "Spinner for Discogs_*_x64-setup.exe" not in friend_trial
 
 
 def test_current_release_notes_pin_verified_stable_asset_links():

@@ -21,7 +21,7 @@ required_files=(
   "COMPLIANCE.md"
   "docs/STRATEGIC_EXPANSION_NOTES_2026-02-26.md"
   "docs/RELEASE_CHECKLIST_WINDOWS_DEBIAN_MACOS.md"
-  "packaging/deb/io.github.edonahue.DiscogsSpinner.metainfo.xml"
+  "packaging/deb/io.github.edonahue.SpinnerForDiscogs.metainfo.xml"
   "scripts/validate_linux_packaging_metadata.py"
 )
 
@@ -37,6 +37,14 @@ echo "prepublish hygiene: checking .gitignore baseline..."
 for marker in ".env" "*.db" "exports/" "*.log"; do
   if ! grep -Fxq "$marker" .gitignore; then
     echo "FAIL: missing .gitignore marker: $marker"
+    exit 1
+  fi
+done
+
+echo "prepublish hygiene: checking forbidden credential files..."
+for path in snapcraft-credentials.txt .env .env.local .env.production; do
+  if [[ -e "$path" ]]; then
+    echo "FAIL: forbidden credential file present in worktree: $path"
     exit 1
   fi
 done

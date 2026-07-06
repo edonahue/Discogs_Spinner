@@ -129,7 +129,7 @@ export function HomePage() {
     <main className="app-page">
       <header className="app-page__header">
         <div>
-          <h1 className="app-page__title">Discogs Spinner</h1>
+          <h1 className="app-page__title">Spinner for Discogs</h1>
           <p className="app-page__subtitle">
             Your records, your market. Browse your collection, spin something to play, and keep
             wantlist and value context close.

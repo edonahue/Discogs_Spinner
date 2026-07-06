@@ -1,4 +1,4 @@
-# Discogs Spinner — Desktop Shell
+# Spinner for Discogs — Desktop Shell
 
 Tauri v2 desktop packaging shell for cross-platform GUI distribution.
 
@@ -120,7 +120,7 @@ status. On success, the app redirects to the home dashboard.
 
 Until signing is in place, end-users on macOS must run:
 ```
-xattr -dr com.apple.quarantine "Discogs Spinner.app"
+xattr -dr com.apple.quarantine "Spinner for Discogs.app"
 ```
 
 ## Reference

@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+from discogs_player.brand import discogs_user_agent
+
 
 class DiscogsError(Exception):
     """Base class for Discogs client errors."""
@@ -96,7 +98,7 @@ def _extract_format_flags(
 @dataclass
 class DiscogsClient:
     token: str
-    user_agent: str = "discogs_player/0.1"
+    user_agent: str = discogs_user_agent()
     timeout_seconds: float = 30.0
 
     def _headers(self) -> dict[str, str]:
