@@ -31,6 +31,23 @@ trademark guidelines and clearly indicate this is an unofficial third-party clie
 Internal package identifiers (`spinner-for-discogs`, `io.github.edonahue.SpinnerForDiscogs`) are
 descriptive and do not imply official Discogs affiliation.
 
+## Repository Rename Checkpoint
+
+The public product name is **Spinner for Discogs**, but the current GitHub repository
+slug remains `edonahue/Discogs_Spinner`. Keep release, updater, issue, source, and
+store metadata links pointed at `https://github.com/edonahue/Discogs_Spinner` until
+the repository is actually renamed and these redirects are verified:
+
+- `releases/latest`
+- `releases/download/<tag>/<asset>`
+- issue-template links
+- Tauri updater `latest.json`
+- package-manager metadata links
+
+After the rename is complete, update the repo slug in one dedicated link-swap commit
+and rerun the release, packaging, and store metadata checks before publishing a new
+tag.
+
 ---
 
 ## Prerequisites (Do These First)
@@ -193,10 +210,10 @@ Keep the Snap dashboard listing aligned with `snap/snapcraft.yaml`.
 - Secondary category: `Utilities`
 - Summary: `Pick, browse, and value your Discogs vinyl collection`
 - License: `MIT`
-- Primary website: https://github.com/edonahue/spinner-for-discogs
-- Source code: https://github.com/edonahue/spinner-for-discogs
-- Issues: https://github.com/edonahue/spinner-for-discogs/issues
-- Contacts: https://github.com/edonahue/spinner-for-discogs/issues
+- Primary website: https://github.com/edonahue/Discogs_Spinner
+- Source code: https://github.com/edonahue/Discogs_Spinner
+- Issues: https://github.com/edonahue/Discogs_Spinner/issues
+- Contacts: https://github.com/edonahue/Discogs_Spinner/issues
 - Snap icon: `desktop_shell/icons/icon.png`
 - Screenshots, in order:
   - `docs/media/screenshots/01-browse-gallery.png`
@@ -246,7 +263,7 @@ Required GitHub repository secret:
 
 Check or add it in GitHub:
 
-1. Open `edonahue/spinner-for-discogs` on GitHub.
+1. Open `edonahue/Discogs_Spinner` on GitHub.
 2. Go to **Settings** → **Secrets and variables** → **Actions**.
 3. Open **Repository secrets**.
 4. Confirm `SNAPCRAFT_STORE_CREDENTIALS` exists, or add it with
@@ -268,7 +285,7 @@ deleted or moved outside the repository after the GitHub secret is set.
 1. Create account at https://snapcraft.io/create-account
 2. Register snap name: snapcraft.io → My snaps → **New snap** → name: `spinner-for-discogs`
 3. In snap dashboard → **Builds** → "Connect a GitHub repo" →
-   repo: `edonahue/spinner-for-discogs`, manifest path: `snap/snapcraft.yaml`
+   repo: `edonahue/Discogs_Spinner`, manifest path: `snap/snapcraft.yaml`
 4. Click **Request build** — Snap Store builds and publishes to the `stable` track automatically
 5. Future versions: updating `version:` in `snapcraft.yaml` as part of the release commit
    auto-triggers a rebuild (no manual upload needed)

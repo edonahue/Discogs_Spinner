@@ -640,7 +640,7 @@ jobs:
           fi
 
           pub_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          base_url="https://github.com/edonahue/spinner-for-discogs/releases/download/${RELEASE_TAG}"
+          base_url="https://github.com/edonahue/Discogs_Spinner/releases/download/${RELEASE_TAG}"
 
           read_sig() {
             local f="$1"
@@ -696,7 +696,7 @@ jobs:
           platforms = json.loads('''$platforms''')
           manifest = {
               "version": "${RELEASE_TAG}",
-              "notes": "See https://github.com/edonahue/spinner-for-discogs/releases/tag/${RELEASE_TAG}",
+              "notes": "See https://github.com/edonahue/Discogs_Spinner/releases/tag/${RELEASE_TAG}",
               "pub_date": "${pub_date}",
               "platforms": platforms,
           }

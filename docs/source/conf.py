@@ -9,9 +9,9 @@ import sys
 sys.path.insert(0, os.path.abspath('../../src'))
 
 # -- Project information -----------------------------------------------------
-project = 'Discogs Player'
-copyright = '2026, Discogs Player Contributors'
-author = 'Discogs Player Contributors'
+project = 'Spinner for Discogs'
+copyright = '2026, Spinner for Discogs Contributors'
+author = 'Spinner for Discogs Contributors'
 release = '0.2.3'
 version = '0.2.3'
 
@@ -30,7 +30,7 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_title = 'Discogs Player Documentation'
+html_title = 'Spinner for Discogs Documentation'
 
 # -- Extension configuration -------------------------------------------------
 # Napoleon settings for Google/NumPy style docstrings

@@ -1,4 +1,4 @@
-"""Performance optimization tests for Discogs Player UI."""
+"""Performance optimization tests for Spinner for Discogs UI."""
 
 import importlib
 import sys

@@ -1,4 +1,4 @@
-"""UI Performance optimizations for Discogs Player.
+"""UI Performance optimizations for Spinner for Discogs.
 
 Status: DEFERRED (Phase 2 close, 2026-02-26)
 

@@ -5,17 +5,17 @@ For a shorter pass/fail runbook, use [`docs/friend_trial_checklist.md`](friend_t
 
 ## What To Download
 
-- Windows: use the guided installer first: [Windows setup EXE (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe)
-- Windows fallback for managed installs: [Windows MSI (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi)
-- macOS Apple Silicon: [macOS Apple Silicon DMG (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg)
-- macOS Intel: [macOS Intel DMG (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg)
+- Windows: use the guided installer first: [Windows setup EXE (v0.2.3 legacy filename)](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64-setup.exe)
+- Windows fallback for managed installs: [Windows MSI (v0.2.3 legacy filename)](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64_en-US.msi)
+- macOS Apple Silicon: [macOS Apple Silicon DMG (v0.2.3 legacy filename)](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_aarch64.dmg)
+- macOS Intel: [macOS Intel DMG (v0.2.3 legacy filename)](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_x64.dmg)
 - Linux Snap Store: [Spinner for Discogs on Snapcraft](https://snapcraft.io/spinner-for-discogs), or `sudo snap install spinner-for-discogs` if `snapd` is already set up
-- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb)
-- Linux portable fallback: [Linux AppImage (v0.2.3 legacy filename)](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage)
-- Linux alternate desktop build: [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb)
-- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/spinner-for-discogs/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
+- Debian/Ubuntu direct package: [discogs-spinner-gtk4_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-gtk4_0.2.3_amd64.deb)
+- Linux portable fallback: [Linux AppImage (v0.2.3 legacy filename)](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/Discogs.Spinner_0.2.3_amd64.AppImage)
+- Linux alternate desktop build: [discogs-spinner-tauri_0.2.3_amd64.deb](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/discogs-spinner-tauri_0.2.3_amd64.deb)
+- Checksums: [CHECKSUMS-INSTALLERS.txt](https://github.com/edonahue/Discogs_Spinner/releases/download/v0.2.3/CHECKSUMS-INSTALLERS.txt)
 
-If you would rather browse the full release page first, start here: [Download the latest stable release](https://github.com/edonahue/spinner-for-discogs/releases/latest)
+If you would rather browse the full release page first, start here: [Download the latest stable release](https://github.com/edonahue/Discogs_Spinner/releases/latest)
 
 ## What To Try
 
@@ -51,8 +51,8 @@ Include:
 
 Direct GitHub issue links:
 
-- [Install failure](https://github.com/edonahue/spinner-for-discogs/issues/new?template=install_failure.yml)
-- [Auth/setup failure](https://github.com/edonahue/spinner-for-discogs/issues/new?template=auth_failure.yml)
-- [Playback failure](https://github.com/edonahue/spinner-for-discogs/issues/new?template=playback_failure.yml)
+- [Install failure](https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml)
+- [Auth/setup failure](https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml)
+- [Playback failure](https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml)
 
 If you are sending the link personally, a plain-text message with the same details is also enough.

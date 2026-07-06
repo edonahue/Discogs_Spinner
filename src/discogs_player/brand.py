@@ -5,7 +5,7 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError, version
 
 APP_NAME = "Spinner for Discogs"
-REPO_URL = "https://github.com/edonahue/spinner-for-discogs"
+REPO_URL = "https://github.com/edonahue/Discogs_Spinner"
 ISSUES_URL = f"{REPO_URL}/issues"
 DISCOGS_URL = "https://www.discogs.com/"
 DISCOGS_ATTRIBUTION_TEXT = "Data provided by Discogs"

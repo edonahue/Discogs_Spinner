@@ -1,4 +1,4 @@
-"""First-run setup wizard for Discogs Player GUI."""
+"""First-run setup wizard for Spinner for Discogs GUI."""
 
 from __future__ import annotations
 

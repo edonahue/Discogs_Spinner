@@ -65,15 +65,13 @@ done
 # ── Step 2: substitute version strings throughout ──────────────────────────
 for f in "${DEST_DIR}"/*.yaml; do
     sed -i "s/${SOURCE_VERSION}/${NEW_VERSION}/g" "$f"
-    sed -i "s#https://github.com/edonahue/Discogs_Spinner#https://github.com/edonahue/spinner-for-discogs#g" "$f"
     sed -i "s/Discogs\\.Spinner_/Spinner-for-Discogs_/g" "$f"
-    sed -i "s/Discogs Spinner/Spinner for Discogs/g" "$f"
 done
 
 echo "  ✓ Manifest templates copied and version strings updated."
 
 # ── Step 3: fetch CHECKSUMS-INSTALLERS.txt from the GitHub Release ─────────
-CHECKSUMS_URL="https://github.com/edonahue/spinner-for-discogs/releases/download/v${NEW_VERSION}/CHECKSUMS-INSTALLERS.txt"
+CHECKSUMS_URL="https://github.com/edonahue/Discogs_Spinner/releases/download/v${NEW_VERSION}/CHECKSUMS-INSTALLERS.txt"
 CHECKSUMS_TMP="$(mktemp)"
 trap 'rm -f "$CHECKSUMS_TMP"' EXIT
 

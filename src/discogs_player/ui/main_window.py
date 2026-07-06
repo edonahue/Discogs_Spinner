@@ -1,4 +1,4 @@
-"""Main GTK window for Discogs Player."""
+"""Main GTK window for Spinner for Discogs."""
 
 from __future__ import annotations
 

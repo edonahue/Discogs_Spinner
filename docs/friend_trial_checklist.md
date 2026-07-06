@@ -33,7 +33,7 @@ Capture:
 
 Issue templates:
 
-- Install failure: <https://github.com/edonahue/spinner-for-discogs/issues/new?template=install_failure.yml>
-- Auth/setup failure: <https://github.com/edonahue/spinner-for-discogs/issues/new?template=auth_failure.yml>
-- Playback failure: <https://github.com/edonahue/spinner-for-discogs/issues/new?template=playback_failure.yml>
+- Install failure: <https://github.com/edonahue/Discogs_Spinner/issues/new?template=install_failure.yml>
+- Auth/setup failure: <https://github.com/edonahue/Discogs_Spinner/issues/new?template=auth_failure.yml>
+- Playback failure: <https://github.com/edonahue/Discogs_Spinner/issues/new?template=playback_failure.yml>
 

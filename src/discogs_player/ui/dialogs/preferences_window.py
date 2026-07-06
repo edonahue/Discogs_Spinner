@@ -1,4 +1,4 @@
-"""Persistent Preferences panel for Discogs Player GUI."""
+"""Persistent Preferences panel for Spinner for Discogs GUI."""
 
 from __future__ import annotations
 

@@ -188,7 +188,7 @@ fpm \
     --architecture "$ARCH" \
     --maintainer "Spinner for Discogs Contributors <discogs_player+maintainer@users.noreply.github.com>" \
     --description "Browse, spin, and value your Discogs vinyl collection." \
-    --url "https://github.com/edonahue/spinner-for-discogs" \
+    --url "https://github.com/edonahue/Discogs_Spinner" \
     --license MIT \
     --category "sound" \
     --depends python3 \

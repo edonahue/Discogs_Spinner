@@ -1,6 +1,6 @@
 # Contributing to Spinner for Discogs
 
-Thank you for your interest in contributing to Discogs Player! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to Spinner for Discogs! This document provides guidelines and information for contributors.
 
 ## Table of Contents
 
@@ -33,8 +33,8 @@ This project follows the standard open-source code of conduct:
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/edonahue/spinner-for-discogs.git
-   cd spinner-for-discogs
+   git clone https://github.com/edonahue/Discogs_Spinner.git
+   cd Discogs_Spinner
    ```
 
 2. **Create a virtual environment:**

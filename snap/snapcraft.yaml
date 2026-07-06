@@ -35,10 +35,10 @@ description: |
   - Data provided by Discogs: https://www.discogs.com/.
 
 license: MIT
-website: https://github.com/edonahue/spinner-for-discogs
-contact: https://github.com/edonahue/spinner-for-discogs/issues
-source-code: https://github.com/edonahue/spinner-for-discogs
-issues: https://github.com/edonahue/spinner-for-discogs/issues
+website: https://github.com/edonahue/Discogs_Spinner
+contact: https://github.com/edonahue/Discogs_Spinner/issues
+source-code: https://github.com/edonahue/Discogs_Spinner
+issues: https://github.com/edonahue/Discogs_Spinner/issues
 icon: desktop_shell/icons/icon.png
 grade: stable
 confinement: strict

@@ -64,7 +64,7 @@ dplayer-api
 You should see:
 
 ```
-Discogs Spinner API — http://127.0.0.1:8768  (Ctrl+C to stop)
+Spinner for Discogs API — http://127.0.0.1:8768  (Ctrl+C to stop)
 INFO:     Started server process [...]
 INFO:     Uvicorn running on http://127.0.0.1:8768
 ```

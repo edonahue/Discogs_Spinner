@@ -392,5 +392,5 @@ def test_discogs_client_user_agent_uses_public_product_name():
     client = DiscogsClient(token="token")
 
     assert client.user_agent.startswith("SpinnerForDiscogs/")
-    assert "github.com/edonahue/spinner-for-discogs" in client.user_agent
+    assert "github.com/edonahue/Discogs_Spinner" in client.user_agent
     assert client._headers()["User-Agent"] == client.user_agent

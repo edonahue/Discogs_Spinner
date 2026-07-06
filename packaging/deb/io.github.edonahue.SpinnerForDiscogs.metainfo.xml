@@ -18,16 +18,16 @@
   <screenshots>
     <screenshot type="default">
       <caption>Browse your synced record collection as a cover-art gallery.</caption>
-      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/01-browse-gallery.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/01-browse-gallery.png</image>
     </screenshot>
     <screenshot>
       <caption>Spin a record and inspect tracklist, value, and playback context.</caption>
-      <image>https://raw.githubusercontent.com/edonahue/spinner-for-discogs/main/docs/media/screenshots/02-spin-result.png</image>
+      <image>https://raw.githubusercontent.com/edonahue/Discogs_Spinner/main/docs/media/screenshots/02-spin-result.png</image>
     </screenshot>
   </screenshots>
-  <url type="homepage">https://github.com/edonahue/spinner-for-discogs</url>
-  <url type="bugtracker">https://github.com/edonahue/spinner-for-discogs/issues</url>
-  <url type="help">https://github.com/edonahue/spinner-for-discogs/blob/main/docs/START_HERE.md</url>
+  <url type="homepage">https://github.com/edonahue/Discogs_Spinner</url>
+  <url type="bugtracker">https://github.com/edonahue/Discogs_Spinner/issues</url>
+  <url type="help">https://github.com/edonahue/Discogs_Spinner/blob/main/docs/START_HERE.md</url>
   <categories>
     <category>AudioVideo</category>
     <category>Audio</category>

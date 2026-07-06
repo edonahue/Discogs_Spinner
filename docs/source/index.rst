@@ -1,6 +1,6 @@
-.. Discogs Player documentation master file
+.. Spinner for Discogs documentation master file
 
-Discogs Player Documentation
+Spinner for Discogs Documentation
 ============================
 
 A local Pop!_OS app that syncs your Discogs record collection into a local cache,

@@ -8,7 +8,7 @@ describe("Footer", () => {
 
     const link = screen.getByRole("link", { name: "Report a problem" });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "https://github.com/edonahue/spinner-for-discogs/issues");
+    expect(link).toHaveAttribute("href", "https://github.com/edonahue/Discogs_Spinner/issues");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noreferrer");
   });
